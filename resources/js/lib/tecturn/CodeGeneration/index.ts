@@ -18,6 +18,7 @@ import { PresentationToCode } from './PresentationToCode.ts';
 
 export * from './contracts.ts';
 export * from './support.ts';
+export * from './lint.ts';
 export { CodegenContainer } from './Container.ts';
 export { PresentationToCode } from './PresentationToCode.ts';
 export * from './plugins/blocks.ts';

@@ -102,6 +102,16 @@ to: number | null,
 },
 };
 export type LengthAwarePaginatorInterface<TKey, TValue> = LengthAwarePaginator<TKey, TValue>;
+export type LintPolicy = {
+readonly wordsPerMinute: number,
+readonly cjkCharsPerMinute: number,
+readonly wordsGood: number,
+readonly wordsMax: number,
+readonly cjkCharsGood: number,
+readonly cjkCharsMax: number,
+readonly paceUnderRatio: number,
+readonly paceOverRatio: number,
+};
 export type NodePosition = {
 readonly x: number,
 readonly y: number,

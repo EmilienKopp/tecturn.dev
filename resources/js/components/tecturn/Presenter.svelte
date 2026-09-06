@@ -2,6 +2,7 @@
     import {
         Action,
         Code,
+        getPresentation,
         Presentation,
         Slide,
         Transition,
@@ -32,9 +33,12 @@
     let {
         content: rawContent,
         flow: rawFlow = null,
+        onSlideChange,
     }: {
         content: PresentationContent;
         flow?: FlowGraph | null;
+        /** Fires with the current slide index and the shown-slide total. */
+        onSlideChange?: (current: number, total: number) => void;
     } = $props();
 
     // Same pipeline as codegen.ts, so live presenting and the Svelte export
@@ -80,6 +84,25 @@
             return content.slides.filter((slide) => enabled.has(slide.id));
         })(),
     );
+
+    // Track the horizontal slide index off Reveal (via Animotion's shared
+    // store) so the presenter dock can pace each slide. Reveal's indexh matches
+    // the order of the shown slides we render below.
+    $effect(() => {
+        const deck = getPresentation().slides;
+        const total = shownSlides.length;
+
+        if (!deck || !onSlideChange) {
+            return;
+        }
+
+        const report = () => onSlideChange(deck.getIndices().h, total);
+
+        deck.on('slidechanged', report);
+        report();
+
+        return () => deck.off('slidechanged', report);
+    });
 
     const blockStyle = (block: Block): string =>
         [

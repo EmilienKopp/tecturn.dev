@@ -36,7 +36,10 @@
         translationRoutes: { start: string; stop: string };
     } = $props();
 
-    let slideCount = $derived(presentation.content.slides.length);
+    // Current slide + shown-slide total, reported by the Presenter off Reveal,
+    // so the dock can pace each slide against the talk target.
+    let currentSlide = $state(0);
+    let slideCount = $state(presentation.content.slides.length);
 
     // Session-only override: starts from the saved setting, toggled from the
     // dock without persisting.
@@ -105,6 +108,10 @@
                 <Presenter
                     content={presentation.content}
                     flow={presentation.flow}
+                    onSlideChange={(current, total) => {
+                        currentSlide = current;
+                        slideCount = total;
+                    }}
                 />
             </div>
 
@@ -135,6 +142,7 @@
             {viewerUrl}
             talkSettings={presentation.talk_settings}
             {slideCount}
+            {currentSlide}
             {recentReactions}
             {viewerCount}
             {reactionTotal}

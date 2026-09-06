@@ -12,6 +12,7 @@
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
+    import Timer from 'lucide-svelte/icons/timer';
     import Workflow from 'lucide-svelte/icons/workflow';
     import { toast } from 'svelte-sonner';
     import Confirm from '@/components/feedback/Confirm.svelte';
@@ -31,6 +32,7 @@
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
+    import TalkLengthModal from './TalkLengthModal.svelte';
 
     let {
         editor,
@@ -61,6 +63,9 @@
     let autoSave = $state(talkSettings.autoSave ?? false);
     let footer = $state<FooterSettings>(talkSettings.footer);
     let footerModalOpen = $state(false);
+    let durationMinutes = $state<number | null>(talkSettings.durationMinutes);
+    let timerMode = $state(talkSettings.timerMode);
+    let talkLengthModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
 
@@ -92,6 +97,8 @@
                     showTranslation,
                     autoSave,
                     footer,
+                    durationMinutes,
+                    timerMode,
                 },
             },
             {
@@ -134,6 +141,24 @@
         persistTalkSettings(
             () => (footer = next),
             () => (footer = previous),
+        );
+    };
+
+    const saveTalkLength = (next: {
+        durationMinutes: number | null;
+        timerMode: string;
+    }) => {
+        const previousDuration = durationMinutes;
+        const previousMode = timerMode;
+        persistTalkSettings(
+            () => {
+                durationMinutes = next.durationMinutes;
+                timerMode = next.timerMode;
+            },
+            () => {
+                durationMinutes = previousDuration;
+                timerMode = previousMode;
+            },
         );
     };
 
@@ -369,6 +394,23 @@
                     type="button"
                     role="menuitem"
                     class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onclick={() => (talkLengthModalOpen = true)}
+                    data-test="editor-talk-length-menu-item"
+                >
+                    <Timer class="h-4 w-4" />
+                    Talk length…
+                    <span
+                        class="ml-auto text-xs {durationMinutes
+                            ? 'font-medium text-primary'
+                            : 'text-muted-foreground'}"
+                    >
+                        {durationMinutes ? `${durationMinutes}m` : 'Off'}
+                    </span>
+                </button>
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
                     onclick={() => (footerModalOpen = true)}
                     data-test="editor-footer-menu-item"
                 >
@@ -473,3 +515,10 @@
 <Confirm bind:this={confirmModal} />
 
 <FooterSettingsModal {footer} bind:open={footerModalOpen} onSave={saveFooter} />
+
+<TalkLengthModal
+    {durationMinutes}
+    {timerMode}
+    bind:open={talkLengthModalOpen}
+    onSave={saveTalkLength}
+/>

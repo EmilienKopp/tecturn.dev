@@ -124,11 +124,17 @@
         </div>
     {:else}
         <div class="flex min-h-0 flex-1">
-            <SlideNavigator {editor} />
+            <SlideNavigator
+                {editor}
+                policy={page.props.lintPolicy}
+                targetMinutes={presentation.talk_settings.durationMinutes}
+            />
             <SlideCanvas {editor} presentationId={presentation.id} />
             <InspectorPanel
                 {editor}
                 presentationId={presentation.id}
+                policy={page.props.lintPolicy}
+                targetMinutes={presentation.talk_settings.durationMinutes}
                 onEditCodeSequence={(blockId) =>
                     (codeSequenceBlockId = blockId)}
             />

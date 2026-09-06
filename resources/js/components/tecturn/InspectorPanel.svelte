@@ -17,20 +17,63 @@
         DialogTitle,
     } from '@/components/ui/dialog';
     import { Label } from '@/components/ui/label';
+    import {
+        formatSpeakingTime,
+        lintDeck,
+        lintSlide,
+    } from '@/lib/tecturn/CodeGeneration/lint';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { FONTS } from '@/lib/tecturn/fonts';
     import { SUPPORTED_LANGUAGES } from '@/lib/tecturn/shiki';
     import { uploadImage, xsrfToken } from '@/lib/tecturn/uploads';
+    import type { LintPolicy } from '@/types/generated';
 
     let {
         editor,
         presentationId,
+        policy,
+        targetMinutes = null,
         onEditCodeSequence,
     }: {
         editor: EditorState;
         presentationId: number;
+        policy: LintPolicy;
+        targetMinutes?: number | null;
         onEditCodeSequence: (blockId: string) => void;
     } = $props();
+
+    const slideLint = $derived(lintSlide(editor.selectedSlide, policy));
+    const deckLint = $derived(
+        lintDeck(editor.content.slides, policy, targetMinutes),
+    );
+
+    const verdictMessage = $derived(
+        slideLint.verdict === 'over'
+            ? 'Dense — consider splitting this slide.'
+            : slideLint.verdict === 'warn'
+              ? 'Getting full — trimming would help it breathe.'
+              : slideLint.chars > 0
+                ? 'Good length.'
+                : 'No text yet.',
+    );
+
+    const verdictClass = $derived(
+        slideLint.verdict === 'over'
+            ? 'text-red-500'
+            : slideLint.verdict === 'warn'
+              ? 'text-amber-500'
+              : 'text-muted-foreground',
+    );
+
+    const pace = $derived(
+        deckLint.pace === 'over'
+            ? { label: 'Over target', class: 'text-red-500' }
+            : deckLint.pace === 'under'
+              ? { label: 'Under target', class: 'text-amber-500' }
+              : deckLint.pace === 'on'
+                ? { label: 'On target', class: 'text-emerald-600' }
+                : null,
+    );
 
     let uploadingBackground = $state(false);
 
@@ -383,6 +426,41 @@
                     editor.setSlideTitle(event.currentTarget.value)}
                 data-test="inspector-slide-title"
             />
+        </div>
+
+        <div
+            class="space-y-1.5 rounded-md border p-2.5"
+            data-test="inspector-content-stats"
+        >
+            <div class="flex items-center justify-between">
+                <Label class="text-xs">Content</Label>
+                <span class="text-xs {verdictClass}">{verdictMessage}</span>
+            </div>
+            <div
+                class="flex items-center justify-between text-xs text-muted-foreground"
+            >
+                <span>
+                    {#if slideLint.words > 0}{slideLint.words} words{/if}{#if slideLint.words > 0 && slideLint.cjkChars > 0},
+                    {/if}{#if slideLint.cjkChars > 0}{slideLint.cjkChars} chars{/if}{#if slideLint.chars === 0}Empty{/if}
+                </span>
+                <span class="font-mono tabular-nums"
+                    >~{formatSpeakingTime(slideLint.speakingSeconds)}</span
+                >
+            </div>
+            <div
+                class="flex items-center justify-between border-t pt-1.5 text-xs"
+            >
+                <span class="text-muted-foreground">Whole deck</span>
+                <span class="font-mono tabular-nums">
+                    ~{formatSpeakingTime(deckLint.totalSpeakingSeconds)}
+                    {#if deckLint.targetSeconds !== null}
+                        / {formatSpeakingTime(deckLint.targetSeconds)}
+                    {/if}
+                </span>
+            </div>
+            {#if pace}
+                <p class="text-right text-[11px] {pace.class}">{pace.label}</p>
+            {/if}
         </div>
 
         {#if editor.isEntrySlide(editor.selectedSlide.id)}

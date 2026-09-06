@@ -29,15 +29,57 @@
     let elapsedSeconds = $state(0);
     let startedAt = $state(Date.now());
 
+    // Per-slide stopwatch: reset every time the presenter moves to a new slide.
+    let slideStartedAt = $state(Date.now());
+    let slideElapsedSeconds = $state(0);
+
     $effect(() => {
         startedAt = Date.now();
         elapsedSeconds = 0;
 
         const interval = setInterval(() => {
             elapsedSeconds = Math.floor((Date.now() - startedAt) / 1000);
+            slideElapsedSeconds = Math.floor(
+                (Date.now() - slideStartedAt) / 1000,
+            );
         }, 1000);
 
         return () => clearInterval(interval);
+    });
+
+    // Restart the per-slide stopwatch whenever the current slide changes.
+    let trackedSlide = $state(-1);
+
+    $effect(() => {
+        if (currentSlide !== trackedSlide) {
+            trackedSlide = currentSlide;
+            slideStartedAt = Date.now();
+            slideElapsedSeconds = 0;
+        }
+    });
+
+    // Even split of the target across the shown slides. Null when no target is
+    // set, which hides the per-slide pacing entirely.
+    const slideBudgetSeconds = $derived(
+        talkSettings.durationMinutes && slideCount > 0
+            ? Math.round((talkSettings.durationMinutes * 60) / slideCount)
+            : null,
+    );
+
+    // Green while there's room, amber past 80% of the slide's share, red once
+    // it runs over — the same restraint as the deck-level linter.
+    const slidePaceClass = $derived.by(() => {
+        if (!slideBudgetSeconds) {
+            return 'text-zinc-400';
+        }
+
+        const ratio = slideElapsedSeconds / slideBudgetSeconds;
+
+        if (ratio > 1.1) {
+            return 'text-red-400';
+        }
+
+        return ratio > 0.8 ? 'text-amber-400' : 'text-emerald-400';
     });
 
     const formatTime = (seconds: number): string => {
@@ -103,9 +145,21 @@
             {displayTime}
         </p>
         {#if slideCount > 0}
-            <p class="mt-2 text-xs text-zinc-400">
-                Slide {currentSlide + 1} / {slideCount}
-            </p>
+            <div class="mt-2 flex items-baseline justify-between text-xs">
+                <span class="text-zinc-400">
+                    Slide {currentSlide + 1} / {slideCount}
+                </span>
+                {#if slideBudgetSeconds}
+                    <span
+                        class="font-mono tabular-nums {slidePaceClass}"
+                        data-test="dock-slide-pace"
+                    >
+                        {formatTime(slideElapsedSeconds)} / {formatTime(
+                            slideBudgetSeconds,
+                        )}
+                    </span>
+                {/if}
+            </div>
         {/if}
     </section>
 

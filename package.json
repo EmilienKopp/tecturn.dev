@@ -10,7 +10,8 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
-        "types:check": "svelte-check --tsconfig ./tsconfig.json"
+        "types:check": "svelte-check --tsconfig ./tsconfig.json",
+        "test:js": "node --test scripts/*.test.mjs"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",

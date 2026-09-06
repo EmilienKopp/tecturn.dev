@@ -1,5 +1,6 @@
 import type { Auth } from '@/types/auth';
 import type { Team } from '@/types/teams';
+import type { LintPolicy } from '@/types/generated';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {
@@ -25,6 +26,7 @@ declare module '@inertiajs/core' {
             sidebarOpen: boolean;
             currentTeam: Team | null;
             teams: Team[];
+            lintPolicy: LintPolicy;
             [key: string]: unknown;
         };
     }

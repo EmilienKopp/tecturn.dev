@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Presentation\ValueObjects\LintPolicy;
 use App\Http\Navigation\AppNavigation;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -48,6 +49,9 @@ class HandleInertiaRequests extends Middleware
             'currentTeam' => fn () => $user?->currentTeam ? $user->toUserTeam($user->currentTeam) : null,
             'navigation' => fn () => app(AppNavigation::class)->tree($user),
             'teams' => fn () => $user?->toUserTeams(includeCurrent: true) ?? [],
+            // Authoritative content-linter thresholds (config/lint.php); the
+            // editor's lint.ts reads these instead of hardcoding its own.
+            'lintPolicy' => LintPolicy::fromArray(config('lint', []))->toArray(),
         ];
     }
 }

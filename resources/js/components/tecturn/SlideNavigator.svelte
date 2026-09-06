@@ -10,9 +10,46 @@
         DialogFooter,
         DialogTitle,
     } from '@/components/ui/dialog';
+    import {
+        formatSpeakingTime,
+        lintDeck,
+        lintSlide,
+    } from '@/lib/tecturn/CodeGeneration/lint';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import type { LintPolicy } from '@/types/generated';
+    import SlideLintBadge from './SlideLintBadge.svelte';
 
-    let { editor }: { editor: EditorState } = $props();
+    let {
+        editor,
+        policy,
+        targetMinutes = null,
+    }: {
+        editor: EditorState;
+        policy: LintPolicy;
+        targetMinutes?: number | null;
+    } = $props();
+
+    const deck = $derived(
+        lintDeck(editor.content.slides, policy, targetMinutes),
+    );
+
+    const paceLabel = $derived(
+        deck.pace === 'over'
+            ? 'over target'
+            : deck.pace === 'under'
+              ? 'under target'
+              : deck.pace === 'on'
+                ? 'on target'
+                : null,
+    );
+
+    const paceClass = $derived(
+        deck.pace === 'over'
+            ? 'text-red-500'
+            : deck.pace === 'under'
+              ? 'text-amber-500'
+              : 'text-emerald-600',
+    );
 
     let deleteDialogOpen = $state(false);
     let slideIndexDeleting = $state<number | null>(null);
@@ -38,6 +75,8 @@
     <div class="flex-1 space-y-2 overflow-y-auto p-3">
         {#each editor.content.slides as slide, index (slide.id)}
             {@const disabled = !editor.isSlideEnabled(slide.id)}
+            {@const lint = lintSlide(slide, policy)}
+
             <button
                 type="button"
                 class="group relative block w-full rounded-md border p-2 text-left text-sm transition-colors hover:bg-accent {index ===
@@ -51,6 +90,12 @@
                 <span class="block truncate pr-5 font-medium"
                     >{slide.title ?? `Slide ${index + 1}`}</span
                 >
+
+                {#if lint.chars > 0}
+                    <span class="mt-0.5 block">
+                        <SlideLintBadge {lint} />
+                    </span>
+                {/if}
 
                 {#if disabled}
                     <span
@@ -81,7 +126,19 @@
         {/each}
     </div>
 
-    <div class="border-t p-3">
+    <div class="space-y-2 border-t p-3">
+        <div
+            class="flex items-baseline justify-between text-xs"
+            data-test="deck-lint-total"
+        >
+            <span class="text-muted-foreground">Est. talk</span>
+            <span class="font-mono tabular-nums">
+                ~{formatSpeakingTime(deck.totalSpeakingSeconds)}
+                {#if paceLabel}
+                    <span class={paceClass}>· {paceLabel}</span>
+                {/if}
+            </span>
+        </div>
         <Button
             variant="outline"
             size="sm"

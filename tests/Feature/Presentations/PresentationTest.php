@@ -81,6 +81,27 @@ test('the editor page renders with the presentation content', function () {
     );
 });
 
+test('the content linter policy is shared to the frontend from config', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('presentations.edit', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]));
+
+    $response->assertInertia(fn (Assert $page) => $page
+        ->where('lintPolicy.wordsPerMinute', config('lint.wordsPerMinute'))
+        ->where('lintPolicy.wordsGood', config('lint.wordsGood'))
+        ->where('lintPolicy.cjkCharsMax', config('lint.cjkCharsMax'))
+        ->where('lintPolicy.paceUnderRatio', config('lint.paceUnderRatio')),
+    );
+});
+
 test('a presentation can be renamed', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
