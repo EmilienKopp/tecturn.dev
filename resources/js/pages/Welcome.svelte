@@ -73,7 +73,9 @@
             <p class="text-lg leading-relaxed text-[hsl(40_15%_75%)]">
                 Build slides out of blocks, wire their reveal order in a flow
                 graph, and present with live translation and floating audience
-                reactions. The deck above is the product doing its own pitch.
+                reactions. A built-in pacing coach flags dense slides and keeps
+                your talk on time. The deck above is the product doing its own
+                pitch.
             </p>
             {#if auth.user}
                 <Link

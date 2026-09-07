@@ -109,6 +109,38 @@
             </div>
         </Slide>
 
+        <Slide background="#faf7f0" class="h-full w-full">
+            <div
+                class="flex h-full w-full flex-col items-start justify-center gap-[2.5cqh] px-[8cqw] text-left"
+            >
+                <h2
+                    class="font-display text-[4.6cqw] leading-tight font-semibold tracking-tight text-[#221c12]"
+                >
+                    A pacing coach as you build.
+                </h2>
+                <p class="text-[2cqw] text-[#6e6250]">
+                    Live word and character counts (yes, even for languages
+                    without spaces), with a speaking-time estimate per slide.
+                </p>
+                <Transition order={1}>
+                    <div
+                        class="mt-[1cqh] flex items-center gap-[1.2cqw] rounded-lg border border-[#e4d9c4] bg-white px-[2cqw] py-[1.4cqh] font-mono text-[1.7cqw] text-[#6e6250]"
+                    >
+                        <span
+                            class="h-[1.4cqw] w-[1.4cqw] rounded-full bg-[#d98a12]"
+                        ></span>
+                        82 words · ~0:38
+                        <span class="text-[#b06e10]">· trim this slide</span>
+                    </div>
+                </Transition>
+                <Transition order={2}>
+                    <p class="text-[1.8cqw] text-[#6e6250]">
+                        Set a target length and it keeps the whole talk on time.
+                    </p>
+                </Transition>
+            </div>
+        </Slide>
+
         <Slide background="#191510" class="h-full w-full">
             <div
                 class="flex h-full w-full flex-col items-start justify-center gap-[3cqh] px-[8cqw] text-left"
