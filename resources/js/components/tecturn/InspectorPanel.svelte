@@ -284,6 +284,43 @@
             </div>
         {/if}
 
+        {#if block.type === 'qr'}
+            <div class="space-y-1">
+                <Label for="qr-url" class="text-xs">URL to encode</Label>
+                <input
+                    id="qr-url"
+                    type="text"
+                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={block.src ?? ''}
+                    oninput={(event) =>
+                        editor.updateBlockSrc(
+                            block.id,
+                            event.currentTarget.value,
+                        )}
+                    placeholder="https://example.com"
+                    data-test="inspector-qr-url"
+                />
+            </div>
+            <div class="space-y-1">
+                <Label for="qr-size" class="text-xs">Size</Label>
+                <select
+                    id="qr-size"
+                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                    value={block.alt ?? 'medium'}
+                    onchange={(event) =>
+                        editor.updateBlockAlt(
+                            block.id,
+                            event.currentTarget.value,
+                        )}
+                    data-test="inspector-qr-size"
+                >
+                    <option value="small">Small</option>
+                    <option value="medium">Medium</option>
+                    <option value="large">Large</option>
+                </select>
+            </div>
+        {/if}
+
         {#if block.type === 'text' || block.type === 'box'}
             <p class="text-xs text-muted-foreground">
                 Box defaults. Select text in the box to style a span

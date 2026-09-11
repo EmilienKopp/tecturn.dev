@@ -8,6 +8,11 @@
         Transition,
     } from '@animotion/core';
     import '@animotion/core/theme';
+    import {
+        QR_SIZE_CQW,
+        normalizeQrSize,
+        qrToSvg,
+    } from '@/lib/tecturn/CodeGeneration/qr';
     import { sanitizeInlineHtml } from '@/lib/tecturn/CodeGeneration/sanitize';
     import {
         codeActionCues,
@@ -171,6 +176,18 @@
             alt={block.alt ?? ''}
             class="max-h-full max-w-full object-contain"
         />
+    {:else if block.type === 'qr'}
+        {#if block.src}
+            <div
+                class="flex items-center justify-center"
+                style="width: {QR_SIZE_CQW[
+                    normalizeQrSize(block.alt)
+                ]}cqw; max-width: 100%;"
+            >
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                {@html qrToSvg(block.src, { title: block.src })}
+            </div>
+        {/if}
     {/if}
 {/snippet}
 

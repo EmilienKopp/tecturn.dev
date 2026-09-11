@@ -1295,11 +1295,16 @@ export class EditorState {
         this.addBlock(slot, 'box');
     }
 
+    addQRBlock(slot: string): void {
+        const block = this.addBlock(slot, 'qr');
+        block.alt = 'medium';
+    }
+
     addGridBlock(
         slot: string,
         gridColumn: string,
         gridRow: string,
-        type: 'text' | 'code' | 'box',
+        type: 'text' | 'code' | 'box' | 'qr',
     ): void {
         const block = this.addBlock(slot, type);
         block.style.gridColumn = gridColumn;
@@ -1308,9 +1313,13 @@ export class EditorState {
         if (type === 'code') {
             block.lang = 'typescript';
         }
+
+        if (type === 'qr') {
+            block.alt = 'medium';
+        }
     }
 
-    addFreeBlock(x: string, y: string, type: 'text' | 'code' | 'box'): void {
+    addFreeBlock(x: string, y: string, type: 'text' | 'code' | 'box' | 'qr'): void {
         const block = this.addBlock('main', type);
         block.style.x = x;
         block.style.y = y;
@@ -1318,6 +1327,11 @@ export class EditorState {
 
         if (type === 'code') {
             block.lang = 'typescript';
+        }
+
+        if (type === 'qr') {
+            block.style.height = '25';
+            block.alt = 'medium';
         }
     }
 
@@ -1362,6 +1376,15 @@ export class EditorState {
 
         if (block) {
             block.alt = alt;
+            this.dirty = true;
+        }
+    }
+
+    updateBlockSrc(blockId: string, src: string | null): void {
+        const block = this.findBlock(blockId);
+
+        if (block) {
+            block.src = src;
             this.dirty = true;
         }
     }

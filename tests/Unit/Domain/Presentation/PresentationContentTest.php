@@ -73,6 +73,26 @@ it('rejects an unknown block type', function () {
     PresentationContent::fromArray($data);
 })->throws(InvalidPresentationContent::class, 'Unknown block type');
 
+it('round-trips a qr block with its url and size', function () {
+    $data = validContentArray();
+    $data['slides'][0]['slots']['left'][0] = [
+        'id' => 'block-qr',
+        'type' => 'qr',
+        'content' => '',
+        'style' => [],
+        'transition' => null,
+        'src' => 'https://example.com',
+        'alt' => 'large',
+    ];
+
+    $content = PresentationContent::fromArray($data);
+    $block = $content->toArray()['slides'][0]['slots']['left'][0];
+
+    expect($block['type'])->toBe('qr')
+        ->and($block['src'])->toBe('https://example.com')
+        ->and($block['alt'])->toBe('large');
+});
+
 it('rejects a slot name not defined by the layout', function () {
     $data = validContentArray();
     $data['slides'][0]['slots']['footer'] = [];

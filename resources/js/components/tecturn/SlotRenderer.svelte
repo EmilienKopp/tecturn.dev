@@ -1,10 +1,12 @@
 <script lang="ts">
     import Code2 from 'lucide-svelte/icons/code-2';
     import Plus from 'lucide-svelte/icons/plus';
+    import QrCode from 'lucide-svelte/icons/qr-code';
     import Square from 'lucide-svelte/icons/square';
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
+    import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
 
@@ -26,6 +28,8 @@
                 <CodeBlockView {editor} {block} />
             {:else if block.type === 'box'}
                 <BoxBlockView {editor} {block} />
+            {:else if block.type === 'qr'}
+                <QRBlockView {editor} {block} />
             {/if}
         </BlockPinMenu>
     {/each}
@@ -57,6 +61,15 @@
             title="Add bordered box"
         >
             <Square class="h-3 w-3" /> Box
+        </button>
+        <button
+            type="button"
+            class="flex items-center gap-1 rounded px-2 py-1 text-xs opacity-40 transition-opacity hover:bg-current/10 hover:opacity-100"
+            onclick={() => editor.addQRBlock(slotName)}
+            data-test="add-qr-block-button"
+            title="Add QR code"
+        >
+            <QrCode class="h-3 w-3" /> QR
         </button>
     </div>
 </div>

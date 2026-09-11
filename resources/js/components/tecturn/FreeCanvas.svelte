@@ -5,6 +5,7 @@
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
+    import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import {
@@ -70,7 +71,7 @@
         popoverVisible = true;
     }
 
-    function createBlock(type: 'text' | 'code' | 'box') {
+    function createBlock(type: 'text' | 'code' | 'box' | 'qr') {
         editor.addFreeBlock(
             String(round2(popover.x)),
             String(round2(popover.y)),
@@ -254,6 +255,8 @@
                             class="h-full w-full object-contain"
                             draggable="false"
                         />
+                    {:else if block.type === 'qr'}
+                        <QRBlockView {editor} {block} />
                     {/if}
                 </BlockPinMenu>
             </div>
@@ -299,6 +302,11 @@
                 type="button"
                 class="rounded px-2 py-1 text-xs hover:bg-accent"
                 onclick={insertImage}>Image</button
+            >
+            <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-accent"
+                onclick={() => createBlock('qr')}>QR</button
             >
         </div>
     {/if}

@@ -7,6 +7,7 @@ import type {
     CodegenPlugin,
     RenderContext,
 } from '../contracts.ts';
+import { QR_SIZE_CQW, normalizeQrSize, qrToSvg } from '../qr.ts';
 import { sanitizeInlineHtml } from '../sanitize.ts';
 import type { EditorJsBlock, EditorJsOutput } from '../support.ts';
 import {
@@ -161,6 +162,28 @@ export class BoxRenderer implements BlockRendererPlugin {
     }
 }
 
+export class QrRenderer implements BlockRendererPlugin {
+    readonly type = 'qr';
+
+    render(block: Block, depth: number): string {
+        const pad = INDENT.repeat(depth);
+        const url = block.src ?? '';
+
+        // No URL yet: emit a sized empty box so the slot keeps its footprint
+        // without leaking a broken QR into the export.
+        if (url === '') {
+            return `${pad}<div style="display: none;"></div>`;
+        }
+
+        const cqw = QR_SIZE_CQW[normalizeQrSize(block.alt)];
+
+        // Inline style, not a class: the embed injects CSS globally, so a bare
+        // rule would leak onto the host page. Mirrors ImageRenderer. Width in
+        // cqw so it scales with the stage like text/code.
+        return `${pad}<div style="width: ${cqw}cqw; max-width: 100%;">${qrToSvg(url, { title: url })}</div>`;
+    }
+}
+
 /** Fallback for plain text blocks and any type no plugin claims. */
 export class ParagraphRenderer implements BlockRendererPlugin {
     readonly type = 'text';
@@ -197,6 +220,7 @@ export const defaultBlockPlugins: CodegenPlugin = {
         new CodeRenderer(),
         new ImageRenderer(),
         new BoxRenderer(),
+        new QrRenderer(),
         new ParagraphRenderer(),
     ],
 };
