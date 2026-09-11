@@ -149,6 +149,7 @@ readonly session_id: string | null,
 readonly websocket_url: string | null,
 readonly active: boolean,
 readonly started_at: string | null,
+readonly languages: string[],
 };
 export type YoYoTranslateSession = {
 readonly websocketUrl: string,

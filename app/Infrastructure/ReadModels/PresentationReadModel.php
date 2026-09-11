@@ -54,7 +54,8 @@ class PresentationReadModel
      *         session_id: string|null,
      *         websocket_url: string|null,
      *         active: bool,
-     *         started_at: string|null
+     *         started_at: string|null,
+     *         languages: list<string>
      *     }
      * }
      */
@@ -64,7 +65,13 @@ class PresentationReadModel
 
         $sessionId = $presentation->yoyotranslate_session_id;
         $wsBaseUrl = (string) config('yoyotranslate.ws_base_url');
-        $wsLang = (string) config('yoyotranslate.ws_lang', 'all');
+        // The presenter picks the caption languages at link time. YoYoTranslate
+        // no longer accepts the `lang=all` wildcard, so fall back to the single
+        // configured code only when none were stored.
+        $languages = $presentation->yoyotranslate_languages ?? [];
+        $wsLang = $languages !== []
+            ? implode(',', $languages)
+            : (string) config('yoyotranslate.ws_lang', 'en');
 
         return [
             'id' => $presentation->id,
@@ -81,6 +88,7 @@ class PresentationReadModel
                     : null,
                 'active' => $sessionId !== null,
                 'started_at' => $presentation->yoyotranslate_session_started_at?->toISOString(),
+                'languages' => $languages,
             ],
         ];
     }

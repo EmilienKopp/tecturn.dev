@@ -27,6 +27,7 @@ class EloquentPresentationRepository implements PresentationRepository
             'flow' => $presentation->flow?->toArray(),
             'yoyotranslate_session_id' => $presentation->yoyotranslateSessionId,
             'yoyotranslate_session_started_at' => $presentation->yoyotranslateSessionStartedAt,
+            'yoyotranslate_languages' => $presentation->yoyotranslateLanguages,
         ];
 
         if ($presentation->id === null) {

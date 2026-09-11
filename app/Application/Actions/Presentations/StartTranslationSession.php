@@ -25,7 +25,7 @@ class StartTranslationSession
         if ($command->eventId !== null) {
             // Manual linking: the presenter created the event in YoYoTranslate's
             // own UI and pasted its id; no API call involved.
-            $presentation->attachTranslationSession($command->eventId, Carbon::now());
+            $presentation->attachTranslationSession($command->eventId, Carbon::now(), $command->languages);
 
             return $this->presentations->save($presentation);
         }
@@ -39,7 +39,7 @@ class StartTranslationSession
             sourceLanguage: $command->sourceLanguage,
         );
 
-        $presentation->attachTranslationSession($session->sessionId, $session->startedAt);
+        $presentation->attachTranslationSession($session->sessionId, $session->startedAt, $command->languages);
 
         return $this->presentations->save($presentation);
     }

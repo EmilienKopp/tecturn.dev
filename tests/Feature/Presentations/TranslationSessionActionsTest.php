@@ -46,11 +46,13 @@ it('starts a translation session and persists the session id', function () {
             presentationId: $presentation->id,
             userId: 1,
             sourceLanguage: 'en',
+            languages: ['en', 'fr'],
         ),
     );
 
     expect($entity->yoyotranslateSessionId)->toBe('session-xyz')
-        ->and($entity->yoyotranslateSessionStartedAt)->not->toBeNull();
+        ->and($entity->yoyotranslateSessionStartedAt)->not->toBeNull()
+        ->and($entity->yoyotranslateLanguages)->toBe(['en', 'fr']);
 
     $this->assertDatabaseHas('presentations', [
         'id' => $presentation->id,
@@ -66,11 +68,13 @@ it('links a manually created event without calling the translation service', fun
             presentationId: $presentation->id,
             userId: 1,
             eventId: '01a05520-5454-7352-aa0f-b9bcb9a23517',
+            languages: ['en'],
         ),
     );
 
     expect($entity->yoyotranslateSessionId)->toBe('01a05520-5454-7352-aa0f-b9bcb9a23517')
-        ->and($entity->yoyotranslateSessionStartedAt)->not->toBeNull();
+        ->and($entity->yoyotranslateSessionStartedAt)->not->toBeNull()
+        ->and($entity->yoyotranslateLanguages)->toBe(['en']);
 });
 
 it('accepts a pasted event url over http and extracts the event id', function () {
@@ -84,15 +88,36 @@ it('accepts a pasted event url over http and extracts the event id', function ()
             'current_team' => $user->currentTeam->slug,
             'presentation' => $presentation->id,
         ]),
-        ['event_url' => 'https://yoyotranslate.app/events/01a05520-5454-7352-aa0f-b9bcb9a23517/live'],
+        [
+            'event_url' => 'https://yoyotranslate.app/events/01a05520-5454-7352-aa0f-b9bcb9a23517/live',
+            'languages' => ['EN', 'fr', 'en'],
+        ],
     );
 
     $response->assertRedirect();
 
-    $this->assertDatabaseHas('presentations', [
-        'id' => $presentation->id,
-        'yoyotranslate_session_id' => '01a05520-5454-7352-aa0f-b9bcb9a23517',
+    $presentation->refresh();
+
+    expect($presentation->yoyotranslate_session_id)->toBe('01a05520-5454-7352-aa0f-b9bcb9a23517')
+        // Codes are lower-cased and de-duplicated before they are stored.
+        ->and($presentation->yoyotranslate_languages)->toBe(['en', 'fr']);
+});
+
+it('rejects a start request with no languages', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
     ]);
+
+    $response = $this->actingAs($user)->post(
+        route('presentations.translation-session.start', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]),
+        ['event_url' => 'https://yoyotranslate.app/events/01a05520-5454-7352-aa0f-b9bcb9a23517/live'],
+    );
+
+    $response->assertSessionHasErrors(['languages']);
 });
 
 it('rejects a start request with neither event url nor source language', function () {

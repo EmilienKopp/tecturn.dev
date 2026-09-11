@@ -308,6 +308,34 @@ test('the present page renders with the presentation content, talk settings and 
     );
 });
 
+test('the present page builds the translation socket url from the stored languages', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'yoyotranslate_session_id' => '01a05520-5454-7352-aa0f-b9bcb9a23517',
+        'yoyotranslate_session_started_at' => now(),
+        'yoyotranslate_languages' => ['en', 'fr'],
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('presentations.present', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('presentations/Present')
+        ->where('presentation.yoyotranslate.active', true)
+        ->where('presentation.yoyotranslate.languages', ['en', 'fr'])
+        ->where(
+            'presentation.yoyotranslate.websocket_url',
+            'wss://api.yoyotranslate.app/events/01a05520-5454-7352-aa0f-b9bcb9a23517?lang=en,fr',
+        ),
+    );
+});
+
 test('the present page flags a test run so no analytics session opens', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->create([

@@ -20,6 +20,10 @@ class StartTranslationSessionRequest extends FormRequest
         return [
             'event_url' => ['required_without:source_language', 'string', 'regex:'.self::UUID_PATTERN],
             'source_language' => ['required_without:event_url', 'string', 'size:2'],
+            // YoYoTranslate dropped the `lang=all` wildcard, so the presenter
+            // must name the languages captions are requested for.
+            'languages' => ['required', 'array', 'min:1'],
+            'languages.*' => ['string', 'size:2'],
         ];
     }
 
@@ -31,6 +35,22 @@ class StartTranslationSessionRequest extends FormRequest
         return [
             'event_url.regex' => 'Paste a YoYoTranslate event URL (or its event id).',
         ];
+    }
+
+    /**
+     * The requested caption languages, lower-cased and de-duplicated.
+     *
+     * @return list<string>
+     */
+    public function languages(): array
+    {
+        /** @var array<int, string> $languages */
+        $languages = $this->validated('languages', []);
+
+        return array_values(array_unique(array_map(
+            static fn (string $language): string => mb_strtolower($language),
+            $languages,
+        )));
     }
 
     /** The event id extracted from the pasted event URL, if one was provided. */

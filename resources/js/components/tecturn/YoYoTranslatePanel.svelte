@@ -47,8 +47,30 @@
     }
 
     // YoYoTranslate has no public API yet, so linking is manual: the presenter
-    // creates an event at yoyotranslate.app and pastes its URL here.
-    const startForm = useForm({ event_url: '' });
+    // creates an event at yoyotranslate.app and pastes its URL here. They also
+    // pick which languages to caption: YoYoTranslate dropped the `lang=all`
+    // wildcard, so the socket needs explicit codes.
+    const startForm = useForm({ event_url: '', languages: ['en'] as string[] });
+
+    // Common picks; the presenter can also type any two-letter code.
+    const commonLanguages = ['en', 'ja', 'fr', 'es', 'de', 'zh', 'fa'];
+    let customLanguage = $state('');
+
+    function toggleRequestedLanguage(code: string) {
+        startForm.languages = startForm.languages.includes(code)
+            ? startForm.languages.filter((language) => language !== code)
+            : [...startForm.languages, code];
+    }
+
+    function addCustomLanguage() {
+        const code = customLanguage.trim().toLowerCase();
+
+        if (code.length === 2 && !startForm.languages.includes(code)) {
+            startForm.languages = [...startForm.languages, code];
+        }
+
+        customLanguage = '';
+    }
 
     function startSession(e: SubmitEvent) {
         e.preventDefault();
@@ -330,6 +352,57 @@
             {#if startForm.errors.event_url}
                 <p class="text-xs text-red-400">
                     {startForm.errors.event_url}
+                </p>
+            {/if}
+
+            <div class="space-y-1.5 pt-1">
+                <span class="block text-xs text-white/70">Languages</span>
+                <div class="flex flex-wrap gap-1">
+                    {#each commonLanguages as code (code)}
+                        <button
+                            type="button"
+                            onclick={() => toggleRequestedLanguage(code)}
+                            class="rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide transition-colors {startForm.languages.includes(
+                                code,
+                            )
+                                ? 'bg-indigo-600 text-white'
+                                : 'bg-white/10 text-white/50 hover:text-white/80'}"
+                        >
+                            {code}
+                        </button>
+                    {/each}
+                    {#each startForm.languages.filter((code) => !commonLanguages.includes(code)) as code (code)}
+                        <button
+                            type="button"
+                            onclick={() => toggleRequestedLanguage(code)}
+                            class="rounded bg-indigo-600 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-white"
+                        >
+                            {code}
+                        </button>
+                    {/each}
+                </div>
+                <input
+                    type="text"
+                    bind:value={customLanguage}
+                    onkeydown={(e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addCustomLanguage();
+                        }
+                    }}
+                    onblur={addCustomLanguage}
+                    maxlength="2"
+                    placeholder="Add code (e.g. it)"
+                    class="w-full rounded-lg bg-white/10 px-2 py-1 text-xs text-white placeholder:text-white/30"
+                />
+                <p class="text-[11px] leading-snug text-white/40">
+                    Pick the languages captions should stream in.
+                </p>
+            </div>
+
+            {#if startForm.errors.languages}
+                <p class="text-xs text-red-400">
+                    {startForm.errors.languages}
                 </p>
             {/if}
 
