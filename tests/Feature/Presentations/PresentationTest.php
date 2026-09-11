@@ -303,7 +303,29 @@ test('the present page renders with the presentation content, talk settings and 
         ->where('presentation.talk_settings.timerMode', 'elapsed')
         ->where('presentation.talk_settings.durationMinutes', null)
         ->has('presentation.flow')
-        ->has('viewerUrl'),
+        ->has('viewerUrl')
+        ->where('testMode', false),
+    );
+});
+
+test('the present page flags a test run so no analytics session opens', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('presentations.present', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+            'test' => 1,
+        ]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('presentations/Present')
+        ->where('testMode', true),
     );
 });
 

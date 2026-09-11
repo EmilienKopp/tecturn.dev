@@ -3,6 +3,7 @@
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Download from 'lucide-svelte/icons/download';
+    import FlaskConical from 'lucide-svelte/icons/flask-conical';
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
     import LayoutPanelLeft from 'lucide-svelte/icons/layout-panel-left';
@@ -207,6 +208,10 @@
             : null,
     );
 
+    // Same present screen, but `test=1` tells the presenter to skip opening an
+    // analytics session so a rehearsal never pollutes the numbers.
+    const testRunUrl = $derived(presentUrl ? `${presentUrl}?test=1` : null);
+
     const save = async () => {
         const currentTeam = page.props.currentTeam;
 
@@ -335,23 +340,51 @@
         </Button>
 
         {#if presentUrl}
-            <Button
-                size="sm"
-                class="bg-emerald-600 text-white shadow hover:bg-emerald-500"
-                asChild
-            >
-                {#snippet children(props)}
-                    <a
-                        {...props}
-                        href={presentUrl}
-                        target="_blank"
-                        rel="noopener"
-                        data-test="editor-present-link"
-                    >
-                        <Play class="h-4 w-4" /> Present
-                    </a>
-                {/snippet}
-            </Button>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    {#snippet children(props)}
+                        <Button
+                            {...props}
+                            size="sm"
+                            class="bg-emerald-600 text-white shadow hover:bg-emerald-500"
+                            data-test="editor-present-menu"
+                        >
+                            <Play class="h-4 w-4" /> Present
+                            <ChevronDown class="h-3.5 w-3.5 opacity-60" />
+                        </Button>
+                    {/snippet}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={4} class="w-56">
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <a
+                                {...props}
+                                onclick={props.onClick}
+                                href={presentUrl}
+                                target="_blank"
+                                rel="noopener"
+                                data-test="editor-present-link"
+                            >
+                                <Play class="h-4 w-4" /> Go Live
+                            </a>
+                        {/snippet}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <a
+                                {...props}
+                                onclick={props.onClick}
+                                href={testRunUrl}
+                                target="_blank"
+                                rel="noopener"
+                                data-test="editor-test-run-link"
+                            >
+                                <FlaskConical class="h-4 w-4" /> Test run
+                            </a>
+                        {/snippet}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         {/if}
 
         <DropdownMenu>

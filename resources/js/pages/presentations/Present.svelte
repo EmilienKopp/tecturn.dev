@@ -20,6 +20,7 @@
         viewerUrl,
         sessionRoutes,
         translationRoutes,
+        testMode = false,
     }: {
         presentation: {
             id: number;
@@ -34,6 +35,7 @@
         viewerUrl: string;
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
+        testMode?: boolean;
     } = $props();
 
     // Current slide + shown-slide total, reported by the Presenter off Reveal,
@@ -102,8 +104,14 @@
     });
 
     // A live session opens while the presenter is on this page and closes when
-    // they leave, so reactions and viewers are attributed to a real talk.
+    // they leave, so reactions and viewers are attributed to a real talk. A
+    // test run skips this entirely: no session means the backend records no
+    // analytics. Slides, presence and instant reactions still work.
     onMount(() => {
+        if (testMode) {
+            return;
+        }
+
         beaconPost(sessionRoutes.start);
 
         const close = (): void => beaconPost(sessionRoutes.close);
