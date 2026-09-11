@@ -42,6 +42,12 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
+
+        // Login-less guard for anonymous audience members on the live
+        // presence channel. Resolved from the request in AppServiceProvider.
+        'viewer' => [
+            'driver' => 'viewer',
+        ],
     ],
 
     /*

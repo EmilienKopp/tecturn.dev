@@ -2,11 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Events\Presentations\ViewerPresenceChanged;
 use App\Models\PresentationModel;
 use App\Models\PresentationSessionModel;
 use App\Models\User;
-use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('going live opens a session for the deck', function () {
@@ -93,22 +91,44 @@ test('a heartbeat with no reactions still counts the viewer', function () {
     expect($session->refresh()->viewer_count)->toBe(1);
 });
 
-test('batched reactions broadcast the live viewer count', function () {
-    Event::fake([ViewerPresenceChanged::class]);
+test('an anonymous viewer can authorize on the live presence channel', function () {
+    // The live "watching now" count now rides a Reverb presence channel; the
+    // null test broadcaster skips channel auth, so exercise the real signer.
+    // Channels register against the boot-time default (null), so re-register
+    // them on the reverb driver after switching.
+    config(['broadcasting.default' => 'reverb']);
+    require base_path('routes/channels.php');
 
     $presentation = PresentationModel::factory()->create();
-    PresentationSessionModel::factory()->create([
-        'presentation_id' => $presentation->id,
-        'team_id' => $presentation->team_id,
-    ]);
 
-    $this->postJson(route('presentations.reactions.batch', [
-        'presentation' => $presentation->embed_token,
-    ]), ['viewerId' => 'viewer-1', 'counts' => ['🔥' => 1]])->assertNoContent();
+    $this->postJson('/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => 'presence-presentation-live.'.$presentation->embed_token,
+        'viewer_id' => 'viewer-1',
+    ])
+        ->assertOk()
+        ->assertJsonStructure(['auth', 'channel_data']);
+});
 
-    Event::assertDispatched(ViewerPresenceChanged::class, function (ViewerPresenceChanged $event) use ($presentation) {
-        return $event->embedToken === $presentation->embed_token && $event->count === 1;
-    });
+test('joining the presence channel for an unknown talk is rejected', function () {
+    config(['broadcasting.default' => 'reverb']);
+
+    $this->postJson('/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => 'presence-presentation-live.does-not-exist',
+        'viewer_id' => 'viewer-1',
+    ])->assertForbidden();
+});
+
+test('the presence channel rejects a member with no viewer id', function () {
+    config(['broadcasting.default' => 'reverb']);
+
+    $presentation = PresentationModel::factory()->create();
+
+    $this->postJson('/broadcasting/auth', [
+        'socket_id' => '1234.5678',
+        'channel_name' => 'presence-presentation-live.'.$presentation->embed_token,
+    ])->assertForbidden();
 });
 
 test('reactions are dropped when no session is live', function () {

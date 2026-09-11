@@ -2,8 +2,11 @@
 
 namespace App\Providers;
 
+use App\Infrastructure\Broadcasting\AnonymousViewer;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -25,8 +28,25 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->configureViewerGuard();
 
         DevCommands::artisan('reverb:start', 'reverb');
+    }
+
+    /**
+     * Resolve anonymous audience members from a client-supplied viewer id so
+     * they can authorize on the guarded live presence channel without logging
+     * in. The id is opaque (a random UUID) and only names a presence member.
+     */
+    protected function configureViewerGuard(): void
+    {
+        Auth::viaRequest('viewer', function (Request $request): ?AnonymousViewer {
+            $viewerId = $request->input('viewer_id');
+
+            return is_string($viewerId) && $viewerId !== ''
+                ? new AnonymousViewer($viewerId)
+                : null;
+        });
     }
 
     /**

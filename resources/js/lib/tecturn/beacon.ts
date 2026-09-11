@@ -6,7 +6,7 @@
  * XSRF-TOKEN cookie value, which equals csrf_token().
  */
 
-function csrfToken(): string {
+export function csrfToken(): string {
     const match = document.cookie.match(/(?:^|;\s*)XSRF-TOKEN=([^;]+)/);
 
     return match ? decodeURIComponent(match[1]) : '';

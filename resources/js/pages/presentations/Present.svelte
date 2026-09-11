@@ -6,7 +6,7 @@
     import PresenterDock from '@/components/tecturn/PresenterDock.svelte';
     import PresentFooter from '@/components/tecturn/PresentFooter.svelte';
     import YoYoTranslatePanel from '@/components/tecturn/YoYoTranslatePanel.svelte';
-    import { getEcho } from '@/lib/echo';
+    import { getEcho, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
     import type {
         FlowGraph,
@@ -55,7 +55,9 @@
 
     $effect(() => {
         const channelName = `presentation.${presentation.embed_token}`;
+        const presenceChannel = `presentation-live.${presentation.embed_token}`;
 
+        // Instant reactions still ride the public channel.
         getEcho()
             .channel(channelName)
             .listen('.reaction.sent', (event: { emoji: string }) => {
@@ -65,12 +67,38 @@
                     ...recentReactions,
                     { id: ++reactionCounter, emoji: event.emoji },
                 ].slice(-30);
-            })
-            .listen('.viewer.presence', (event: { count: number }) => {
-                viewerCount = event.count;
             });
 
-        return () => getEcho().leave(channelName);
+        // "Watching now" is the count of audience members on the presence
+        // channel. Reverb adds/removes members as tabs open and close, so this
+        // falls back to 0 on its own when the room empties. The presenter joins
+        // as a "presenter" member and is excluded from the tally.
+        // laravel-echo hands the member's user_info straight to these
+        // callbacks, so `role` sits at the top level, not under `.info`.
+        const isViewer = (member: { role?: string }): boolean =>
+            member.role !== 'presenter';
+
+        setPresenceIdentity(`presenter:${crypto.randomUUID()}`);
+        getEcho()
+            .join(presenceChannel)
+            .here((members: { role?: string }[]) => {
+                viewerCount = members.filter(isViewer).length;
+            })
+            .joining((member: { role?: string }) => {
+                if (isViewer(member)) {
+                    viewerCount += 1;
+                }
+            })
+            .leaving((member: { role?: string }) => {
+                if (isViewer(member)) {
+                    viewerCount = Math.max(0, viewerCount - 1);
+                }
+            });
+
+        return () => {
+            getEcho().leave(channelName);
+            getEcho().leave(presenceChannel);
+        };
     });
 
     // A live session opens while the presenter is on this page and closes when

@@ -5,6 +5,7 @@
     import SendReactionController from '@/actions/App/Http/Controllers/Presentations/SendReactionController';
     import AppHead from '@/components/AppHead.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
+    import { getEcho, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
 
     let {
@@ -98,7 +99,16 @@
         viewerId = sessionStorage.getItem(key) ?? crypto.randomUUID();
         sessionStorage.setItem(key, viewerId);
 
-        // Register presence immediately so idle viewers still count.
+        // Join the live presence channel: simply being a member is what the
+        // presenter counts as "watching now". When this tab closes, Reverb
+        // drops the member automatically, so the count falls without relying
+        // on a farewell request landing.
+        const presenceChannel = `presentation-live.${embedToken}`;
+        setPresenceIdentity(viewerId);
+        getEcho().join(presenceChannel);
+
+        // The heartbeat below only persists analytics (unique viewers,
+        // reactions); the live count no longer depends on it.
         lastFlushAt = 0;
         flush();
 
@@ -118,6 +128,7 @@
         return () => {
             clearInterval(interval);
             window.removeEventListener('pagehide', leave);
+            getEcho().leave(presenceChannel);
             leave();
         };
     });
