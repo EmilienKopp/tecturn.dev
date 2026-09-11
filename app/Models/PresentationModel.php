@@ -29,11 +29,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string $embed_token
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
+ * @property list<string>|null $yoyotranslate_languages
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team $team
  */
-#[Fillable(['team_id', 'name', 'content', 'talk_settings', 'flow', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at'])]
+#[Fillable(['team_id', 'name', 'content', 'talk_settings', 'flow', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
 #[UsePolicy(PresentationPolicy::class)]
 class PresentationModel extends Model implements HasMedia
 {
@@ -96,6 +97,7 @@ class PresentationModel extends Model implements HasMedia
             updated_at: $this->updated_at?->toDateTimeImmutable(),
             yoyotranslateSessionId: $this->yoyotranslate_session_id,
             yoyotranslateSessionStartedAt: $this->yoyotranslate_session_started_at?->toDateTimeImmutable(),
+            yoyotranslateLanguages: $this->yoyotranslate_languages ?? [],
         );
     }
 
@@ -114,6 +116,7 @@ class PresentationModel extends Model implements HasMedia
             'talk_settings' => 'array',
             'flow' => 'array',
             'yoyotranslate_session_started_at' => 'datetime',
+            'yoyotranslate_languages' => 'array',
         ];
     }
 }

@@ -26,6 +26,8 @@ class PresentationEntity extends BaseEntity
         public ?DateTimeInterface $updated_at = null,
         public ?string $yoyotranslateSessionId = null,
         public ?DateTimeInterface $yoyotranslateSessionStartedAt = null,
+        /** @var list<string> */
+        public array $yoyotranslateLanguages = [],
     ) {}
 
     public function rename(string $name): void
@@ -42,16 +44,21 @@ class PresentationEntity extends BaseEntity
         $this->content = $content;
     }
 
-    public function attachTranslationSession(string $sessionId, DateTimeInterface $startedAt): void
+    /**
+     * @param  list<string>  $languages  Language codes to request captions for.
+     */
+    public function attachTranslationSession(string $sessionId, DateTimeInterface $startedAt, array $languages = []): void
     {
         $this->yoyotranslateSessionId = $sessionId;
         $this->yoyotranslateSessionStartedAt = $startedAt;
+        $this->yoyotranslateLanguages = $languages;
     }
 
     public function detachTranslationSession(): void
     {
         $this->yoyotranslateSessionId = null;
         $this->yoyotranslateSessionStartedAt = null;
+        $this->yoyotranslateLanguages = [];
     }
 
     public function changeTalkSettings(TalkSettings $talkSettings): void
@@ -101,6 +108,7 @@ class PresentationEntity extends BaseEntity
             'updated_at' => $this->updated_at,
             'yoyotranslate_session_id' => $this->yoyotranslateSessionId,
             'yoyotranslate_session_started_at' => $this->yoyotranslateSessionStartedAt,
+            'yoyotranslate_languages' => $this->yoyotranslateLanguages,
         ];
     }
 }

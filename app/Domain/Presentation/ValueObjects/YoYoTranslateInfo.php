@@ -11,10 +11,14 @@ namespace App\Domain\Presentation\ValueObjects;
  */
 readonly class YoYoTranslateInfo
 {
+    /**
+     * @param  list<string>  $languages  Caption languages the presenter requested.
+     */
     public function __construct(
         public ?string $session_id,
         public ?string $websocket_url,
         public bool $active,
         public ?string $started_at,
+        public array $languages = [],
     ) {}
 }
