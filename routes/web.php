@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminUserController;
+use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Presentations\CreatePresentationController;
 use App\Http\Controllers\Presentations\DeletePresentationBackgroundController;
@@ -22,10 +25,30 @@ use App\Http\Controllers\Presentations\UploadPresentationImageController;
 use App\Http\Controllers\Presentations\ViewerController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
+use App\Http\Middleware\EnsureUserIsAdmin;
 use Illuminate\Support\Facades\Route;
 use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
 Route::inertia('/', 'Welcome')->name('home');
+
+// Admin panel. Served on a dedicated subdomain when ADMIN_DOMAIN is set,
+// otherwise under a "/admin" path prefix for local development. Gated by
+// WorkOS auth plus the ADMIN_EMAILS allowlist. Registered before the team
+// "{current_team}" group so "/admin" is never captured as a team slug.
+$adminRoutes = Route::middleware(['auth', ValidateSessionWithWorkOS::class, EnsureUserIsAdmin::class])
+    ->name('admin.');
+
+if ($adminDomain = config('admin.domain')) {
+    $adminRoutes->domain($adminDomain);
+} else {
+    $adminRoutes->prefix('admin');
+}
+
+$adminRoutes->group(function () {
+    Route::get('/', AdminDashboardController::class)->name('dashboard');
+    Route::get('users', AdminUsersController::class)->name('users');
+    Route::get('users/{user}', AdminUserController::class)->name('users.show');
+});
 
 Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentationController::class)
     ->middleware('throttle:60,1')
