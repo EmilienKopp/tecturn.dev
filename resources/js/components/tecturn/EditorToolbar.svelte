@@ -10,6 +10,7 @@
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
     import Play from 'lucide-svelte/icons/play';
+    import Sliders from 'lucide-svelte/icons/sliders';
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
@@ -33,6 +34,7 @@
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
+    import SlideDefaultsModal from './SlideDefaultsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
 
     let {
@@ -67,6 +69,7 @@
     let durationMinutes = $state<number | null>(talkSettings.durationMinutes);
     let timerMode = $state(talkSettings.timerMode);
     let talkLengthModalOpen = $state(false);
+    let slideDefaultsModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
 
@@ -457,6 +460,16 @@
                         {footer.enabled ? 'On' : 'Off'}
                     </span>
                 </button>
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onclick={() => (slideDefaultsModalOpen = true)}
+                    data-test="editor-slide-defaults-menu-item"
+                >
+                    <Sliders class="h-4 w-4" />
+                    Slide Defaults…
+                </button>
             </DropdownMenuContent>
         </DropdownMenu>
 
@@ -555,3 +568,5 @@
     bind:open={talkLengthModalOpen}
     onSave={saveTalkLength}
 />
+
+<SlideDefaultsModal bind:open={slideDefaultsModalOpen} />

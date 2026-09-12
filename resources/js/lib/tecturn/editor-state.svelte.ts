@@ -7,6 +7,7 @@ import {
     transitionsForSlide,
 } from '@/lib/tecturn/flow-compiler';
 import { layoutDefinitions } from '@/lib/tecturn/layouts';
+import { slideDefaults } from '@/lib/tecturn/slide-defaults.svelte';
 import type {
     Block,
     BlockStyle,
@@ -64,10 +65,12 @@ export class EditorState {
 
     addSlide(layout: SlideLayout = 'free'): void {
         const id = `slide-${crypto.randomUUID()}`;
+        const defaults = slideDefaults.get();
+
         this.content.slides.push({
             id,
             layout,
-            background: null,
+            background: defaults.background,
             slots: {},
             config: null,
             title: null,
@@ -104,6 +107,53 @@ export class EditorState {
         );
         this.selectedBlockId = null;
         this.syncSlideNodes();
+        this.dirty = true;
+    }
+
+    duplicateSlide(index: number): void {
+        const sourceSlide = this.content.slides[index];
+
+        if (!sourceSlide) {
+            return;
+        }
+
+        // Deep clone the slide with new IDs for slide and all blocks
+        const newSlideId = `slide-${crypto.randomUUID()}`;
+        const duplicatedSlots: Record<string, MutableBlock[]> = {};
+
+        for (const [slotName, blocks] of Object.entries(sourceSlide.slots)) {
+            duplicatedSlots[slotName] = blocks.map((block) => ({
+                ...block,
+                id: `block-${crypto.randomUUID()}`,
+                style: { ...block.style },
+                transition: null, // Don't copy transition pinning
+                actions: block.actions?.map((action) => ({
+                    ...action,
+                    id: `action-${crypto.randomUUID()}`,
+                })) ?? [],
+            }));
+        }
+
+        const duplicatedSlide: MutableSlide = {
+            id: newSlideId,
+            layout: sourceSlide.layout,
+            background: sourceSlide.background,
+            slots: duplicatedSlots,
+            config: sourceSlide.config ? { ...sourceSlide.config } : null,
+            title: sourceSlide.title ? `${sourceSlide.title} (Copy)` : null,
+        };
+
+        // Insert the duplicated slide right after the source slide
+        this.content.slides.splice(index + 1, 0, duplicatedSlide);
+        this.selectedSlideIndex = index + 1;
+        this.selectedBlockId = null;
+        this.syncSlideNodes();
+
+        // If there's a nav chain, insert the new slide into it
+        if (this.hasNavEdges()) {
+            this.enableSlide(newSlideId);
+        }
+
         this.dirty = true;
     }
 
@@ -1444,15 +1494,21 @@ export class EditorState {
     }
 
     private addBlock(slot: string, type: string): MutableBlock {
+        // Apply slide defaults to text and box blocks
+        const applyDefaults = type === 'text' || type === 'box';
+        const defaults = applyDefaults
+            ? slideDefaults.getBlockStyleDefaults()
+            : {};
+
         const block: MutableBlock = {
             id: `block-${crypto.randomUUID()}`,
             type,
             content: '',
             style: {
-                fontSize: null,
-                fontWeight: null,
-                fontFamily: null,
-                color: null,
+                fontSize: defaults.fontSize ?? null,
+                fontWeight: defaults.fontWeight ?? null,
+                fontFamily: defaults.fontFamily ?? null,
+                color: defaults.color ?? null,
                 borderColor: null,
                 backgroundColor: null,
                 gridColumn: null,
