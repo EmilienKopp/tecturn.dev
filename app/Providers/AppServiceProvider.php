@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use Laravel\Pennant\Feature;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,8 +30,18 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureViewerGuard();
+        $this->configureFeatures();
 
         DevCommands::artisan('reverb:start', 'reverb');
+    }
+
+    /**
+     * Register the application's global feature flags. The registration flag is
+     * a rich (string) value seeded from config; runtime overrides win once set.
+     */
+    protected function configureFeatures(): void
+    {
+        Feature::define('registration', fn (): string => config('features.registration'));
     }
 
     /**

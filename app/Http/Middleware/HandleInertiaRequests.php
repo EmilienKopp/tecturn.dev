@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Domain\Presentation\ValueObjects\LintPolicy;
 use App\Http\Navigation\AppNavigation;
+use App\Support\Features;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -53,6 +54,10 @@ class HandleInertiaRequests extends Middleware
             // Authoritative content-linter thresholds (config/lint.php); the
             // editor's lint.ts reads these instead of hardcoding its own.
             'lintPolicy' => LintPolicy::fromArray(config('lint', []))->toArray(),
+            // Global feature flags, consumed on the client via useFeatures().
+            'features' => [
+                'registration' => Features::registration()->value,
+            ],
         ];
     }
 }
