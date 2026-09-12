@@ -1,8 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminBetaRequestsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminUsersController;
+use App\Http\Controllers\Admin\ApproveBetaRequestController;
+use App\Http\Controllers\Admin\RejectBetaRequestController;
+use App\Http\Controllers\Beta\RequestBetaAccessController;
+use App\Http\Controllers\Beta\ShowBetaRegistrationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Presentations\CreatePresentationController;
 use App\Http\Controllers\Presentations\DeletePresentationBackgroundController;
@@ -31,6 +36,13 @@ use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
 Route::inertia('/', 'Welcome')->name('home');
 
+// Private beta signup. Only reachable while registration mode is "invitation";
+// the controllers 404 otherwise.
+Route::get('beta', ShowBetaRegistrationController::class)->name('beta.create');
+Route::post('beta', RequestBetaAccessController::class)
+    ->middleware('throttle:10,1')
+    ->name('beta.store');
+
 // Admin panel. Served on a dedicated subdomain when ADMIN_DOMAIN is set,
 // otherwise under a "/admin" path prefix for local development. Gated by
 // WorkOS auth plus the ADMIN_EMAILS allowlist. Registered before the team
@@ -48,6 +60,9 @@ $adminRoutes->group(function () {
     Route::get('/', AdminDashboardController::class)->name('dashboard');
     Route::get('users', AdminUsersController::class)->name('users');
     Route::get('users/{user}', AdminUserController::class)->name('users.show');
+    Route::get('beta-requests', AdminBetaRequestsController::class)->name('beta-requests');
+    Route::post('beta-requests/{betaRequest}/approve', ApproveBetaRequestController::class)->name('beta-requests.approve');
+    Route::post('beta-requests/{betaRequest}/reject', RejectBetaRequestController::class)->name('beta-requests.reject');
 });
 
 Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentationController::class)
