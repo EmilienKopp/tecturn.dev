@@ -2,8 +2,10 @@
     import { Link, page } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import LandingDeck from '@/components/LandingDeck.svelte';
+    import { useFeatures } from '@/lib/features.svelte';
     import { toUrl } from '@/lib/utils';
     import { dashboard, login } from '@/routes';
+    import { create as betaCreate } from '@/routes/beta';
     import type { Team } from '@/types';
 
     const auth = $derived(page.props.auth);
@@ -11,6 +13,8 @@
     const dashboardUrl = $derived(
         currentTeam ? dashboard(currentTeam.slug) : '/',
     );
+
+    const features = useFeatures();
 </script>
 
 <AppHead title="The stage for developer talks" />
@@ -34,7 +38,7 @@
                 >
                     Your decks
                 </Link>
-            {:else}
+            {:else if features.registration !== 'closed'}
                 <Link
                     href={toUrl(login())}
                     class="rounded-md border border-[hsl(34_9%_22%)] px-4 py-1.5 text-sm text-[hsl(40_20%_86%)] transition-colors hover:border-[hsl(37_40%_35%)] focus-visible:ring-2 focus-visible:ring-[hsl(37_91%_55%)] focus-visible:outline-none"
@@ -84,12 +88,19 @@
                 >
                     Back to your decks
                 </Link>
-            {:else}
+            {:else if features.canSelfRegister}
                 <Link
                     href={toUrl(login())}
                     class="mt-5 inline-block rounded-md bg-[hsl(37_91%_55%)] px-6 py-2.5 font-medium text-[hsl(36_45%_10%)] transition-colors hover:bg-[hsl(37_91%_62%)] focus-visible:ring-2 focus-visible:ring-[hsl(37_91%_55%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(36_11%_7%)] focus-visible:outline-none"
                 >
                     Take the stage
+                </Link>
+            {:else if features.canRequestBeta}
+                <Link
+                    href={toUrl(betaCreate())}
+                    class="mt-5 inline-block rounded-md bg-[hsl(37_91%_55%)] px-6 py-2.5 font-medium text-[hsl(36_45%_10%)] transition-colors hover:bg-[hsl(37_91%_62%)] focus-visible:ring-2 focus-visible:ring-[hsl(37_91%_55%)] focus-visible:ring-offset-2 focus-visible:ring-offset-[hsl(36_11%_7%)] focus-visible:outline-none"
+                >
+                    Request beta access
                 </Link>
             {/if}
         </section>

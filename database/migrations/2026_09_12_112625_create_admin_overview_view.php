@@ -7,6 +7,7 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $this->down();
         DB::statement(file_get_contents(database_path('views/2026_09_12_112624_admin_overview.sql')));
     }
 

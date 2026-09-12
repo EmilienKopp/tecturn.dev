@@ -1,5 +1,6 @@
 <script lang="ts">
     import { Link } from '@inertiajs/svelte';
+    import Inbox from 'lucide-svelte/icons/inbox';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
     import Users from 'lucide-svelte/icons/users';
     import AppLogo from '@/components/AppLogo.svelte';
@@ -14,12 +15,13 @@
         SidebarMenuButton,
         SidebarMenuItem,
     } from '@/components/ui/sidebar';
-    import { dashboard, users } from '@/routes/admin';
+    import { betaRequests, dashboard, users } from '@/routes/admin';
     import type { NavItem } from '@/types';
 
     const items: NavItem[] = [
         { title: 'Overview', href: dashboard(), icon: LayoutGrid },
         { title: 'Users', href: users(), icon: Users },
+        { title: 'Requests', href: betaRequests(), icon: Inbox },
     ];
 </script>
 
