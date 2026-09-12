@@ -7,6 +7,7 @@
     import { toast } from 'svelte-sonner';
     import DeletePresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/DeletePresentationBackgroundController';
     import UploadPresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationBackgroundController';
+    import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
     import { Button } from '@/components/ui/button';
     import {
@@ -22,6 +23,7 @@
         lintDeck,
         lintSlide,
     } from '@/lib/tecturn/CodeGeneration/lint';
+    import { isGradientBackground } from '@/lib/tecturn/background';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { FONTS } from '@/lib/tecturn/fonts';
     import { SUPPORTED_LANGUAGES } from '@/lib/tecturn/shiki';
@@ -76,6 +78,7 @@
     );
 
     let uploadingBackground = $state(false);
+    let gradientModalOpen = $state(false);
 
     let deleteBlockDialogOpen = $state(false);
     let blockIdDeleting = $state<string | null>(null);
@@ -534,15 +537,49 @@
 
         <div class="space-y-1">
             <Label for="slide-background" class="text-xs">Background</Label>
-            <input
-                id="slide-background"
-                type="color"
-                class="h-8 w-full cursor-pointer rounded-md border"
-                value={editor.selectedSlide.background ?? '#ffffff'}
-                oninput={(event) =>
-                    editor.setBackground(event.currentTarget.value)}
-                data-test="inspector-background"
-            />
+            {#if isGradientBackground(editor.selectedSlide.background)}
+                <button
+                    type="button"
+                    class="h-8 w-full cursor-pointer rounded-md border"
+                    style="background: {editor.selectedSlide.background}"
+                    onclick={() => (gradientModalOpen = true)}
+                    aria-label="Edit gradient"
+                    data-test="inspector-background-gradient"
+                ></button>
+            {:else}
+                <input
+                    id="slide-background"
+                    type="color"
+                    class="h-8 w-full cursor-pointer rounded-md border"
+                    value={editor.selectedSlide.background ?? '#ffffff'}
+                    oninput={(event) =>
+                        editor.setBackground(event.currentTarget.value)}
+                    data-test="inspector-background"
+                />
+            {/if}
+            <div class="flex gap-1.5">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="flex-1"
+                    onclick={() => (gradientModalOpen = true)}
+                    data-test="inspector-background-gradient-open"
+                >
+                    {isGradientBackground(editor.selectedSlide.background)
+                        ? 'Edit gradient'
+                        : 'Gradient…'}
+                </Button>
+                {#if isGradientBackground(editor.selectedSlide.background)}
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onclick={() => editor.setBackground('#ffffff')}
+                        data-test="inspector-background-solid"
+                    >
+                        Solid
+                    </Button>
+                {/if}
+            </div>
             <Button
                 variant="outline"
                 size="sm"
@@ -553,6 +590,12 @@
                 Apply to all slides
             </Button>
         </div>
+
+        <GradientModal
+            bind:open={gradientModalOpen}
+            current={editor.selectedSlide.background}
+            onSave={(gradient) => editor.setBackground(gradient)}
+        />
 
         <div class="space-y-1">
             <Label class="text-xs">Background image (all slides)</Label>

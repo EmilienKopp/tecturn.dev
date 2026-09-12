@@ -13,6 +13,7 @@ import {
     migrateLegacyTransitions,
     stepIndexBySlide,
 } from '../flow-compiler.ts';
+import { isGradientBackground } from '../background.ts';
 import { bunnyImportCss } from '../fonts.ts';
 import type { CodegenContainer } from './Container.ts';
 import type { BlockRendererPlugin, RenderContext } from './contracts.ts';
@@ -184,7 +185,11 @@ ${styles}
         // lands on the transparent slide section and never shows.
         let backgroundAttr = '';
 
-        if (slide.background) {
+        if (slide.background && isGradientBackground(slide.background)) {
+            // Gradients need Animotion's `gradient` prop; `background` only
+            // accepts a solid color and is ignored for a gradient string.
+            backgroundAttr = ` gradient="${escapeAttribute(slide.background)}"`;
+        } else if (slide.background) {
             backgroundAttr = ` background="${escapeAttribute(slide.background)}"`;
         } else if (backgroundImage) {
             backgroundAttr = ` image="${escapeAttribute(backgroundImage)}"`;

@@ -126,6 +126,83 @@ it('turns reveal steps into anchored, chained transition nodes and pins blocks t
     expect($chainEdges)->toHaveCount(1);
 });
 
+it('applies the deck theme as slide background, text color, and block defaults', function () {
+    $result = assemble([
+        'title' => 'T',
+        'theme' => [
+            'background' => '#0b1021',
+            'textColor' => '#f5f5f5',
+            'bodyFont' => 'Inter',
+        ],
+        'slides' => [
+            [
+                'layout' => 'center',
+                'blocks' => [
+                    ['slot' => 'main', 'type' => 'text', 'content' => 'Plain'],
+                ],
+            ],
+        ],
+    ]);
+
+    $slide = $result['content']->slides[0];
+    $block = $slide->slots['main'][0];
+
+    expect($slide->background)->toBe('#0b1021')
+        ->and($slide->config['textColor'])->toBe('#f5f5f5')
+        ->and($block->style->color)->toBe('#f5f5f5')
+        ->and($block->style->fontFamily)->toBe('Inter');
+});
+
+it('lets a per-slide background and per-block style override the theme', function () {
+    $result = assemble([
+        'title' => 'T',
+        'theme' => ['background' => '#0b1021', 'textColor' => '#f5f5f5', 'bodyFont' => 'Inter'],
+        'slides' => [
+            [
+                'layout' => 'center',
+                'background' => '#ffffff',
+                'blocks' => [
+                    [
+                        'slot' => 'main',
+                        'type' => 'text',
+                        'content' => 'Hero',
+                        'style' => [
+                            'fontSize' => '4rem',
+                            'fontWeight' => '800',
+                            'color' => '#ff9900',
+                            'fontFamily' => 'Anton',
+                        ],
+                    ],
+                ],
+            ],
+        ],
+    ]);
+
+    $slide = $result['content']->slides[0];
+    $style = $slide->slots['main'][0]->style;
+
+    expect($slide->background)->toBe('#ffffff')
+        ->and($style->fontSize)->toBe('4rem')
+        ->and($style->fontWeight)->toBe('800')
+        ->and($style->color)->toBe('#ff9900')
+        ->and($style->fontFamily)->toBe('Anton');
+});
+
+it('leaves background and config null when no theme is given', function () {
+    $result = assemble([
+        'title' => 'T',
+        'slides' => [
+            ['layout' => 'center', 'blocks' => [['slot' => 'main', 'type' => 'text', 'content' => 'A']]],
+        ],
+    ]);
+
+    $slide = $result['content']->slides[0];
+
+    expect($slide->background)->toBeNull()
+        ->and($slide->config)->toBeNull()
+        ->and($slide->slots['main'][0]->style->color)->toBeNull();
+});
+
 it('produces a graph whose slide nodes all reference existing slides', function () {
     $result = assemble([
         'title' => 'T',

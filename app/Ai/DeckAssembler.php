@@ -37,6 +37,11 @@ class DeckAssembler
     {
         $rawSlides = is_array($deck['slides'] ?? null) ? array_values($deck['slides']) : [];
 
+        $rawTheme = is_array($deck['theme'] ?? null) ? $deck['theme'] : [];
+        $themeBackground = $this->stringOrNull($rawTheme['background'] ?? null);
+        $themeTextColor = $this->stringOrNull($rawTheme['textColor'] ?? null);
+        $themeBodyFont = $this->stringOrNull($rawTheme['bodyFont'] ?? null);
+
         $slides = [];
         $nodes = [];
         $edges = [];
@@ -58,8 +63,9 @@ class DeckAssembler
             $slides[] = new Slide(
                 id: $slideId,
                 layout: $layout,
-                background: null,
-                slots: $this->buildSlots($slideNumber, $layout, $rawBlocks, $stepNodeIds),
+                background: $this->stringOrNull($rawSlide['background'] ?? null) ?? $themeBackground,
+                slots: $this->buildSlots($slideNumber, $layout, $rawBlocks, $stepNodeIds, $themeTextColor, $themeBodyFont),
+                config: $themeTextColor !== null ? ['textColor' => $themeTextColor] : null,
                 title: $this->stringOrNull($rawSlide['title'] ?? null),
             );
 
@@ -133,7 +139,7 @@ class DeckAssembler
      * @param  array<int, string>  $stepNodeIds
      * @return array<string, list<Block>>
      */
-    private function buildSlots(int $slideNumber, SlideLayout $layout, array $rawBlocks, array $stepNodeIds): array
+    private function buildSlots(int $slideNumber, SlideLayout $layout, array $rawBlocks, array $stepNodeIds, ?string $defaultColor, ?string $defaultFont): array
     {
         $allowedSlots = $layout->slots();
         $fallbackSlot = $allowedSlots[0];
@@ -166,7 +172,7 @@ class DeckAssembler
                 id: "b-{$slideNumber}-".($position + 1),
                 type: $type,
                 content: (string) ($rawBlock['content'] ?? ''),
-                style: new BlockStyle,
+                style: $this->buildBlockStyle($rawBlock['style'] ?? null, $defaultColor, $defaultFont),
                 transition: $transition,
                 lang: $type === 'code' ? $this->stringOrNull($rawBlock['lang'] ?? null) : null,
                 src: in_array($type, ['image', 'qr'], true) ? $this->stringOrNull($rawBlock['src'] ?? null) : null,
@@ -213,6 +219,26 @@ class DeckAssembler
             $previousStepNodeId = $nodeId;
             $offset++;
         }
+    }
+
+    /**
+     * Build a block's style from the agent's optional `style` object, falling
+     * back to the deck theme's text color and body font so every block is
+     * styled even when the agent leaves a block unstyled. Per-block values
+     * always win over the theme defaults.
+     */
+    private function buildBlockStyle(mixed $rawStyle, ?string $defaultColor, ?string $defaultFont): BlockStyle
+    {
+        $style = is_array($rawStyle) ? $rawStyle : [];
+
+        return new BlockStyle(
+            fontSize: $this->stringOrNull($style['fontSize'] ?? null),
+            fontWeight: $this->stringOrNull($style['fontWeight'] ?? null),
+            fontFamily: $this->stringOrNull($style['fontFamily'] ?? null) ?? $defaultFont,
+            color: $this->stringOrNull($style['color'] ?? null) ?? $defaultColor,
+            borderColor: $this->stringOrNull($style['borderColor'] ?? null),
+            backgroundColor: $this->stringOrNull($style['backgroundColor'] ?? null),
+        );
     }
 
     private function stringOrNull(mixed $value): ?string
