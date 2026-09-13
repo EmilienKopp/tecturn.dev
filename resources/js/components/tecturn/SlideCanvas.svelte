@@ -5,7 +5,7 @@
     import RichTextEditor from '@/components/tecturn/RichTextEditor.svelte';
     import SlotRenderer from '@/components/tecturn/SlotRenderer.svelte';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
-    import { layoutDefinitions } from '@/lib/tecturn/layouts';
+    import { layoutDefinition } from '@/lib/tecturn/layouts';
 
     let {
         editor,
@@ -13,11 +13,9 @@
     }: { editor: EditorState; presentationId: number } = $props();
 
     const slide = $derived(editor.selectedSlide);
-    // Older decks may reference layouts that are no longer offered; fall
-    // back to the free layout instead of crashing on a missing definition.
-    const definition = $derived(
-        layoutDefinitions[slide.layout] ?? layoutDefinitions.free,
-    );
+    // Older decks may reference layouts that are no longer offered; the
+    // resolver falls back to Center instead of crashing on a missing definition.
+    const definition = $derived(layoutDefinition(slide.layout));
     const isCustomGrid = $derived(slide.layout === 'custom-grid');
     const isRichText = $derived(slide.layout === 'rich-text');
     const isFree = $derived(slide.layout === 'free');

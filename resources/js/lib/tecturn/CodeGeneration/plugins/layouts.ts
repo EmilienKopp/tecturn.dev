@@ -1,7 +1,7 @@
-import type { Block, Slide } from '@/types/generated';
+import type { Block, Slide, SlideLayout } from '@/types/generated';
 import { flattenFreeSteps, groupBlocksIntoSteps } from '../../flow-compiler.ts';
 import { FREE_DEFAULTS } from '../../free-drag.ts';
-import { layoutDefinitions } from '../../layouts.ts';
+import { layoutDefinition } from '../../layouts.ts';
 import type {
     CodegenPlugin,
     LayoutRendererPlugin,
@@ -61,13 +61,9 @@ export class SlotLayoutRenderer implements LayoutRendererPlugin {
     }
 
     render(slide: Slide, rc: RenderContext): string[] {
-        const definition = layoutDefinitions[slide.layout];
-
-        if (!definition) {
-            throw new Error(
-                `Layout "${slide.layout}" has no slot definition in layouts.ts.`,
-            );
-        }
+        // Disabled layouts have no definition; fall back to Center rather than
+        // failing the whole export on a legacy deck.
+        const definition = layoutDefinition(slide.layout as SlideLayout);
 
         const lines: string[] = [];
 

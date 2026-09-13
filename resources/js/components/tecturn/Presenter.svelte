@@ -26,7 +26,8 @@
     } from '@/lib/tecturn/flow-compiler';
     import { fontStack } from '@/lib/tecturn/fonts';
     import { FREE_DEFAULTS } from '@/lib/tecturn/free-drag';
-    import { layoutDefinitions } from '@/lib/tecturn/layouts';
+    import { isGradientBackground } from '@/lib/tecturn/background';
+    import { layoutDefinition } from '@/lib/tecturn/layouts';
     import { scaleFontSize } from '@/lib/tecturn/scaling';
     import type {
         Block,
@@ -137,6 +138,17 @@
             stepsBySlideId.get(slide.id) ?? new Map(),
         );
 
+    const boxStyle = (block: Block): string =>
+        [
+            `border-color: ${block.style.borderColor ?? 'currentColor'};`,
+            block.style.backgroundColor
+                ? `background-color: ${block.style.backgroundColor};`
+                : '',
+            blockStyle(block),
+        ]
+            .filter(Boolean)
+            .join(' ');
+
     const freeBlockStyle = (block: Block): string => {
         const parts = [
             `left: ${block.style.x ?? FREE_DEFAULTS.x}%;`,
@@ -169,6 +181,16 @@
                 theme="github-dark"
                 autoIndent={false}
             />
+        </div>
+    {:else if block.type === 'box'}
+        <div class="w-full rounded-md border-2 p-4" style={boxStyle(block)}>
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html sanitizeInlineHtml(block.content)}
+        </div>
+    {:else if block.type === 'richtext'}
+        <div style={blockStyle(block)}>
+            <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+            {@html sanitizeInlineHtml(block.content)}
         </div>
     {:else if block.type === 'image'}
         <img
@@ -224,9 +246,13 @@
         }}
     >
         {#each shownSlides as slide (slide.id)}
+            {@const gradient = isGradientBackground(slide.background)}
             <Slide
-                background={slide.background ??
-                    (content.backgroundImage ? undefined : '#ffffff')}
+                background={gradient
+                    ? undefined
+                    : (slide.background ??
+                      (content.backgroundImage ? undefined : '#ffffff'))}
+                gradient={gradient ? (slide.background ?? undefined) : undefined}
                 image={slide.background
                     ? undefined
                     : (content.backgroundImage ?? undefined)}
@@ -240,7 +266,9 @@
                     >
                         <div
                             class="relative"
-                            style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9; color: #1a1a1a; text-align: left;"
+                            style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9; color: {slide
+                                .config?.textColor ??
+                                '#1a1a1a'}; text-align: left;"
                         >
                             {#each freeSteps(slide) as { block, order } (block.id)}
                                 <div
@@ -261,12 +289,12 @@
                         </div>
                     </div>
                 {:else}
+                    {@const definition = layoutDefinition(slide.layout)}
                     <div
-                        class="{layoutDefinitions[slide.layout]
-                            .containerClass} h-full p-12"
-                        style="color: #1a1a1a"
+                        class="{definition.containerClass} h-full p-12"
+                        style="color: {slide.config?.textColor ?? '#1a1a1a'}"
                     >
-                        {#each layoutDefinitions[slide.layout].slots as slotName (slotName)}
+                        {#each definition.slots as slotName (slotName)}
                             {@const { staticBlocks, stepGroups } = slotSteps(
                                 slide,
                                 slotName,
