@@ -28,7 +28,6 @@
         "splitstack/laravel-conveyor": "^0.1.0",
         "splitstack/laravel-enum-friendly": "^2.2",
         "splitstack/laravel-rome": "^0.1.0",
-        "splitstack/laravel-teddy": "dev-main",
         "splitstack/laravel-typewriter": "^0.1.0"
     },
     "require-dev": {
@@ -43,7 +42,8 @@
         "nunomaduro/collision": "^8.9.3",
         "pestphp/pest": "^4.7",
         "pestphp/pest-plugin-laravel": "^4.1",
-        "phparkitect/phparkitect": "^1.2"
+        "phparkitect/phparkitect": "^1.2",
+        "splitstack/laravel-teddy": "dev-main"
     },
     "autoload": {
         "psr-4": {
@@ -127,9 +127,11 @@
         }
     },
     "minimum-stability": "stable",
-    "repositories": [{
-        "name": "teddy",
-        "type": "vcs",
-        "url": "/home/ec2k/code/teddy"
-    }]
+    "repositories": [
+        {
+            "name": "teddy",
+            "type": "vcs",
+            "url": "/home/ec2k/code/teddy"
+        }
+    ]
 }
