@@ -40,6 +40,14 @@ class EloquentBetaRequestRepository implements BetaRequestRepository
             ->exists();
     }
 
+    public function hasActiveRequestForEmail(string $email): bool
+    {
+        return BetaRequestModel::query()
+            ->where('email_hash', $this->hashEmail($email))
+            ->whereIn('status', [BetaRequestStatus::Pending, BetaRequestStatus::Approved])
+            ->exists();
+    }
+
     /**
      * Deterministic hash of the address, used as the unique dedupe key since the
      * email column itself is encrypted (non-deterministic) ciphertext.

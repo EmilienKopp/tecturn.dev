@@ -89,18 +89,48 @@ test('requesting beta access requires a name and a valid email', function () {
     Notification::assertNothingSent();
 });
 
-test('a repeat request for the same email does not create a duplicate', function () {
+test('a repeat request for an already-submitted email is rejected with a message', function () {
     setRegistrationMode('invitation');
     Notification::fake();
 
     $this->post(route('beta.store'), ['name' => 'Ada', 'email' => 'ada@example.com']);
-    $this->post(route('beta.store'), ['name' => 'Ada L', 'email' => 'ada@example.com', 'message' => 'Updated']);
 
+    $this->post(route('beta.store'), ['name' => 'Ada L', 'email' => 'ada@example.com', 'message' => 'Updated'])
+        ->assertSessionHasErrors('email');
+
+    // The pending request is left untouched and no duplicate is created.
     expect(BetaRequestModel::count())->toBe(1);
-
     $request = BetaRequestModel::first();
-    expect($request->name)->toBe('Ada L')
-        ->and($request->message)->toBe('Updated');
+    expect($request->name)->toBe('Ada')
+        ->and($request->message)->toBeNull();
+
+    // Only the first submission notified anyone.
+    Notification::assertSentOnDemandTimes(BetaRequestReceived::class, 1);
+});
+
+test('an already-approved email cannot request access again', function () {
+    setRegistrationMode('invitation');
+    Notification::fake();
+    BetaRequestModel::factory()->forEmail('ada@example.com')->approved()->create();
+
+    $this->post(route('beta.store'), ['name' => 'Ada', 'email' => 'ada@example.com'])
+        ->assertSessionHasErrors('email');
+
+    Notification::assertNothingSent();
+});
+
+test('a rejected applicant can submit a fresh request', function () {
+    setRegistrationMode('invitation');
+    Notification::fake();
+    BetaRequestModel::factory()->forEmail('ada@example.com')->rejected()->create();
+
+    $this->post(route('beta.store'), ['name' => 'Ada', 'email' => 'ada@example.com'])
+        ->assertRedirect(route('home'))
+        ->assertSessionHasNoErrors();
+
+    // The rejected row is reused and flipped back to pending.
+    expect(BetaRequestModel::count())->toBe(1)
+        ->and(BetaRequestModel::first()->status)->toBe(BetaRequestStatus::Pending);
 });
 
 test('a visitor cannot request beta access when registration is closed', function () {

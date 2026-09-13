@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Beta;
 
+use App\Rules\NotAlreadyRequestedBetaAccess;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -24,7 +25,7 @@ class RequestBetaAccessRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', app(NotAlreadyRequestedBetaAccess::class)],
             'message' => ['nullable', 'string', 'max:2000'],
         ];
     }

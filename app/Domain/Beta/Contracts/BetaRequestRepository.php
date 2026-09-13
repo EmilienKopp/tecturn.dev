@@ -20,4 +20,11 @@ interface BetaRequestRepository
      * Whether the given email address has a beta request that an admin approved.
      */
     public function hasApprovedRequestForEmail(string $email): bool;
+
+    /**
+     * Whether the given email already has a beta request awaiting review or
+     * approved. Rejected requests are excluded so a rejected applicant can
+     * submit a fresh request.
+     */
+    public function hasActiveRequestForEmail(string $email): bool;
 }
