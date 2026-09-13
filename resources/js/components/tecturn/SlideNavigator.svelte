@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Copy from 'lucide-svelte/icons/copy';
     import EyeOff from 'lucide-svelte/icons/eye-off';
     import Plus from 'lucide-svelte/icons/plus';
     import Trash2 from 'lucide-svelte/icons/trash-2';
@@ -105,23 +106,39 @@
                     </span>
                 {/if}
 
-                {#if editor.content.slides.length > 1}
+                <div class="absolute top-1 right-1 hidden group-hover:flex gap-0.5">
                     <span
                         role="button"
                         tabindex="-1"
-                        class="absolute top-1 right-1 hidden rounded p-1 text-muted-foreground group-hover:block hover:text-destructive"
+                        class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                         onclick={(event) => {
                             event.stopPropagation();
-                            slideIndexDeleting = index;
-                            deleteDialogOpen = true;
+                            editor.duplicateSlide(index);
                         }}
                         onkeydown={() => {}}
-                        aria-label="Delete slide {index + 1}"
-                        data-test="slide-delete-button"
+                        aria-label="Duplicate slide {index + 1}"
+                        data-test="slide-duplicate-button"
                     >
-                        <Trash2 class="h-3 w-3" />
+                        <Copy class="h-3 w-3" />
                     </span>
-                {/if}
+                    {#if editor.content.slides.length > 1}
+                        <span
+                            role="button"
+                            tabindex="-1"
+                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive"
+                            onclick={(event) => {
+                                event.stopPropagation();
+                                slideIndexDeleting = index;
+                                deleteDialogOpen = true;
+                            }}
+                            onkeydown={() => {}}
+                            aria-label="Delete slide {index + 1}"
+                            data-test="slide-delete-button"
+                        >
+                            <Trash2 class="h-3 w-3" />
+                        </span>
+                    {/if}
+                </div>
             </button>
         {/each}
     </div>
