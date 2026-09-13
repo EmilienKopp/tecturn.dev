@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Presentation;
 
 use App\Presentation\Contracts\Presenter;
+use App\Presentation\Presenters\JsonPresenter;
 use App\Presentation\Presenters\NodePresenter;
 
 class PresenterFactory
@@ -14,6 +15,7 @@ class PresenterFactory
         return match ($format) {
             ExportFormat::SvelteSource,
             ExportFormat::WebComponent => new NodePresenter($format, $customElementTag),
+            ExportFormat::JSON => new JsonPresenter,
         };
     }
 }

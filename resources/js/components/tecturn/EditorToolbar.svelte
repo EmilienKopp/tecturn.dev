@@ -1,5 +1,6 @@
 <script lang="ts">
     import { router, page } from '@inertiajs/svelte';
+    import { Code, CurlyBraces } from 'lucide-svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Download from 'lucide-svelte/icons/download';
@@ -10,10 +11,10 @@
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
     import Play from 'lucide-svelte/icons/play';
-    import Sliders from 'lucide-svelte/icons/sliders';
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
+    import Sliders from 'lucide-svelte/icons/sliders';
     import Timer from 'lucide-svelte/icons/timer';
     import Workflow from 'lucide-svelte/icons/workflow';
     import { toast } from 'svelte-sonner';
@@ -45,6 +46,7 @@
         view = $bindable(),
         onExport,
         onExportWebComponent,
+        onExportJSON,
         embedSnippet,
         viewerUrl,
     }: {
@@ -55,6 +57,7 @@
         view: 'slides' | 'flow';
         onExport: () => void;
         onExportWebComponent: () => Promise<void>;
+        onExportJSON: () => Promise<void>;
         embedSnippet: string;
         viewerUrl: string;
     } = $props();
@@ -199,6 +202,14 @@
             await onExportWebComponent();
         } finally {
             exportingWebComponent = false;
+        }
+    };
+
+    const exportJSON = async () => {
+        try {
+            await onExportJSON();
+        } catch (error) {
+            console.error('Failed to export JSON:', error);
         }
     };
 
@@ -519,6 +530,21 @@
                             {exportingWebComponent
                                 ? 'Exporting…'
                                 : 'Export Web Component'}
+                        </button>
+                    {/snippet}
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                    {#snippet children(props)}
+                        <button
+                            type="button"
+                            class={props.class}
+                            onclick={() => {
+                                props.onClick?.();
+                                onExportJSON();
+                            }}
+                            data-test="editor-export-json-button"
+                        >
+                            <CurlyBraces class="mr-2 h-4 w-4" /> Export JSON
                         </button>
                     {/snippet}
                 </DropdownMenuItem>

@@ -18,6 +18,7 @@ use App\Http\Controllers\Presentations\EditPresentationController;
 use App\Http\Controllers\Presentations\EmbedPresentationController;
 use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
+use App\Http\Controllers\Presentations\GenerateDeckController;
 use App\Http\Controllers\Presentations\ImportPresentationController;
 use App\Http\Controllers\Presentations\ListPresentationsController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
@@ -92,6 +93,7 @@ Route::prefix('{current_team}')
 
         Route::get('presentations', ListPresentationsController::class)->name('presentations.index');
         Route::post('presentations', CreatePresentationController::class)->name('presentations.store');
+        Route::post('presentations/generate', GenerateDeckController::class)->name('presentations.generate');
         Route::post('presentations/import', ImportPresentationController::class)->name('presentations.importJson');
         Route::get('presentations/{presentation}', EditPresentationController::class)->name('presentations.edit');
         Route::get('presentations/{presentation}/present', PresentPresentationController::class)->name('presentations.present');

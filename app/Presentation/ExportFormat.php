@@ -8,12 +8,14 @@ enum ExportFormat: string
 {
     case SvelteSource = 'svelte';
     case WebComponent = 'web-component';
+    case JSON = 'json';
 
     public function mimeType(): string
     {
         return match ($this) {
             self::SvelteSource => 'text/plain',
             self::WebComponent => 'text/javascript',
+            self::JSON => 'application/json',
         };
     }
 
@@ -22,6 +24,7 @@ enum ExportFormat: string
         return match ($this) {
             self::SvelteSource => 'svelte',
             self::WebComponent => 'js',
+            self::JSON => 'json',
         };
     }
 }

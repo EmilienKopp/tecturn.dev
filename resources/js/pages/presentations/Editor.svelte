@@ -96,6 +96,32 @@
 
         downloadBlob(`${slugify(name)}.js`, await response.blob());
     };
+
+    const exportJSON = async () => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam) {
+            return;
+        }
+
+        const url = exportMethod(
+            {
+                current_team: currentTeam.slug,
+                presentation: presentation.id,
+            },
+            { query: { format: 'json' } },
+        ).url;
+
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            toast.error('JSON export failed.');
+
+            return;
+        }
+
+        downloadBlob(`${slugify(name)}.json`, await response.blob());
+    };
 </script>
 
 <AppHead title={name} />
@@ -109,6 +135,7 @@
         bind:view
         onExport={exportSvelte}
         onExportWebComponent={exportWebComponent}
+        onExportJSON={exportJSON}
         {embedSnippet}
         {viewerUrl}
     />

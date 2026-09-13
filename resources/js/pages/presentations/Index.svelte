@@ -4,6 +4,7 @@
     import ClipboardPaste from 'lucide-svelte/icons/clipboard-paste';
     import Plus from 'lucide-svelte/icons/plus';
     import Presentation from 'lucide-svelte/icons/presentation';
+    import Sparkles from 'lucide-svelte/icons/sparkles';
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import Upload from 'lucide-svelte/icons/upload';
     import AppHead from '@/components/AppHead.svelte';
@@ -31,7 +32,13 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
-    import { destroy, edit, importJson, store } from '@/routes/presentations';
+    import {
+        destroy,
+        edit,
+        generate,
+        importJson,
+        store,
+    } from '@/routes/presentations';
 
     type PresentationListItem = {
         id: number;
@@ -56,6 +63,11 @@
     let importInput = $state<HTMLInputElement | null>(null);
     let pasteDialogOpen = $state(false);
     let pastedJson = $state('');
+    let draftDialogOpen = $state(false);
+    let draftName = $state('');
+    let draftPlan = $state('');
+    let drafting = $state(false);
+    let draftError = $state<string | null>(null);
 
     const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
 
@@ -124,6 +136,33 @@
                     creating = false;
                     createDialogOpen = false;
                     newName = '';
+                },
+            },
+        );
+    };
+
+    const generateDraft = (event: SubmitEvent) => {
+        event.preventDefault();
+
+        if (draftPlan.trim() === '') {
+            return;
+        }
+
+        drafting = true;
+        draftError = null;
+
+        router.post(
+            generate(teamSlug).url,
+            { name: draftName, plan: draftPlan },
+            {
+                onError: (errors) => {
+                    draftError =
+                        errors.plan ??
+                        errors.name ??
+                        'Could not generate a draft. Please try again.';
+                },
+                onFinish: () => {
+                    drafting = false;
                 },
             },
         );
@@ -230,6 +269,79 @@
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
+
+            <Dialog bind:open={draftDialogOpen}>
+                <DialogTrigger asChild>
+                    {#snippet children(props)}
+                        <Button
+                            variant="outline"
+                            onclick={(event: MouseEvent) => {
+                                if (typeof props.onClick === 'function') {
+                                    props.onClick(event);
+                                }
+                            }}
+                            data-test="magic-draft-button"
+                        >
+                            <Sparkles class="h-4 w-4" /> Magic draft
+                        </Button>
+                    {/snippet}
+                </DialogTrigger>
+                <DialogContent>
+                    <form onsubmit={generateDraft} class="space-y-4">
+                        <div class="space-y-3">
+                            <DialogTitle>Magic draft</DialogTitle>
+                            <DialogDescription>
+                                Describe your talk and we'll draft the slides
+                                for you. Rough bullet points work great. You can
+                                edit everything afterwards.
+                            </DialogDescription>
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="draft-name">Name (optional)</Label>
+                            <Input
+                                id="draft-name"
+                                bind:value={draftName}
+                                maxlength={255}
+                                placeholder="Leave blank to use the generated title"
+                                data-test="magic-draft-name"
+                            />
+                        </div>
+
+                        <div class="space-y-2">
+                            <Label for="draft-plan">Outline</Label>
+                            <textarea
+                                id="draft-plan"
+                                bind:value={draftPlan}
+                                rows={10}
+                                required
+                                placeholder={'# Ship faster with X\n\n- The problem teams hit today\n- How X solves it (3 key features)\n- A quick demo\n- Pricing and next steps'}
+                                class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                data-test="magic-draft-plan"
+                            ></textarea>
+                        </div>
+
+                        {#if draftError}
+                            <p
+                                class="text-sm text-destructive"
+                                data-test="magic-draft-error"
+                            >
+                                {draftError}
+                            </p>
+                        {/if}
+
+                        <DialogFooter>
+                            <Button
+                                type="submit"
+                                disabled={drafting || draftPlan.trim() === ''}
+                                data-test="magic-draft-submit"
+                            >
+                                {drafting ? 'Drafting…' : 'Generate draft'}
+                            </Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
 
             <Dialog bind:open={createDialogOpen}>
                 <DialogTrigger asChild>
