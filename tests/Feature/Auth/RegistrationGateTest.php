@@ -74,7 +74,7 @@ test('provisioning creates the account for an allowed email', function () {
     useRegistrationMode('invitation');
     BetaRequestModel::factory()->forEmail('ada@example.com')->approved()->create();
 
-    $user = app(ProvisionUserFromWorkOS::class)(workosUser('ada@example.com'));
+    $user = app(ProvisionUserFromWorkOS::class)->create(workosUser('ada@example.com'));
 
     expect($user)->toBeInstanceOf(User::class);
     $this->assertDatabaseHas('users', [
@@ -86,10 +86,55 @@ test('provisioning creates the account for an allowed email', function () {
 test('provisioning rejects an email with no approved request', function () {
     useRegistrationMode('invitation');
 
-    expect(fn () => app(ProvisionUserFromWorkOS::class)(workosUser('stranger@example.com')))
+    expect(fn () => app(ProvisionUserFromWorkOS::class)->create(workosUser('stranger@example.com')))
         ->toThrow(RegistrationNotAllowed::class);
 
     $this->assertDatabaseMissing('users', ['email' => 'stranger@example.com']);
+});
+
+test('find matches an existing account by workos id', function () {
+    $user = User::factory()->create(['workos_id' => 'user_existing']);
+
+    $found = app(ProvisionUserFromWorkOS::class)->find(new WorkOSUser(
+        id: 'user_existing',
+        organizationId: null,
+        firstName: 'X',
+        lastName: 'Y',
+        email: 'someone-else@example.com',
+    ));
+
+    expect($found?->id)->toBe($user->id);
+});
+
+test('find re-links an account by email when the workos id changed', function () {
+    // Simulates switching WorkOS apps: same email, brand-new WorkOS id.
+    $user = User::factory()->create([
+        'email' => 'ada@example.com',
+        'workos_id' => 'user_old_env',
+    ]);
+
+    $found = app(ProvisionUserFromWorkOS::class)->find(workosUser('ada@example.com'));
+
+    expect($found?->id)->toBe($user->id)
+        ->and($found?->workos_id)->toBe('workos_'.md5('ada@example.com'));
+
+    // No duplicate row was created.
+    expect(User::where('email', 'ada@example.com')->count())->toBe(1);
+});
+
+test('re-linking by email ignores casing', function () {
+    $user = User::factory()->create([
+        'email' => 'ada@example.com',
+        'workos_id' => 'user_old_env',
+    ]);
+
+    $found = app(ProvisionUserFromWorkOS::class)->find(workosUser('Ada@Example.com'));
+
+    expect($found?->id)->toBe($user->id);
+});
+
+test('find returns null for a genuinely new identity', function () {
+    expect(app(ProvisionUserFromWorkOS::class)->find(workosUser('new@example.com')))->toBeNull();
 });
 
 test('rejection funnels to the beta request form in invitation mode', function () {

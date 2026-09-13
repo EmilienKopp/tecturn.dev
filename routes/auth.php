@@ -12,9 +12,15 @@ Route::middleware(['guest'])->group(function () {
 
     Route::get('authenticate', function (AuthKitAuthenticationRequest $request) {
         // Gate new-account creation behind the registration policy so a WorkOS
-        // login (any method) can't bypass invitation-only access. Existing users
-        // skip this: createUsing only fires for first-time identities.
-        $request->authenticate(createUsing: app(ProvisionUserFromWorkOS::class));
+        // login (any method) can't bypass invitation-only access. find() also
+        // re-links an account by verified email if its WorkOS id changed, so a
+        // switched WorkOS app doesn't collide on the unique email.
+        $provision = app(ProvisionUserFromWorkOS::class);
+
+        $request->authenticate(
+            findUsing: $provision->find(...),
+            createUsing: $provision->create(...),
+        );
 
         $user = auth()->user();
         $currentTeam = $user->currentTeam ?? $user->personalTeam();
