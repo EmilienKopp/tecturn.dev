@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Infrastructure\Broadcasting\AnonymousViewer;
+use App\Models\Team;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Http\Request;
@@ -42,6 +43,10 @@ class AppServiceProvider extends ServiceProvider
     protected function configureFeatures(): void
     {
         Feature::define('registration', fn (): string => config('features.registration'));
+
+        // Team-scoped flags default on, so existing teams keep their capabilities
+        // until an admin explicitly turns one off for a given team.
+        Feature::define('live_translation', fn (Team $team): bool => true);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\StartTranslationSessionRequest;
 use App\Models\PresentationModel;
 use App\Models\Team;
+use App\Support\Features;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -19,6 +20,8 @@ class StartTranslationSessionController extends Controller
     public function __invoke(StartTranslationSessionRequest $request, Team $current_team, PresentationModel $presentation): RedirectResponse
     {
         Gate::authorize('update', $presentation);
+
+        abort_unless(Features::teamHas($current_team, 'live_translation'), 403);
 
         $this->startTranslationSession->execute(
             new StartTranslationSessionCommand(

@@ -11,6 +11,7 @@ use App\Domain\Presentation\ValueObjects\YoYoTranslateSession;
 use App\Models\PresentationModel;
 use App\Models\User;
 use Illuminate\Support\Carbon;
+use Laravel\Pennant\Feature;
 
 function makeFakeTranslationService(string $sessionId = 'fake-session-abc'): TranslationServiceContract
 {
@@ -101,6 +102,28 @@ it('accepts a pasted event url over http and extracts the event id', function ()
     expect($presentation->yoyotranslate_session_id)->toBe('01a05520-5454-7352-aa0f-b9bcb9a23517')
         // Codes are lower-cased and de-duplicated before they are stored.
         ->and($presentation->yoyotranslate_languages)->toBe(['en', 'fr']);
+});
+
+it('forbids starting a translation session when the team flag is off', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    Feature::for($user->currentTeam)->deactivate('live_translation');
+
+    $response = $this->actingAs($user)->post(
+        route('presentations.translation-session.start', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]),
+        [
+            'event_url' => 'https://yoyotranslate.app/events/01a05520-5454-7352-aa0f-b9bcb9a23517/live',
+            'languages' => ['en'],
+        ],
+    );
+
+    $response->assertForbidden();
 });
 
 it('rejects a start request with no languages', function () {

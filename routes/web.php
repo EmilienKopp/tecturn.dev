@@ -2,10 +2,12 @@
 
 use App\Http\Controllers\Admin\AdminBetaRequestsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
+use App\Http\Controllers\Admin\AdminFeatureFlagsController;
 use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\ApproveBetaRequestController;
 use App\Http\Controllers\Admin\RejectBetaRequestController;
+use App\Http\Controllers\Admin\UpdateFeatureFlagController;
 use App\Http\Controllers\Beta\RequestBetaAccessController;
 use App\Http\Controllers\Beta\ShowBetaRegistrationController;
 use App\Http\Controllers\DashboardController;
@@ -63,6 +65,8 @@ $adminRoutes->group(function () {
     Route::get('beta-requests', AdminBetaRequestsController::class)->name('beta-requests');
     Route::post('beta-requests/{betaRequest}/approve', ApproveBetaRequestController::class)->name('beta-requests.approve');
     Route::post('beta-requests/{betaRequest}/reject', RejectBetaRequestController::class)->name('beta-requests.reject');
+    Route::get('features', AdminFeatureFlagsController::class)->name('features');
+    Route::post('features', UpdateFeatureFlagController::class)->name('features.update');
 });
 
 Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentationController::class)

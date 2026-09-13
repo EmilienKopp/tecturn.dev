@@ -38,7 +38,7 @@
                 >
                     Your decks
                 </Link>
-            {:else if features.registration !== 'closed'}
+            {:else}
                 <Link
                     href={toUrl(login())}
                     class="rounded-md border border-[hsl(34_9%_22%)] px-4 py-1.5 text-sm text-[hsl(40_20%_86%)] transition-colors hover:border-[hsl(37_40%_35%)] focus-visible:ring-2 focus-visible:ring-[hsl(37_91%_55%)] focus-visible:outline-none"

@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Enums\RegistrationMode;
+use App\Models\Team;
 use Laravel\Pennant\Feature;
 
 /**
@@ -27,5 +28,13 @@ class Features
         return RegistrationMode::from(
             Feature::for(self::GLOBAL_SCOPE)->value('registration'),
         );
+    }
+
+    /**
+     * Whether the given team-scoped flag is enabled for the team.
+     */
+    public static function teamHas(Team $team, string $flag): bool
+    {
+        return Feature::for($team)->active($flag);
     }
 }

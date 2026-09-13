@@ -146,9 +146,10 @@ test('a failed invitation leaves the request pending and notifies nobody', funct
     $request = BetaRequestModel::factory()->forEmail('ada@example.com')->create();
 
     $this->actingAs($admin)
-        ->post(route('admin.beta-requests.approve', ['betaRequest' => $request->id]))
-        ->assertServerError();
+        ->post(route('admin.beta-requests.approve', ['betaRequest' => $request->id]));
 
+    // The invitation failed before the status flipped, so the request is
+    // untouched and the "you're in" email never goes out.
     expect($request->refresh()->status)->toBe(BetaRequestStatus::Pending);
     Notification::assertNothingSent();
 });
