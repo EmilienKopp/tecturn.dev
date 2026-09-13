@@ -40,6 +40,17 @@ test('closed mode blocks everyone, even an approved request', function () {
     expect(app(RegistrationPolicy::class)->allowsRegistration('ada@example.com'))->toBeFalse();
 });
 
+test('an allowlisted admin bypasses the gate in every mode', function (string $mode) {
+    config()->set('admin.emails', ['boss@example.com']);
+    useRegistrationMode($mode);
+
+    $policy = app(RegistrationPolicy::class);
+
+    // No beta request exists for the admin, yet they still get in.
+    expect($policy->allowsRegistration('boss@example.com'))->toBeTrue()
+        ->and($policy->allowsRegistration('Boss@Example.com'))->toBeTrue();
+})->with(['open', 'invitation', 'closed']);
+
 test('invitation mode allows an approved email and blocks the rest', function () {
     useRegistrationMode('invitation');
     BetaRequestModel::factory()->forEmail('ada@example.com')->approved()->create();
