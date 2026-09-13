@@ -22,6 +22,7 @@
         email: string;
         message: string | null;
         status: 'pending' | 'approved' | 'rejected';
+        registered: boolean;
         created_at: string | null;
     };
 
@@ -119,21 +120,33 @@
                                 {formatDate(request.created_at)}
                             </td>
                             <td class="px-4 py-3">
-                                <span
-                                    class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize {statusStyles[
-                                        request.status
-                                    ]}"
+                                <div
+                                    class="flex flex-wrap items-center gap-1.5"
                                 >
-                                    {request.status}
-                                </span>
+                                    <span
+                                        class="inline-flex rounded-full px-2 py-0.5 text-xs font-semibold capitalize {statusStyles[
+                                            request.status
+                                        ]}"
+                                    >
+                                        {request.status}
+                                    </span>
+                                    {#if request.registered}
+                                        <span
+                                            class="inline-flex rounded-full bg-sky-500/15 px-2 py-0.5 text-xs font-semibold text-sky-600 dark:text-sky-400"
+                                            data-test="registered-badge"
+                                        >
+                                            Registered
+                                        </span>
+                                    {/if}
+                                </div>
                             </td>
                             <td class="px-4 py-3">
                                 <div class="flex justify-end gap-2">
                                     <Button
                                         size="sm"
                                         variant="default"
-                                        disabled={request.status ===
-                                            'approved' ||
+                                        disabled={request.registered ||
+                                            request.status === 'approved' ||
                                             processing.includes(request.id)}
                                         onclick={() =>
                                             decide(request.id, approve)}
@@ -144,8 +157,8 @@
                                     <Button
                                         size="sm"
                                         variant="outline"
-                                        disabled={request.status ===
-                                            'rejected' ||
+                                        disabled={request.registered ||
+                                            request.status === 'rejected' ||
                                             processing.includes(request.id)}
                                         onclick={() =>
                                             decide(request.id, reject)}
