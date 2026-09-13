@@ -75,7 +75,11 @@
         {:else}
             <div class="{definition.containerClass} p-8">
                 {#each definition.slots as slotName (slotName)}
-                    <SlotRenderer {editor} slot={slotName} />
+                    <SlotRenderer
+                        {editor}
+                        slot={slotName}
+                        class={definition.slotClass?.[slotName] ?? ''}
+                    />
                 {/each}
             </div>
         {/if}

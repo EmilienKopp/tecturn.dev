@@ -19,18 +19,20 @@ export const layoutDefinitions = {
         label: 'Full',
         slots: ['main'],
         containerClass: 'grid h-full grid-cols-1',
+        slotClass: { main: 'h-full' },
     },
     center: {
         label: 'Center',
         slots: ['main'],
         containerClass: 'flex h-full items-center justify-center',
+        slotClass: { main: 'text-center' },
     },
     free: {
         label: 'Free',
         slots: ['main'],
         containerClass: 'relative h-full',
     },
-} as Record<SlideLayout, LayoutDefinition>;
+} as unknown as Record<SlideLayout, LayoutDefinition>;
 
 /** Resolve a layout to its definition, falling back to Center when disabled. */
 export function layoutDefinition(layout: SlideLayout): LayoutDefinition {

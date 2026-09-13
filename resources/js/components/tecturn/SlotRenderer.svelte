@@ -10,14 +10,17 @@
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
 
-    let { editor, slot: slotName }: { editor: EditorState; slot: string } =
-        $props();
+    let {
+        editor,
+        slot: slotName,
+        class: className = '',
+    }: { editor: EditorState; slot: string; class?: string } = $props();
 
     const blocks = $derived(editor.selectedSlide.slots[slotName] ?? []);
 </script>
 
 <div
-    class="flex h-full flex-col gap-2 rounded border border-dashed border-current/25 p-2"
+    class="flex flex-col gap-2 rounded border border-dashed border-current/25 p-2 {className}"
     data-test="slot-{slotName}"
 >
     {#each blocks as block (block.id)}
