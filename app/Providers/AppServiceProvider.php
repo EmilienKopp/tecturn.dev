@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Laravel\Pennant\Feature;
+use Splitstack\Teddy\TeddyServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -21,7 +22,19 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->registerDevelopmentProviders();
+    }
+
+    /**
+     * Register dev-only package providers behind an existence guard so a
+     * require-dev package (e.g. Teddy) never breaks a production boot where
+     * the class is absent under `composer install --no-dev`.
+     */
+    protected function registerDevelopmentProviders(): void
+    {
+        if (class_exists(TeddyServiceProvider::class)) {
+            $this->app->register(TeddyServiceProvider::class);
+        }
     }
 
     /**
