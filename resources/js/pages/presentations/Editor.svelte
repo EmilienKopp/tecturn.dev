@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { page } from '@inertiajs/svelte';
+    import { page, router } from '@inertiajs/svelte';
+    import { onMount } from 'svelte';
     import { toast } from 'svelte-sonner';
     import AppHead from '@/components/AppHead.svelte';
     import CodeSequenceModal from '@/components/tecturn/CodeSequenceModal.svelte';
@@ -14,6 +15,12 @@
         downloadFile,
         slugify,
     } from '@/lib/tecturn/download';
+    import {
+        clearEditorDraft,
+        isDraftNewer,
+        loadEditorDraft,
+        saveEditorDraft,
+    } from '@/lib/tecturn/editor-draft';
     import { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { exportMethod } from '@/routes/presentations';
     import type {
@@ -46,10 +53,70 @@
     // itself to 100% of its container.
     const embedSnippet = `<script src="${embed.url}"><\/script>\n<${embed.tag} style="display: block; width: 100%; aspect-ratio: 16 / 9;"></${embed.tag}>`;
 
-    const editor = new EditorState(presentation.content, presentation.flow);
-    let name = $state(presentation.name);
+    // A newer local draft means this browser holds edits the server never
+    // received (reload, crash, or auto-save off) — restore those over the
+    // server copy; anything stale or in sync is discarded by the effect below.
+    const draft = loadEditorDraft(presentation.id);
+    const restoringDraft =
+        draft !== null && isDraftNewer(draft, presentation.updated_at);
+
+    const editor = restoringDraft
+        ? new EditorState(draft.content, draft.flow)
+        : new EditorState(presentation.content, presentation.flow);
+    let name = $state(restoringDraft ? draft.name : presentation.name);
+
+    if (restoringDraft) {
+        editor.selectedSlideIndex = Math.min(
+            draft.selectedSlideIndex,
+            editor.content.slides.length - 1,
+        );
+        editor.selectedBlockId = draft.selectedBlockId;
+        editor.dirty = true;
+    }
+
     let view = $state<'slides' | 'flow'>('slides');
     let codeSequenceBlockId = $state<string | null>(null);
+
+    onMount(() => {
+        if (!restoringDraft) {
+            return;
+        }
+
+        toast('Restored unsaved changes from this browser.', {
+            action: {
+                label: 'Discard',
+                onClick: () => {
+                    clearEditorDraft(presentation.id);
+                    router.reload();
+                },
+            },
+        });
+    });
+
+    // Persist every edit to localStorage, debounced, regardless of the
+    // server-side auto-save toggle. A clean editor mirrors the server, so its
+    // draft is dropped rather than kept.
+    $effect(() => {
+        const snapshot = {
+            name,
+            content: $state.snapshot(editor.content),
+            flow: $state.snapshot(editor.flow),
+            selectedSlideIndex: editor.selectedSlideIndex,
+            selectedBlockId: editor.selectedBlockId,
+        };
+
+        if (!editor.dirty) {
+            clearEditorDraft(presentation.id);
+
+            return;
+        }
+
+        const timeout = setTimeout(() => {
+            saveEditorDraft(presentation.id, snapshot);
+        }, 500);
+
+        return () => clearTimeout(timeout);
+    });
 
     const openSlide = (slideIndex: number) => {
         if (slideIndex !== -1) {
