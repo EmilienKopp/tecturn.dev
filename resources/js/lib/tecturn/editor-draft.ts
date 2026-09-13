@@ -39,7 +39,10 @@ export function saveEditorDraft(
     try {
         localStorage.setItem(
             keyFor(presentationId),
-            JSON.stringify({ ...draft, savedAt: Date.now() } satisfies EditorDraft),
+            JSON.stringify({
+                ...draft,
+                savedAt: Date.now(),
+            } satisfies EditorDraft),
         );
     } catch {
         // Ignore quota or serialization errors; persistence is best-effort.

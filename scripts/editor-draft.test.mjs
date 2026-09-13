@@ -28,12 +28,8 @@ class MemoryStorage {
 
 globalThis.localStorage = new MemoryStorage();
 
-const {
-    clearEditorDraft,
-    isDraftNewer,
-    loadEditorDraft,
-    saveEditorDraft,
-} = await import('../resources/js/lib/tecturn/editor-draft.ts');
+const { clearEditorDraft, isDraftNewer, loadEditorDraft, saveEditorDraft } =
+    await import('../resources/js/lib/tecturn/editor-draft.ts');
 
 const sampleDraft = () => ({
     name: 'My deck',
