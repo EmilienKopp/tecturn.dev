@@ -15,4 +15,9 @@ interface BetaRequestRepository
     public function save(BetaRequestEntity $request): BetaRequestEntity;
 
     public function findById(int $id): BetaRequestEntity;
+
+    /**
+     * Whether the given email address has a beta request that an admin approved.
+     */
+    public function hasApprovedRequestForEmail(string $email): bool;
 }

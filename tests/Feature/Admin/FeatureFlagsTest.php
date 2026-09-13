@@ -119,7 +119,7 @@ test('a team flag requires a team id', function () {
         ->assertSessionHasErrors('team_id');
 });
 
-test('a global flag rejects a team id', function () {
+test('a global flag ignores an incidental team id', function () {
     $admin = admin();
     $team = Team::factory()->create();
 
@@ -129,5 +129,9 @@ test('a global flag rejects a team id', function () {
             'value' => RegistrationMode::Open->value,
             'team_id' => $team->id,
         ])
-        ->assertSessionHasErrors('team_id');
+        ->assertSessionHasNoErrors()
+        ->assertRedirect();
+
+    Feature::flushCache();
+    expect(Features::registration())->toBe(RegistrationMode::Open);
 });

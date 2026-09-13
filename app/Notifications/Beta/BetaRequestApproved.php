@@ -30,7 +30,8 @@ class BetaRequestApproved extends Notification implements ShouldQueue
         return (new MailMessage)
             ->subject(__("You're in! :app beta access is ready", ['app' => config('app.name')]))
             ->greeting(__('Hi :name,', ['name' => $this->betaRequest->name]))
-            ->line(__("Good news, your request to join the :app private beta was approved.", ['app' => config('app.name')]))
+            ->line(__('Good news, your request to join the :app private beta was approved.', ['app' => config('app.name')]))
+            ->line(__('Sign in with this same email address (:email). You can use Google, GitHub, or an email code, no password to set up.', ['email' => $this->betaRequest->email]))
             ->action(__('Sign in to get started'), route('login'))
             ->line(__('Welcome aboard!'));
     }

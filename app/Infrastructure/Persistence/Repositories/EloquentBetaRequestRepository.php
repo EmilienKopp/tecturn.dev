@@ -6,6 +6,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Beta\Contracts\BetaRequestRepository;
 use App\Domain\Beta\Entities\BetaRequestEntity;
+use App\Enums\BetaRequestStatus;
 use App\Models\BetaRequestModel;
 use Illuminate\Support\Str;
 
@@ -29,6 +30,14 @@ class EloquentBetaRequestRepository implements BetaRequestRepository
     public function findById(int $id): BetaRequestEntity
     {
         return BetaRequestModel::findOrFail($id)->toEntity();
+    }
+
+    public function hasApprovedRequestForEmail(string $email): bool
+    {
+        return BetaRequestModel::query()
+            ->where('email_hash', $this->hashEmail($email))
+            ->where('status', BetaRequestStatus::Approved)
+            ->exists();
     }
 
     /**

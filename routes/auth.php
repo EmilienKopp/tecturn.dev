@@ -1,5 +1,6 @@
 <?php
 
+use App\Application\Actions\Auth\ProvisionUserFromWorkOS;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\URL;
 use Laravel\WorkOS\Http\Requests\AuthKitAuthenticationRequest;
@@ -10,7 +11,10 @@ Route::middleware(['guest'])->group(function () {
     Route::get('login', fn (AuthKitLoginRequest $request) => $request->redirect())->name('login');
 
     Route::get('authenticate', function (AuthKitAuthenticationRequest $request) {
-        $request->authenticate();
+        // Gate new-account creation behind the registration policy so a WorkOS
+        // login (any method) can't bypass invitation-only access. Existing users
+        // skip this: createUsing only fires for first-time identities.
+        $request->authenticate(createUsing: app(ProvisionUserFromWorkOS::class));
 
         $user = auth()->user();
         $currentTeam = $user->currentTeam ?? $user->personalTeam();

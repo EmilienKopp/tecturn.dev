@@ -1,7 +1,5 @@
 <?php
 
-use App\Domain\Beta\Contracts\BetaInvitationGateway;
-use App\Domain\Beta\Exceptions\BetaInvitationFailed;
 use App\Enums\BetaRequestStatus;
 use App\Models\BetaRequestModel;
 use App\Models\User;
@@ -119,10 +117,6 @@ test('an admin can approve a beta request', function () {
     config()->set('admin.emails', ['boss@example.com']);
     Notification::fake();
 
-    $gateway = Mockery::mock(BetaInvitationGateway::class);
-    $gateway->shouldReceive('invite')->once()->with('ada@example.com');
-    $this->app->instance(BetaInvitationGateway::class, $gateway);
-
     $admin = User::factory()->create(['email' => 'boss@example.com']);
     $request = BetaRequestModel::factory()->forEmail('ada@example.com')->create();
 
@@ -132,26 +126,6 @@ test('an admin can approve a beta request', function () {
 
     expect($request->refresh()->status)->toBe(BetaRequestStatus::Approved);
     Notification::assertSentOnDemand(BetaRequestApproved::class);
-});
-
-test('a failed invitation leaves the request pending and notifies nobody', function () {
-    config()->set('admin.emails', ['boss@example.com']);
-    Notification::fake();
-
-    $gateway = Mockery::mock(BetaInvitationGateway::class);
-    $gateway->shouldReceive('invite')->once()->andThrow(new BetaInvitationFailed('WorkOS is down'));
-    $this->app->instance(BetaInvitationGateway::class, $gateway);
-
-    $admin = User::factory()->create(['email' => 'boss@example.com']);
-    $request = BetaRequestModel::factory()->forEmail('ada@example.com')->create();
-
-    $this->actingAs($admin)
-        ->post(route('admin.beta-requests.approve', ['betaRequest' => $request->id]));
-
-    // The invitation failed before the status flipped, so the request is
-    // untouched and the "you're in" email never goes out.
-    expect($request->refresh()->status)->toBe(BetaRequestStatus::Pending);
-    Notification::assertNothingSent();
 });
 
 test('an admin can reject a beta request without emailing the requester', function () {
