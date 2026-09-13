@@ -58,7 +58,10 @@ class ProvisionUserFromWorkOS
     public function create(WorkOSUser $workosUser): User
     {
         if (! $this->policy->allowsRegistration($workosUser->email)) {
-            throw new RegistrationNotAllowed;
+            throw new RegistrationNotAllowed(
+                prefillEmail: $workosUser->email,
+                prefillName: trim($workosUser->firstName.' '.$workosUser->lastName),
+            );
         }
 
         return User::create([

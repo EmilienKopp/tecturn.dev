@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "271d5c5431f881df4b4246f44648b890",
+    "content-hash": "878d255319549c72b60a6e8d5181e1a7",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1691,6 +1691,43 @@
                 "type"
             ],
             "time": "2026-02-19T20:12:01+00:00"
+        },
+        {
+            "name": "joetannenbaum/chewie",
+            "version": "0.1.11",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/joetannenbaum/chewie.git",
+                "reference": "7040f1c157e6756f45f49f4a821303cae3cfe424"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/joetannenbaum/chewie/zipball/7040f1c157e6756f45f49f4a821303cae3cfe424",
+                "reference": "7040f1c157e6756f45f49f4a821303cae3cfe424",
+                "shasum": ""
+            },
+            "require": {
+                "laravel/prompts": "0.x"
+            },
+            "require-dev": {
+                "pestphp/pest": "^2.33",
+                "tightenco/duster": "^2.7"
+            },
+            "type": "library",
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Chewie\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "support": {
+                "issues": "https://github.com/joetannenbaum/chewie/issues",
+                "source": "https://github.com/joetannenbaum/chewie/tree/0.1.11"
+            },
+            "time": "2024-12-07T01:53:54+00:00"
         },
         {
             "name": "laravel/ai",
@@ -7047,6 +7084,67 @@
                 "source": "https://github.com/EmilienKopp/laravel-rome/tree/v0.1.0"
             },
             "time": "2026-07-15T00:19:52+00:00"
+        },
+        {
+            "name": "splitstack/laravel-teddy",
+            "version": "dev-main",
+            "source": {
+                "type": "git",
+                "url": "/home/ec2k/code/teddy",
+                "reference": "8b562b69b7ff7a2b2ae3e3fa671082a2a9cb4f2e"
+            },
+            "require": {
+                "illuminate/console": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                "illuminate/database": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                "illuminate/support": "^10.0 || ^11.0 || ^12.0 || ^13.0",
+                "joetannenbaum/chewie": "^0.1.11",
+                "laravel/prompts": "^0.1.25 || ^0.2 || ^0.3",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "orchestra/testbench": "^8.0 || ^9.0 || ^10.0 || ^11.0",
+                "pestphp/pest": "^2.0 || ^3.0"
+            },
+            "default-branch": true,
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Splitstack\\Teddy\\TeddyServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Splitstack\\Teddy\\": "src/"
+                }
+            },
+            "autoload-dev": {
+                "psr-4": {
+                    "Splitstack\\Teddy\\Tests\\": "tests/"
+                }
+            },
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Emilien Kopp",
+                    "email": "emilien.kopp@gmail.com"
+                }
+            ],
+            "description": "TEDI: a TablePlus-style Terminal Database Inspector for Laravel, powered by Chewie.",
+            "keywords": [
+                "artisan",
+                "cli",
+                "database",
+                "laravel",
+                "prompts",
+                "splitstack",
+                "tableplus",
+                "tui"
+            ],
+            "time": "2026-09-13T03:05:52+00:00"
         },
         {
             "name": "splitstack/laravel-typewriter",
@@ -13840,7 +13938,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "splitstack/laravel-teddy": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {

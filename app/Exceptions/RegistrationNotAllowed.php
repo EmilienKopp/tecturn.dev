@@ -14,10 +14,18 @@ use RuntimeException;
  * Thrown when someone authenticates with WorkOS but the registration policy
  * won't provision an account for their email. Renders a friendly redirect
  * rather than an error page: in invitation mode we funnel them to the beta
- * request form, otherwise back to the landing page.
+ * request form (prefilled with the identity they just authenticated with, so
+ * they don't retype it), otherwise back to the landing page.
  */
 class RegistrationNotAllowed extends RuntimeException
 {
+    public function __construct(
+        private readonly ?string $prefillEmail = null,
+        private readonly ?string $prefillName = null,
+    ) {
+        parent::__construct('Registration is not allowed for this account.');
+    }
+
     public function render(Request $request): RedirectResponse
     {
         $canRequestAccess = Features::registration()->allowsBetaRequests();
@@ -29,6 +37,13 @@ class RegistrationNotAllowed extends RuntimeException
                 : __('This email has not been approved for access yet.'),
         ]);
 
-        return redirect()->to($canRequestAccess ? route('beta.create') : route('home'));
+        if (! $canRequestAccess) {
+            return redirect()->to(route('home'));
+        }
+
+        return redirect()->to(route('beta.create'))->with('beta_prefill', [
+            'name' => $this->prefillName ?? '',
+            'email' => $this->prefillEmail ?? '',
+        ]);
     }
 }

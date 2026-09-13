@@ -8,6 +8,10 @@
     import { toUrl } from '@/lib/utils';
     import { login } from '@/routes';
     import { store as storeBeta } from '@/routes/beta';
+
+    let {
+        prefill = { name: '', email: '' },
+    }: { prefill?: { name: string; email: string } } = $props();
 </script>
 
 <AppHead title="Request beta access" />
@@ -56,6 +60,7 @@
                                 name="name"
                                 type="text"
                                 placeholder="Ada Lovelace"
+                                value={prefill.name}
                                 required
                                 data-test="beta-name"
                                 class="text-accent-foreground"
@@ -70,6 +75,7 @@
                                 name="email"
                                 type="email"
                                 placeholder="you@example.com"
+                                value={prefill.email}
                                 required
                                 data-test="beta-email"
                                 class="text-accent-foreground"

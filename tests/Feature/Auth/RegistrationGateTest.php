@@ -140,9 +140,23 @@ test('find returns null for a genuinely new identity', function () {
 test('rejection funnels to the beta request form in invitation mode', function () {
     useRegistrationMode('invitation');
 
-    $response = (new RegistrationNotAllowed)->render(request());
+    $response = (new RegistrationNotAllowed('ada@example.com', 'Ada Lovelace'))->render(request());
 
-    expect($response->getTargetUrl())->toBe(route('beta.create'));
+    expect($response->getTargetUrl())->toBe(route('beta.create'))
+        ->and(session('beta_prefill'))->toBe(['name' => 'Ada Lovelace', 'email' => 'ada@example.com']);
+});
+
+test('the beta form prefills from the bounced identity', function () {
+    useRegistrationMode('invitation');
+
+    $this->withSession(['beta_prefill' => ['name' => 'Ada Lovelace', 'email' => 'ada@example.com']])
+        ->get(route('beta.create'))
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page
+            ->component('beta/register')
+            ->where('prefill.name', 'Ada Lovelace')
+            ->where('prefill.email', 'ada@example.com'),
+        );
 });
 
 test('rejection returns to the landing page in closed mode', function () {
