@@ -141,6 +141,35 @@
             </div>
         </Slide>
 
+        <Slide background="#faf7f0" class="h-full w-full">
+            <div
+                class="flex h-full w-full flex-col items-start justify-center gap-[2.5cqh] px-[8cqw] text-left"
+            >
+                <h2
+                    class="font-display text-[4.6cqw] leading-tight font-semibold tracking-tight text-[#221c12]"
+                >
+                    Rehearse until it runs on time.
+                </h2>
+                <Transition order={1}>
+                    <div
+                        class="flex items-center gap-[1.4cqw] rounded-lg border border-[#e4d9c4] bg-white px-[2cqw] py-[1.4cqh] font-mono text-[1.7cqw] text-[#6e6250]"
+                    >
+                        <span
+                            class="h-[1.4cqw] w-[1.4cqw] rounded-full bg-[#d98a12]"
+                        ></span>
+                        12:40 · slide 8 / 17
+                        <span class="text-[#b06e10]">· practice</span>
+                    </div>
+                </Transition>
+                <Transition order={2}>
+                    <p class="text-[2cqw] text-[#6e6250]">
+                        Practice mode times every slide, and every run saves a
+                        snapshot of the deck as it was that day.
+                    </p>
+                </Transition>
+            </div>
+        </Slide>
+
         <Slide background="#191510" class="h-full w-full">
             <div
                 class="flex h-full w-full flex-col items-start justify-center gap-[3cqh] px-[8cqw] text-left"
