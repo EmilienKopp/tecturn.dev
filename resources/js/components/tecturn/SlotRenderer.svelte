@@ -1,8 +1,4 @@
 <script lang="ts">
-    import Code2 from 'lucide-svelte/icons/code-2';
-    import Plus from 'lucide-svelte/icons/plus';
-    import QrCode from 'lucide-svelte/icons/qr-code';
-    import Square from 'lucide-svelte/icons/square';
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
@@ -17,11 +13,46 @@
     }: { editor: EditorState; slot: string; class?: string } = $props();
 
     const blocks = $derived(editor.selectedSlide.slots[slotName] ?? []);
+
+    let slotEl = $state<HTMLDivElement | null>(null);
+    let popoverVisible = $state(false);
+    let popover = $state<{ top: number; left: number }>({ top: 0, left: 0 });
+
+    function openPopover(event: MouseEvent) {
+        if (!slotEl) {
+            return;
+        }
+
+        const rect = slotEl.getBoundingClientRect();
+        popover = {
+            top: event.clientY - rect.top,
+            left: event.clientX - rect.left,
+        };
+        popoverVisible = true;
+    }
+
+    function addBlock(type: 'text' | 'code' | 'box' | 'qr') {
+        if (type === 'text') {
+            editor.addTextBlock(slotName);
+        } else if (type === 'code') {
+            editor.addCodeBlock(slotName);
+        } else if (type === 'box') {
+            editor.addBoxBlock(slotName);
+        } else {
+            editor.addQRBlock(slotName);
+        }
+
+        popoverVisible = false;
+    }
 </script>
 
+<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div
-    class="flex flex-col gap-2 rounded border border-dashed border-current/25 p-2 {className}"
+    bind:this={slotEl}
+    class="relative flex flex-col gap-2 rounded border border-dashed border-current/25 p-2 {className}"
     data-test="slot-{slotName}"
+    onclick={() => (popoverVisible = false)}
+    ondblclick={openPopover}
 >
     {#each blocks as block (block.id)}
         <BlockPinMenu {editor} {block}>
@@ -37,42 +68,45 @@
         </BlockPinMenu>
     {/each}
 
-    <div class="mt-auto flex items-center justify-center gap-1">
-        <button
-            type="button"
-            class="flex items-center gap-1 rounded px-2 py-1 text-xs opacity-40 transition-opacity hover:bg-current/10 hover:opacity-100"
-            onclick={() => editor.addTextBlock(slotName)}
-            data-test="add-text-block-button"
-            title="Add text block"
+    {#if blocks.length === 0}
+        <div
+            class="pointer-events-none flex flex-1 items-center justify-center py-4 text-xs opacity-40"
         >
-            <Plus class="h-3 w-3" /> Text
-        </button>
-        <button
-            type="button"
-            class="flex items-center gap-1 rounded px-2 py-1 text-xs opacity-40 transition-opacity hover:bg-current/10 hover:opacity-100"
-            onclick={() => editor.addCodeBlock(slotName)}
-            data-test="add-code-block-button"
-            title="Add code block"
+            Double-click to add a block
+        </div>
+    {/if}
+
+    {#if popoverVisible}
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div
+            class="absolute z-50 flex gap-1 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+            style="top: {popover.top}px; left: {popover.left}px;"
+            onclick={(e) => e.stopPropagation()}
         >
-            <Code2 class="h-3 w-3" /> Code
-        </button>
-        <button
-            type="button"
-            class="flex items-center gap-1 rounded px-2 py-1 text-xs opacity-40 transition-opacity hover:bg-current/10 hover:opacity-100"
-            onclick={() => editor.addBoxBlock(slotName)}
-            data-test="add-box-block-button"
-            title="Add bordered box"
-        >
-            <Square class="h-3 w-3" /> Box
-        </button>
-        <button
-            type="button"
-            class="flex items-center gap-1 rounded px-2 py-1 text-xs opacity-40 transition-opacity hover:bg-current/10 hover:opacity-100"
-            onclick={() => editor.addQRBlock(slotName)}
-            data-test="add-qr-block-button"
-            title="Add QR code"
-        >
-            <QrCode class="h-3 w-3" /> QR
-        </button>
-    </div>
+            <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-accent"
+                onclick={() => addBlock('text')}
+                data-test="add-text-block-button">Text</button
+            >
+            <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-accent"
+                onclick={() => addBlock('code')}
+                data-test="add-code-block-button">Code</button
+            >
+            <button
+                type="button"
+                class="rounded px-2 py-1 font-mono text-xs hover:bg-accent"
+                onclick={() => addBlock('box')}
+                data-test="add-box-block-button">Box</button
+            >
+            <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-accent"
+                onclick={() => addBlock('qr')}
+                data-test="add-qr-block-button">QR</button
+            >
+        </div>
+    {/if}
 </div>
