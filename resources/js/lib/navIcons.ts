@@ -1,3 +1,4 @@
+import BookOpen from 'lucide-svelte/icons/book-open';
 import LayoutGrid from 'lucide-svelte/icons/layout-grid';
 import Presentation from 'lucide-svelte/icons/presentation';
 import Timer from 'lucide-svelte/icons/timer';
@@ -6,6 +7,7 @@ import Users from 'lucide-svelte/icons/users';
 import type { NavItem, ServerNavItem } from '@/types';
 
 const icons: Record<string, NavItem['icon']> = {
+    'book-open': BookOpen,
     'layout-grid': LayoutGrid,
     presentation: Presentation,
     timer: Timer,

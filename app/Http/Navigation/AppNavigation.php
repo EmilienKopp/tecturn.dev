@@ -22,7 +22,8 @@ class AppNavigation
                 $section
                     ->add('Dashboard', route('dashboard', $team->slug), attributes: ['icon' => 'layout-grid'])
                     ->add('Presentations', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
-                    ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer']);
+                    ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer'])
+                    ->add('Documentation', route('docs'), attributes: ['icon' => 'book-open']);
             })
             ->addIf($user !== null, 'Settings', '', function (Section $section) {
                 $section

@@ -13,6 +13,7 @@ createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'Welcome':
+            case name === 'docs/Index':
             case name === 'beta/register':
             case name === 'presentations/Present':
                 return null;

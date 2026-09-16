@@ -4,7 +4,7 @@
     import LandingDeck from '@/components/LandingDeck.svelte';
     import { useFeatures } from '@/lib/features.svelte';
     import { toUrl } from '@/lib/utils';
-    import { dashboard, login } from '@/routes';
+    import { dashboard, docs, login } from '@/routes';
     import { create as betaCreate } from '@/routes/beta';
     import type { Team } from '@/types';
 
@@ -30,7 +30,14 @@
         >
             Tecturn<span class="text-[hsl(37_91%_55%)]">.</span>
         </span>
-        <nav>
+        <nav class="flex items-center gap-4">
+            <Link
+                href={toUrl(docs())}
+                class="text-sm text-[hsl(37_6%_55%)] transition-colors hover:text-[hsl(40_20%_86%)]"
+                data-test="landing-docs-link"
+            >
+                Docs
+            </Link>
             {#if auth.user}
                 <Link
                     href={toUrl(dashboardUrl)}

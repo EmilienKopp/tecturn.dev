@@ -42,6 +42,10 @@ use Laravel\WorkOS\Http\Middleware\ValidateSessionWithWorkOS;
 
 Route::inertia('/', 'Welcome')->name('home');
 
+// Public product documentation. Registered before the "{current_team}" group
+// so "docs" is never captured as a team slug.
+Route::inertia('docs', 'docs/Index')->name('docs');
+
 // Private beta signup. Only reachable while registration mode is "invitation";
 // the controllers 404 otherwise.
 Route::get('beta', ShowBetaRegistrationController::class)->name('beta.create');
