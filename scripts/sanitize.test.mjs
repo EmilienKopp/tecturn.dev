@@ -20,6 +20,21 @@ test('sanitizeInlineHtml keeps allowlisted markup', () => {
     );
 });
 
+test('sanitizeInlineHtml normalizes an inline px font-size to cqw', () => {
+    // 24.576px baked in by copy-paste -> stage-relative cqw so it scales.
+    assert.equal(
+        sanitizeInlineHtml('<span style="font-size: 24.576px">x</span>'),
+        '<span style="font-size: 2.458cqw">x</span>',
+    );
+});
+
+test('sanitizeInlineHtml leaves an inline cqw font-size untouched', () => {
+    assert.equal(
+        sanitizeInlineHtml('<span style="font-size: 3.2cqw">x</span>'),
+        '<span style="font-size: 3.2cqw">x</span>',
+    );
+});
+
 test('stripInlineFormatting removes spans and bold but keeps text', () => {
     assert.equal(
         stripInlineFormatting(

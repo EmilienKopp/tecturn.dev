@@ -15,6 +15,8 @@
  * rather than smuggling script or style through.
  */
 
+import { scaleFontSize } from '../scaling.ts';
+
 /** Tags that survive sanitizing. */
 const ALLOWED_TAGS = new Set(['span', 'b', 'strong', 'i', 'em', 'br']);
 
@@ -59,9 +61,22 @@ function sanitizeStyle(tagBody: string): string {
         const value = declaration.slice(colon + 1).trim();
         const validator = STYLE_VALIDATORS[property];
 
-        if (validator && validator(value)) {
-            kept.push(`${property}: ${value}`);
+        if (!validator || !validator(value)) {
+            continue;
         }
+
+        // Inline font sizes are normalized to stage-relative `cqw`, the same
+        // treatment block sizes get at render. Copy-pasting rendered text bakes
+        // the computed pixel size into the span (e.g. `24.576px`); left as an
+        // absolute unit it would not scale with the stage and render tiny when
+        // presented full-screen. `scaleFontSize` converts px/rem/em and passes
+        // `cqw`/`%` through unchanged.
+        const normalized =
+            property === 'font-size'
+                ? (scaleFontSize(value) ?? value)
+                : value;
+
+        kept.push(`${property}: ${normalized}`);
     }
 
     return kept.join('; ');
