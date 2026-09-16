@@ -9,13 +9,17 @@
 
     let el = $state<HTMLDivElement | null>(null);
 
-    // Seed the contenteditable once via an action; re-rendering its children on
-    // every keystroke would reset the caret. Content is inline HTML now, so
-    // seed and save through the sanitizer to keep only allowlisted markup
-    // (colored/sized spans, bold, italic).
-    const seedContent = (node: HTMLElement) => {
-        node.innerHTML = sanitizeInlineHtml(block.content);
-    };
+    // Seed the contenteditable, and re-seed whenever the content changes from
+    // outside the field (e.g. "clear formatting"). Content is inline HTML, so it
+    // flows through the sanitizer to keep only allowlisted markup (colored/sized
+    // spans, bold, italic). The focus guard keeps typing from resetting the caret.
+    $effect(() => {
+        const html = sanitizeInlineHtml(block.content);
+
+        if (el && el !== document.activeElement && el.innerHTML !== html) {
+            el.innerHTML = html;
+        }
+    });
 
     function onInput() {
         if (el) {
@@ -56,7 +60,6 @@
 >
     <div
         bind:this={el}
-        use:seedContent
         contenteditable="true"
         data-inline-format
         class="min-h-8 w-full outline-none"

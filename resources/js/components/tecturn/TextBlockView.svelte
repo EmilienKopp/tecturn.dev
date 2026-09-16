@@ -24,12 +24,19 @@
             .join(' '),
     );
 
-    // Seed the contenteditable once; re-rendering its children on every
-    // keystroke would reset the caret position. Content is inline HTML now, so
-    // seed and save through the sanitizer to keep only allowlisted markup.
-    const seedContent = (node: HTMLElement) => {
-        node.innerHTML = sanitizeInlineHtml(block.content);
-    };
+    let el = $state<HTMLElement | null>(null);
+
+    // Seed the contenteditable, and re-seed whenever the content changes from
+    // outside the field (e.g. "clear formatting"). Content is inline HTML now,
+    // so it flows through the sanitizer to keep only allowlisted markup. The
+    // focus guard means typing never triggers a re-seed, so the caret is safe.
+    $effect(() => {
+        const html = sanitizeInlineHtml(block.content);
+
+        if (el && el !== document.activeElement && el.innerHTML !== html) {
+            el.innerHTML = html;
+        }
+    });
 
     // Keep new lines as <br>; the default contenteditable Enter inserts a
     // <div> the sanitizer would strip, silently merging lines.
@@ -43,9 +50,9 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
+    bind:this={el}
     contenteditable="true"
     data-inline-format
-    use:seedContent
     class="min-h-[1.5em] cursor-text rounded px-1 outline-none focus:ring-2 focus:ring-primary/50 {editor.selectedBlockId ===
     block.id
         ? 'ring-2 ring-primary'

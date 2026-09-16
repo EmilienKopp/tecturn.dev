@@ -1,5 +1,6 @@
 <script lang="ts">
     import Check from 'lucide-svelte/icons/check';
+    import Eraser from 'lucide-svelte/icons/eraser';
     import Plus from 'lucide-svelte/icons/plus';
     import Sparkles from 'lucide-svelte/icons/sparkles';
     import X from 'lucide-svelte/icons/x';
@@ -36,8 +37,17 @@
         open = true;
     }
 
+    const canClearFormatting = $derived(
+        block.type === 'text' || block.type === 'box',
+    );
+
     function pinTo(nodeId: string | null): void {
         editor.pinBlock(block.id, nodeId);
+        open = false;
+    }
+
+    function clearFormatting(): void {
+        editor.clearBlockFormatting(block.id);
         open = false;
     }
 
@@ -141,6 +151,20 @@
                 data-test="block-pin-unpin"
             >
                 <X class="h-3.5 w-3.5" /> Unpin
+            </button>
+        {/if}
+
+        {#if canClearFormatting}
+            <div class="my-1 h-px bg-border" role="separator"></div>
+
+            <button
+                type="button"
+                class="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent hover:text-accent-foreground"
+                onclick={clearFormatting}
+                role="menuitem"
+                data-test="block-clear-formatting"
+            >
+                <Eraser class="h-3.5 w-3.5" /> Clear formatting
             </button>
         {/if}
     </div>

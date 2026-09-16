@@ -1,4 +1,5 @@
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { stripInlineFormatting } from '@/lib/tecturn/CodeGeneration/sanitize';
 import {
     codeActionsForBlock,
     defaultFlowFromContent,
@@ -127,10 +128,11 @@ export class EditorState {
                 id: `block-${crypto.randomUUID()}`,
                 style: { ...block.style },
                 transition: null, // Don't copy transition pinning
-                actions: block.actions?.map((action) => ({
-                    ...action,
-                    id: `action-${crypto.randomUUID()}`,
-                })) ?? [],
+                actions:
+                    block.actions?.map((action) => ({
+                        ...action,
+                        id: `action-${crypto.randomUUID()}`,
+                    })) ?? [],
             }));
         }
 
@@ -1369,7 +1371,11 @@ export class EditorState {
         }
     }
 
-    addFreeBlock(x: string, y: string, type: 'text' | 'code' | 'box' | 'qr'): void {
+    addFreeBlock(
+        x: string,
+        y: string,
+        type: 'text' | 'code' | 'box' | 'qr',
+    ): void {
         const block = this.addBlock('main', type);
         block.style.x = x;
         block.style.y = y;
@@ -1399,6 +1405,26 @@ export class EditorState {
 
         if (block && block.content !== content) {
             block.content = content;
+            this.dirty = true;
+        }
+    }
+
+    /**
+     * Drop all inline markup (spans, bold, italic) from a text/box block,
+     * keeping the plain text and line breaks. The escape hatch for content
+     * whose formatting got tangled, e.g. after pasting rich HTML.
+     */
+    clearBlockFormatting(blockId: string): void {
+        const block = this.findBlock(blockId);
+
+        if (!block) {
+            return;
+        }
+
+        const stripped = stripInlineFormatting(block.content);
+
+        if (block.content !== stripped) {
+            block.content = stripped;
             this.dirty = true;
         }
     }

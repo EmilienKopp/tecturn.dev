@@ -147,3 +147,53 @@ export function sanitizeInlineHtml(html: string): string {
 
     return out;
 }
+
+/**
+ * Return `html` with every inline tag removed, keeping only the plain text and
+ * hard line breaks (`<br>`). This is the "clear formatting" escape hatch: when
+ * a block's markup gets tangled (e.g. after pasting rich HTML), it strips the
+ * spans, bold, and italic back to bare text without losing the line structure.
+ * Like the sanitizer it is DOM-free and escapes stray `<`/`>`.
+ */
+export function stripInlineFormatting(html: string): string {
+    if (!html) {
+        return '';
+    }
+
+    let out = '';
+    let i = 0;
+
+    while (i < html.length) {
+        const char = html[i];
+
+        if (char === '<') {
+            const close = html.indexOf('>', i);
+
+            if (close === -1) {
+                out += '&lt;';
+                i += 1;
+                continue;
+            }
+
+            const inner = html
+                .slice(i + 1, close)
+                .replace(/^\//, '')
+                .trim();
+            const name = inner.match(/^([a-z0-9]+)/i)?.[1]?.toLowerCase();
+
+            if (name === 'br') {
+                out += '<br>';
+            }
+
+            i = close + 1;
+        } else if (char === '>') {
+            out += '&gt;';
+            i += 1;
+        } else {
+            out += char;
+            i += 1;
+        }
+    }
+
+    return out;
+}
