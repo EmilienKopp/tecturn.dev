@@ -34,6 +34,7 @@
 
     const sections = [
         { id: 'decks', title: 'Build a deck' },
+        { id: 'settings', title: 'Settings' },
         { id: 'present', title: 'Present live' },
         { id: 'rehearse', title: 'Rehearse' },
         { id: 'share', title: 'Share & export' },
@@ -139,6 +140,51 @@
                     slides, reorder, repeat.
                 </li>
             </ol>
+        </section>
+
+        <!-- Settings -->
+        <section id="settings" class="flex scroll-mt-20 flex-col gap-4">
+            <h2 class="font-display text-xl font-semibold">Settings</h2>
+            <p class="text-muted-foreground">
+                The <strong class="text-foreground">Settings</strong> menu in the
+                editor toolbar holds everything per deck:
+            </p>
+            <ul class="list-disc space-y-2 pl-5 text-muted-foreground">
+                <li>
+                    <strong class="text-foreground">Reactions</strong>: whether
+                    audience emoji float across your slides while you present.
+                    You can also flip this mid-talk with the switch in the dock.
+                </li>
+                <li>
+                    <strong class="text-foreground">Dock</strong>: show or hide
+                    the presenter dock (timer, viewer count, QR code) next to
+                    your slides.
+                </li>
+                <li>
+                    <strong class="text-foreground">Live Translation</strong>:
+                    adds a caption panel under your slides that translates you
+                    live, in the languages you pick for the session.
+                </li>
+                <li>
+                    <strong class="text-foreground">Talk length…</strong>: your
+                    slot in minutes. This drives the per-slide speaking-time
+                    budget in the editor and the pace colors in the dock. Tick
+                    the countdown option to make the dock timer count down to
+                    zero instead of counting up.
+                </li>
+                <li>
+                    <strong class="text-foreground">Footer…</strong>: a strip
+                    with your X and GitHub handles and the talk's hashtag, in
+                    the colors you choose. Show it on the slides themselves or
+                    tuck it into the dock.
+                </li>
+                <li>
+                    <strong class="text-foreground">Slide Defaults…</strong>:
+                    the starting style for new slides and blocks: background,
+                    font, size, weight, and text color. Saved in your browser,
+                    so your next deck starts the same way.
+                </li>
+            </ul>
         </section>
 
         <!-- Present -->
