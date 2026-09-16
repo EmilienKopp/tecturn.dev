@@ -1,7 +1,10 @@
 <script lang="ts">
+    import { router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
+    import PracticeDock from '@/components/tecturn/PracticeDock.svelte';
+    import type { PracticeRunPayload } from '@/components/tecturn/PracticeDock.svelte';
     import Presenter from '@/components/tecturn/Presenter.svelte';
     import PresenterDock from '@/components/tecturn/PresenterDock.svelte';
     import PresentFooter from '@/components/tecturn/PresentFooter.svelte';
@@ -21,6 +24,8 @@
         sessionRoutes,
         translationRoutes,
         testMode = false,
+        practiceMode = false,
+        practiceRoutes,
     }: {
         presentation: {
             id: number;
@@ -36,7 +41,26 @@
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
         testMode?: boolean;
+        practiceMode?: boolean;
+        practiceRoutes?: { store: string };
     } = $props();
+
+    // A finished rehearsal posts its timings; the backend snapshots the deck
+    // and redirects to the run's replay page.
+    let savingPracticeRun = $state(false);
+
+    const savePracticeRun = (run: PracticeRunPayload): void => {
+        if (!practiceRoutes) {
+            return;
+        }
+
+        savingPracticeRun = true;
+        router.post(practiceRoutes.store, run, {
+            onFinish: () => {
+                savingPracticeRun = false;
+            },
+        });
+    };
 
     // Current slide + shown-slide total, reported by the Presenter off Reveal,
     // so the dock can pace each slide against the talk target.
@@ -105,10 +129,11 @@
 
     // A live session opens while the presenter is on this page and closes when
     // they leave, so reactions and viewers are attributed to a real talk. A
-    // test run skips this entirely: no session means the backend records no
-    // analytics. Slides, presence and instant reactions still work.
+    // test run or practice run skips this entirely: no session means the
+    // backend records no analytics. Slides, presence and instant reactions
+    // still work.
     onMount(() => {
-        if (testMode) {
+        if (testMode || practiceMode) {
             return;
         }
 
@@ -172,8 +197,17 @@
         {/if}
     </div>
 
-    <!-- Dock column -->
-    {#if presentation.talk_settings.showDock}
+    <!-- Dock column. Practice mode swaps the live dock for the rehearsal
+         timer with its start/pause/stop controls, always visible. -->
+    {#if practiceMode}
+        <PracticeDock
+            talkSettings={presentation.talk_settings}
+            {slideCount}
+            {currentSlide}
+            saving={savingPracticeRun}
+            onFinish={savePracticeRun}
+        />
+    {:else if presentation.talk_settings.showDock}
         <PresenterDock
             {viewerUrl}
             talkSettings={presentation.talk_settings}

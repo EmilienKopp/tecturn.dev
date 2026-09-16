@@ -23,6 +23,13 @@ class PresentPresentationController extends Controller
             'presentation' => $this->presentations->findForPresent($presentation->id),
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),
             'testMode' => $request->boolean('test'),
+            'practiceMode' => $request->boolean('practice'),
+            'practiceRoutes' => [
+                'store' => route('presentations.practice.store', [
+                    'current_team' => $current_team->slug,
+                    'presentation' => $presentation->id,
+                ]),
+            ],
             'sessionRoutes' => [
                 'start' => route('presentations.session.start', [
                     'current_team' => $current_team->slug,

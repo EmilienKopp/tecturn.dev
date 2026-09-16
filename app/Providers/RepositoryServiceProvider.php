@@ -3,12 +3,14 @@
 namespace App\Providers;
 
 use App\Domain\Beta\Contracts\BetaRequestRepository;
+use App\Domain\Presentation\Contracts\PracticeRunRepository;
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Contracts\PresentationSessionRepository;
 use App\Domain\Presentation\Contracts\TranslationServiceContract;
 use App\Infrastructure\Adapters\UnconfiguredTranslationService;
 use App\Infrastructure\Adapters\YoYoTranslateAdapter;
 use App\Infrastructure\Persistence\Repositories\EloquentBetaRequestRepository;
+use App\Infrastructure\Persistence\Repositories\EloquentPracticeRunRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentPresentationRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentPresentationSessionRepository;
 use Illuminate\Support\Facades\Http;
@@ -20,6 +22,7 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(PresentationRepository::class, EloquentPresentationRepository::class);
         $this->app->bind(PresentationSessionRepository::class, EloquentPresentationSessionRepository::class);
+        $this->app->bind(PracticeRunRepository::class, EloquentPracticeRunRepository::class);
         $this->app->bind(BetaRequestRepository::class, EloquentBetaRequestRepository::class);
 
         $this->app->bind(TranslationServiceContract::class, function () {

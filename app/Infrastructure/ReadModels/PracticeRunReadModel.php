@@ -1,0 +1,74 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Infrastructure\ReadModels;
+
+use App\Models\Views\PracticeRunHistoryView;
+
+class PracticeRunReadModel
+{
+    /**
+     * A team's rehearsal history, most recent first, without the heavy deck
+     * snapshots — those load one at a time on the replay page.
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     presentation_id: int,
+     *     presentation_name: string,
+     *     started_at: string,
+     *     duration_seconds: int,
+     *     slide_count: int,
+     *     slide_timings: list<array{slide: int, seconds: int}>
+     * }>
+     */
+    public function listForTeam(int $teamId): array
+    {
+        return PracticeRunHistoryView::query()
+            ->where('team_id', $teamId)
+            ->orderByDesc('started_at')
+            ->get()
+            ->map(fn (PracticeRunHistoryView $run): array => [
+                'id' => $run->id,
+                'presentation_id' => $run->presentation_id,
+                'presentation_name' => $run->presentation_name,
+                'started_at' => $run->started_at->toISOString(),
+                'duration_seconds' => $run->duration_seconds,
+                'slide_count' => count($run->content['slides'] ?? []),
+                'slide_timings' => $run->slide_timings ?? [],
+            ])
+            ->all();
+    }
+
+    /**
+     * A single rehearsal with its frozen deck, ready for read-only replay.
+     *
+     * @return array{
+     *     id: int,
+     *     presentation_id: int,
+     *     presentation_name: string,
+     *     started_at: string,
+     *     ended_at: string,
+     *     duration_seconds: int,
+     *     slide_timings: list<array{slide: int, seconds: int}>,
+     *     content: array<string, mixed>,
+     *     flow: array<string, mixed>|null
+     * }
+     */
+    public function findForReplay(int $runId): array
+    {
+        $run = PracticeRunHistoryView::query()->findOrFail($runId);
+
+        return [
+            'id' => $run->id,
+            'presentation_id' => $run->presentation_id,
+            'presentation_name' => $run->presentation_name,
+            'started_at' => $run->started_at->toISOString(),
+            'ended_at' => $run->ended_at->toISOString(),
+            'duration_seconds' => $run->duration_seconds,
+            'slide_timings' => $run->slide_timings ?? [],
+            'content' => $run->content,
+            'flow' => $run->flow,
+        ];
+    }
+}

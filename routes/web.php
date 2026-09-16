@@ -20,10 +20,13 @@ use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
 use App\Http\Controllers\Presentations\GenerateDeckController;
 use App\Http\Controllers\Presentations\ImportPresentationController;
+use App\Http\Controllers\Presentations\ListPracticeRunsController;
 use App\Http\Controllers\Presentations\ListPresentationsController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
+use App\Http\Controllers\Presentations\RecordPracticeRunController;
 use App\Http\Controllers\Presentations\RecordReactionsController;
 use App\Http\Controllers\Presentations\SendReactionController;
+use App\Http\Controllers\Presentations\ShowPracticeRunController;
 use App\Http\Controllers\Presentations\StartSessionController;
 use App\Http\Controllers\Presentations\StartTranslationSessionController;
 use App\Http\Controllers\Presentations\StopTranslationSessionController;
@@ -91,12 +94,16 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+        Route::get('rehearsals', ListPracticeRunsController::class)->name('rehearsals.index');
+        Route::get('rehearsals/{practice_run}', ShowPracticeRunController::class)->name('rehearsals.show');
+
         Route::get('presentations', ListPresentationsController::class)->name('presentations.index');
         Route::post('presentations', CreatePresentationController::class)->name('presentations.store');
         Route::post('presentations/generate', GenerateDeckController::class)->name('presentations.generate');
         Route::post('presentations/import', ImportPresentationController::class)->name('presentations.importJson');
         Route::get('presentations/{presentation}', EditPresentationController::class)->name('presentations.edit');
         Route::get('presentations/{presentation}/present', PresentPresentationController::class)->name('presentations.present');
+        Route::post('presentations/{presentation}/practice-runs', RecordPracticeRunController::class)->name('presentations.practice.store');
         Route::post('presentations/{presentation}/session', StartSessionController::class)->name('presentations.session.start');
         // POST (not DELETE) so the presenter's unload handler can close the
         // session via navigator.sendBeacon, which only issues POST requests.

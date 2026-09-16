@@ -357,6 +357,31 @@ test('the present page flags a test run so no analytics session opens', function
     );
 });
 
+test('the present page flags a practice run and exposes the save route', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('presentations.present', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+            'practice' => 1,
+        ]));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('presentations/Present')
+        ->where('practiceMode', true)
+        ->where('practiceRoutes.store', route('presentations.practice.store', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ])),
+    );
+});
+
 test('the present page of another team presentation is not reachable', function () {
     $user = User::factory()->create();
     $otherTeamPresentation = PresentationModel::factory()->create();

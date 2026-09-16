@@ -102,7 +102,13 @@
             return;
         }
 
-        const report = () => onSlideChange(deck.getIndices().h, total);
+        // Before Reveal finishes booting, getIndices() can report an
+        // undefined h, which would surface as "Slide NaN" in the docks.
+        const report = () => {
+            const h = deck.getIndices().h;
+
+            onSlideChange(Number.isFinite(h) ? h : 0, total);
+        };
 
         deck.on('slidechanged', report);
         report();

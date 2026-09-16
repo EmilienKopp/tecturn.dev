@@ -106,6 +106,16 @@ class Team extends Model
     }
 
     /**
+     * Get all practice runs (rehearsals) recorded by this team.
+     *
+     * @return HasMany<PracticeRunModel, $this>
+     */
+    public function practiceRuns(): HasMany
+    {
+        return $this->hasMany(PracticeRunModel::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

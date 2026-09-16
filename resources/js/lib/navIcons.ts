@@ -1,5 +1,6 @@
 import LayoutGrid from 'lucide-svelte/icons/layout-grid';
 import Presentation from 'lucide-svelte/icons/presentation';
+import Timer from 'lucide-svelte/icons/timer';
 import User from 'lucide-svelte/icons/user';
 import Users from 'lucide-svelte/icons/users';
 import type { NavItem, ServerNavItem } from '@/types';
@@ -7,6 +8,7 @@ import type { NavItem, ServerNavItem } from '@/types';
 const icons: Record<string, NavItem['icon']> = {
     'layout-grid': LayoutGrid,
     presentation: Presentation,
+    timer: Timer,
     user: User,
     users: Users,
 };

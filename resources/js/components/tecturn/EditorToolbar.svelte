@@ -226,6 +226,12 @@
     // analytics session so a rehearsal never pollutes the numbers.
     const testRunUrl = $derived(presentUrl ? `${presentUrl}?test=1` : null);
 
+    // Practice mode: same screen again, but with a start/stop rehearsal timer
+    // whose runs are saved with a snapshot of the deck.
+    const practiceRunUrl = $derived(
+        presentUrl ? `${presentUrl}?practice=1` : null,
+    );
+
     const save = async () => {
         const currentTeam = page.props.currentTeam;
 
@@ -394,6 +400,20 @@
                                 data-test="editor-test-run-link"
                             >
                                 <FlaskConical class="h-4 w-4" /> Test run
+                            </a>
+                        {/snippet}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <a
+                                {...props}
+                                onclick={props.onClick}
+                                href={practiceRunUrl}
+                                target="_blank"
+                                rel="noopener"
+                                data-test="editor-practice-link"
+                            >
+                                <Timer class="h-4 w-4" /> Practice
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
