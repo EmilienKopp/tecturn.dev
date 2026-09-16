@@ -216,8 +216,10 @@ ${styles}
         }
 
         // Slides default to a white background, but the surrounding Animotion
-        // theme is dark; pin a base ink color so text never inherits it.
-        const baseInk = `${INDENT}${usedLayouts.map((layout) => `.layout-${layout}`).join(', ')} { color: #1a1a1a; }`;
+        // theme is dark; pin a base ink color so text never inherits it. The
+        // line-height counters Reveal's `.reveal-viewport { line-height: 1 }`
+        // so vertical rhythm matches the editor (Tailwind's 1.5 base).
+        const baseInk = `${INDENT}${usedLayouts.map((layout) => `.layout-${layout}`).join(', ')} { color: #1a1a1a; line-height: 1.5; }`;
 
         return [
             baseInk,

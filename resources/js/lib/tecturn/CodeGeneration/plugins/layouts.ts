@@ -163,13 +163,17 @@ export class RichTextLayoutRenderer implements LayoutRendererPlugin {
 export const defaultLayoutPlugins: CodegenPlugin = {
     name: 'tecturn:layouts',
     layouts: [
+        // `text-align` is set directly on the section so it beats Reveal's
+        // inherited `.reveal .slides { text-align: center }`, matching the
+        // editor: Full is left-aligned, Center is centered. Without it a Full
+        // slide renders centered in the embed but left in the editor.
         new SlotLayoutRenderer(
             'full',
-            '.layout-full { display: grid; height: 100%; }',
+            '.layout-full { display: grid; height: 100%; text-align: left; }',
         ),
         new SlotLayoutRenderer(
             'center',
-            '.layout-center { display: flex; height: 100%; align-items: center; justify-content: center; }',
+            '.layout-center { display: flex; height: 100%; align-items: center; justify-content: center; text-align: center; }',
         ),
         new SlotLayoutRenderer(
             'top-main',

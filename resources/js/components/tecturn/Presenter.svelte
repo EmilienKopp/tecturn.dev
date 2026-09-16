@@ -252,7 +252,9 @@
                     ? undefined
                     : (slide.background ??
                       (content.backgroundImage ? undefined : '#ffffff'))}
-                gradient={gradient ? (slide.background ?? undefined) : undefined}
+                gradient={gradient
+                    ? (slide.background ?? undefined)
+                    : undefined}
                 image={slide.background
                     ? undefined
                     : (content.backgroundImage ?? undefined)}
@@ -268,7 +270,7 @@
                             class="relative"
                             style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9; color: {slide
                                 .config?.textColor ??
-                                '#1a1a1a'}; text-align: left;"
+                                '#1a1a1a'}; text-align: left; line-height: 1.5;"
                         >
                             {#each freeSteps(slide) as { block, order } (block.id)}
                                 <div
@@ -290,8 +292,13 @@
                     </div>
                 {:else}
                     {@const definition = layoutDefinition(slide.layout)}
+                    <!-- `text-left` counters Reveal's inherited center and
+                         `leading-normal` its viewport `line-height: 1`, so
+                         alignment and vertical rhythm match the editor
+                         (Tailwind's 1.5 base); Center re-centers via its
+                         slotClass, same as SlideCanvas. -->
                     <div
-                        class="{definition.containerClass} h-full p-12"
+                        class="{definition.containerClass} h-full p-12 text-left leading-normal"
                         style="color: {slide.config?.textColor ?? '#1a1a1a'}"
                     >
                         {#each definition.slots as slotName (slotName)}
@@ -299,7 +306,10 @@
                                 slide,
                                 slotName,
                             )}
-                            <div class="flex min-h-0 flex-col gap-4">
+                            <div
+                                class="flex min-h-0 flex-col gap-4 {definition
+                                    .slotClass?.[slotName] ?? ''}"
+                            >
                                 {#each staticBlocks as block (block.id)}
                                     {@render blockView(block)}
                                     {@render blockActions(slide, block)}
