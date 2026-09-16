@@ -14,9 +14,14 @@
 </script>
 
 <script lang="ts">
+    import { page, router } from '@inertiajs/svelte';
+    import Download from 'lucide-svelte/icons/download';
+    import FilePlus from 'lucide-svelte/icons/file-plus';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import Presenter from '@/components/tecturn/Presenter.svelte';
+    import { Button } from '@/components/ui/button';
+    import { importJson } from '@/routes/presentations';
     import type { FlowGraph, PresentationContent } from '@/types/generated';
 
     type Run = {
@@ -63,6 +68,51 @@
         Math.max(1, ...run.slide_timings.map((timing) => timing.seconds)),
     );
 
+    const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
+
+    // The snapshot repackaged as the same envelope the import flow accepts,
+    // so the downloaded file round-trips through "Import JSON" untouched.
+    const snapshotEnvelope = (): string =>
+        JSON.stringify(
+            {
+                name: `${run.presentation_name} (rehearsal ${new Date(run.started_at).toLocaleDateString()})`,
+                content: run.content,
+                flow: run.flow,
+            },
+            null,
+            2,
+        );
+
+    const downloadSnapshot = (): void => {
+        const blob = new Blob([snapshotEnvelope()], {
+            type: 'application/json',
+        });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+
+        anchor.href = url;
+        anchor.download = `${run.presentation_name.replace(/[^\w-]+/g, '-')}-rehearsal-${run.id}.json`;
+        anchor.click();
+        URL.revokeObjectURL(url);
+    };
+
+    let restoring = $state(false);
+
+    // Feeds the snapshot straight into the existing import flow, which
+    // creates the new deck and redirects to its editor.
+    const restoreAsNewDeck = (): void => {
+        restoring = true;
+        router.post(
+            importJson(teamSlug).url,
+            { json: snapshotEnvelope() },
+            {
+                onFinish: () => {
+                    restoring = false;
+                },
+            },
+        );
+    };
+
     const stats = $derived([
         { label: 'Total time', value: formatTime(run.duration_seconds) },
         { label: 'Slides in deck', value: String(run.content.slides.length) },
@@ -74,11 +124,30 @@
 <AppHead title="Rehearsal · {run.presentation_name}" />
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
-    <Heading
-        variant="small"
-        title={run.presentation_name}
-        description="Rehearsed {when}, with the slides as they were then"
-    />
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <Heading
+            variant="small"
+            title={run.presentation_name}
+            description="Rehearsed {when}, with the slides as they were then"
+        />
+        <div class="flex items-center gap-2">
+            <Button
+                variant="outline"
+                onclick={downloadSnapshot}
+                data-test="rehearsal-download-json"
+            >
+                <Download class="h-4 w-4" /> Download JSON
+            </Button>
+            <Button
+                onclick={restoreAsNewDeck}
+                disabled={restoring}
+                data-test="rehearsal-restore-deck"
+            >
+                <FilePlus class="h-4 w-4" />
+                {restoring ? 'Creating…' : 'New deck from snapshot'}
+            </Button>
+        </div>
+    </div>
 
     <!-- Timing summary strip, same shape as the dashboard's engagement strip -->
     <section

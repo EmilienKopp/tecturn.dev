@@ -156,6 +156,38 @@ test('a rehearsal replay exposes the frozen deck and its timings', function () {
     );
 });
 
+test('a snapshot envelope creates a new deck via the import flow', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $user->currentTeam->id]);
+    $run = PracticeRunModel::factory()->create([
+        'presentation_id' => $presentation->id,
+        'team_id' => $user->currentTeam->id,
+        'content' => $presentation->content,
+    ]);
+
+    // The original deck moves on; the restore must come from the snapshot.
+    $presentation->update(['content' => ['version' => '1.0', 'slides' => []]]);
+
+    $response = $this->actingAs($user)->post(route('presentations.importJson', [
+        'current_team' => $user->currentTeam->slug,
+    ]), [
+        'json' => json_encode([
+            'name' => 'Restored rehearsal',
+            'content' => $run->content,
+            'flow' => $run->flow,
+        ]),
+    ]);
+
+    $restored = PresentationModel::query()->where('name', 'Restored rehearsal')->sole();
+
+    $response->assertRedirect(route('presentations.edit', [
+        'current_team' => $user->currentTeam->slug,
+        'presentation' => $restored->id,
+    ]));
+
+    expect($restored->content['slides'])->toHaveCount(2);
+});
+
 test('a rehearsal from another team is not reachable', function () {
     $user = User::factory()->create();
     $foreignRun = PracticeRunModel::factory()->create();
