@@ -21,15 +21,29 @@
     let socketStatus: SocketStatus = $state('disconnected');
     let reconnectNonce = $state(0);
 
-    // Frames carry arrays of sub-word tokens tagged by language; concatenate
-    // them into one running transcript per language.
-    type CaptionToken = {
+    // Each language arrives as its own {type:"transcript", language, final,
+    // interim} frame. `final` segments are committed once and appended;
+    // `interim` is the in-progress line, replaced on every frame. The displayed
+    // transcript is committed + pending.
+    type CaptionSegment = {
         text: string;
-        language?: string;
-        is_final?: boolean;
-        translation_status?: string;
+        kind?: string;
     };
-    let transcripts = $state<Record<string, string>>({});
+    let committed = $state<Record<string, string>>({});
+    let pending = $state<Record<string, string>>({});
+    let transcripts = $derived.by(() => {
+        const merged: Record<string, string> = {};
+
+        for (const language of new Set([
+            ...Object.keys(committed),
+            ...Object.keys(pending),
+        ])) {
+            merged[language] =
+                (committed[language] ?? '') + (pending[language] ?? '');
+        }
+
+        return merged;
+    });
     let languages = $derived(Object.keys(transcripts));
 
     // Up to two languages shown at once; two get a two-column layout.
@@ -102,7 +116,7 @@
                         ? await event.data.text()
                         : event.data;
 
-                if (!appendTokens(raw)) {
+                if (!handleTranscript(raw)) {
                     console.warn('[YoYoTranslate] unrecognized frame:', raw);
                 }
             });
@@ -127,54 +141,75 @@
         }
     });
 
-    /** Returns false when the frame doesn't match the expected token shape. */
-    function appendTokens(raw: unknown): boolean {
+    /** Returns false when the frame isn't a recognized transcript message. */
+    function handleTranscript(raw: unknown): boolean {
         if (typeof raw !== 'string' || raw === '') {
             return false;
         }
 
-        let tokens: CaptionToken[];
+        let message: {
+            type?: string;
+            language?: string;
+            final?: unknown;
+            interim?: unknown;
+        };
 
         try {
-            const parsed = JSON.parse(raw) as {
-                tokens?: unknown;
-                data?: { tokens?: unknown };
-            };
-            // Frames arrive as {type: "translation", data: {tokens: [...]}}.
-            const candidate = parsed?.data?.tokens ?? parsed?.tokens;
-
-            if (!Array.isArray(candidate)) {
-                return false;
-            }
-
-            tokens = candidate.filter(
-                (token: unknown): token is CaptionToken =>
-                    typeof (token as CaptionToken)?.text === 'string',
-            );
+            message = JSON.parse(raw);
         } catch {
             return false;
         }
 
-        for (const token of tokens) {
-            // Non-final tokens get re-sent once settled; skip them so text
-            // isn't duplicated.
-            if (token.is_final === false) {
-                continue;
-            }
-
-            const language = token.language ?? 'unknown';
-            transcripts[language] = (
-                (transcripts[language] ?? '') + token.text
-            ).slice(-1000);
-
-            if (token.translation_status === 'translation') {
-                translatedLanguages.add(language);
-            }
-
-            autoSelect(language);
+        // One frame per language: {type:"transcript", language, final, interim}.
+        if (
+            message?.type !== 'transcript' ||
+            typeof message.language !== 'string'
+        ) {
+            return false;
         }
 
+        const language = message.language;
+        const finalSegments = toSegments(message.final);
+        const interimSegments = toSegments(message.interim);
+
+        // `final` is committed text (append); `interim` is the in-progress line
+        // (replace each frame, don't append).
+        if (finalSegments.length > 0) {
+            committed[language] = (
+                (committed[language] ?? '') +
+                finalSegments.map((segment) => segment.text).join('')
+            ).slice(-1000);
+        }
+
+        pending[language] = interimSegments
+            .map((segment) => segment.text)
+            .join('');
+
+        // `kind: "translation"` marks translated output; "original"/"none" is
+        // the spoken source. Translations land in `final`.
+        if (
+            [...finalSegments, ...interimSegments].some(
+                (segment) => segment.kind === 'translation',
+            )
+        ) {
+            translatedLanguages.add(language);
+        }
+
+        autoSelect(language);
+
         return true;
+    }
+
+    /** Keep only well-formed {text} segments from a frame's final/interim list. */
+    function toSegments(value: unknown): CaptionSegment[] {
+        if (!Array.isArray(value)) {
+            return [];
+        }
+
+        return value.filter(
+            (segment: unknown): segment is CaptionSegment =>
+                typeof (segment as CaptionSegment)?.text === 'string',
+        );
     }
 
     /**
