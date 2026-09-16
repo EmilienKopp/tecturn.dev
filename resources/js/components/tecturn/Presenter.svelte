@@ -40,11 +40,19 @@
         content: rawContent,
         flow: rawFlow = null,
         onSlideChange,
+        embedded = false,
     }: {
         content: PresentationContent;
         flow?: FlowGraph | null;
         /** Fires with the current slide index and the shown-slide total. */
         onSlideChange?: (current: number, total: number) => void;
+        /**
+         * Sizes the deck to its host element instead of the window. Required
+         * when the Presenter renders inside a small box (e.g. the rehearsal
+         * replay); without it Reveal goes full-page and the cqw font sizes
+         * resolve against the viewport, blowing up the text.
+         */
+        embedded?: boolean;
     } = $props();
 
     // Same pipeline as codegen.ts, so live presenting and the Svelte export
@@ -249,6 +257,8 @@
             hash: false,
             controls: true,
             progress: true,
+            embedded,
+            ...(embedded ? { keyboardCondition: 'focused' } : {}),
         }}
     >
         {#each shownSlides as slide (slide.id)}
@@ -336,3 +346,13 @@
         {/each}
     </Presentation>
 </div>
+
+<style>
+    /* Reveal's embedded mode measures the .reveal element, which Animotion
+       renders without dimensions of its own; make it fill the host box. The
+       full-page presenter is unaffected since its viewport is already sized. */
+    div[data-test='presenter'] :global(.reveal) {
+        width: 100%;
+        height: 100%;
+    }
+</style>

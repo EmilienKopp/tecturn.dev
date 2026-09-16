@@ -111,13 +111,18 @@
                     Slide {currentSlide + 1} / {slideCount}
                 </span>
             </div>
+            <!-- The stage must be a query container: slide text is sized in
+                 cqw and otherwise falls back to viewport units, blowing up
+                 the fonts. Mirrors the [container-type:size] column on the
+                 present page. -->
             <div
-                class="overflow-hidden rounded-xl border border-border bg-black"
+                class="relative overflow-hidden rounded-xl border border-border bg-black [container-type:size]"
                 style="aspect-ratio: 16 / 9;"
             >
                 <Presenter
                     content={run.content}
                     flow={run.flow}
+                    embedded
                     onSlideChange={(current, total) => {
                         currentSlide = current;
                         slideCount = total;
