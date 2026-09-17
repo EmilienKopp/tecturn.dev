@@ -1,6 +1,6 @@
 <script lang="ts">
     import { router, page } from '@inertiajs/svelte';
-    import { Code, CurlyBraces } from 'lucide-svelte';
+    import { CurlyBraces } from 'lucide-svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Download from 'lucide-svelte/icons/download';
@@ -8,6 +8,7 @@
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
     import LayoutPanelLeft from 'lucide-svelte/icons/layout-panel-left';
+    import Lock from 'lucide-svelte/icons/lock';
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
     import Play from 'lucide-svelte/icons/play';
@@ -30,18 +31,19 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
-    import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
     import SlideDefaultsModal from './SlideDefaultsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
+    import { present, update } from '@/routes/presentations';
 
     let {
         editor,
         presentationId,
         talkSettings,
+        isPrivate,
         name = $bindable(),
         view = $bindable(),
         onExport,
@@ -53,6 +55,7 @@
         editor: EditorState;
         presentationId: number;
         talkSettings: TalkSettings;
+        isPrivate: boolean;
         name: string;
         view: 'slides' | 'flow';
         onExport: () => void;
@@ -63,6 +66,7 @@
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
+    let presentationPrivate = $state(isPrivate);
     let showDock = $state(talkSettings.showDock);
     let showTranslation = $state(talkSettings.showTranslation);
     let savingTalkSettings = $state(false);
@@ -143,6 +147,33 @@
         );
     };
 
+    const togglePrivacy = () => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam) {
+            return;
+        }
+
+        const next = !presentationPrivate;
+        presentationPrivate = next;
+
+        router.put(
+            update({
+                current_team: currentTeam.slug,
+                presentation: presentationId,
+            }).url,
+            {
+                is_private: next,
+            },
+            {
+                preserveState: true,
+                onError: () => {
+                    presentationPrivate = !next;
+                },
+            },
+        );
+    };
+
     const saveFooter = (next: FooterSettings) => {
         const previous = footer;
         persistTalkSettings(
@@ -205,14 +236,6 @@
         }
     };
 
-    const exportJSON = async () => {
-        try {
-            await onExportJSON();
-        } catch (error) {
-            console.error('Failed to export JSON:', error);
-        }
-    };
-
     const presentUrl = $derived(
         page.props.currentTeam
             ? present({
@@ -249,6 +272,7 @@
                     name,
                     content: editor.content,
                     flow: $state.snapshot(editor.flow),
+                    is_private: presentationPrivate,
                     autoSave: autoSave,
                 },
                 {
@@ -456,6 +480,13 @@
                     showTranslation,
                     toggleTranslation,
                     'editor-translation-toggle',
+                )}
+                {@render toggleRow(
+                    'Private talk',
+                    Lock,
+                    presentationPrivate,
+                    togglePrivacy,
+                    'editor-private-toggle',
                 )}
                 <button
                     type="button"

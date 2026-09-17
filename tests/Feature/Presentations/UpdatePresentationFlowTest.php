@@ -161,6 +161,35 @@ test('a flow referencing a nonexistent slide is rejected', function () {
         ->assertSessionHasErrors('flow');
 });
 
+test('privacy can be updated and returned to the editor', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'is_private' => false,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->put(route('presentations.update', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]), ['is_private' => true])
+        ->assertSessionDoesntHaveErrors();
+
+    expect($presentation->refresh()->is_private)->toBeTrue();
+
+    $this
+        ->actingAs($user)
+        ->get(route('presentations.edit', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('presentations/Editor')
+            ->where('presentation.is_private', true),
+        );
+});
+
 test('the editor loads a presentation without a flow', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->create([

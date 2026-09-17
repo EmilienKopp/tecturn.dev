@@ -13,7 +13,6 @@
 
 <script lang="ts">
     import { Form, page, useForm } from '@inertiajs/svelte';
-    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';
     import Heading from '@/components/Heading.svelte';
@@ -27,6 +26,7 @@
         BRANDING_KEYS,
         BRANDING_LABELS,
     } from '@/lib/tecturn/branding';
+    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import { update as updateBranding } from '@/routes/branding';
 
     const user = $derived(page.props.auth.user);
@@ -54,7 +54,7 @@
     <Heading
         variant="small"
         title="Profile"
-        description="Update your name and email address"
+        description="Update your name, public handle, and social links"
     />
 
     <Form
@@ -75,6 +75,23 @@
                     placeholder="Full name"
                 />
                 <InputError class="mt-2" message={errors.name} />
+            </div>
+
+            <div class="grid gap-2">
+                <Label for="handle">Public handle</Label>
+                <Input
+                    id="handle"
+                    name="handle"
+                    class="mt-1 block w-full"
+                    value={user.handle ?? ''}
+                    autocomplete="off"
+                    placeholder="yourname"
+                    data-test="profile-handle"
+                />
+                <p class="text-sm text-muted-foreground">
+                    This is how people can find you in Contacts.
+                </p>
+                <InputError class="mt-2" message={errors.handle} />
             </div>
 
             <div class="grid gap-2">

@@ -22,12 +22,12 @@
         saveEditorDraft,
     } from '@/lib/tecturn/editor-draft';
     import { EditorState } from '@/lib/tecturn/editor-state.svelte';
-    import { exportMethod } from '@/routes/presentations';
     import type {
         FlowGraph,
         PresentationContent,
         TalkSettings,
     } from '@/types/generated';
+    import { exportMethod } from '@/routes/presentations';
 
     let {
         presentation,
@@ -39,6 +39,7 @@
             name: string;
             content: PresentationContent;
             talk_settings: TalkSettings;
+            is_private: boolean;
             flow: FlowGraph | null;
             updated_at: string | null;
         };
@@ -51,7 +52,7 @@
 
     // The element must be block-level with a real height — Reveal.js sizes
     // itself to 100% of its container.
-    const embedSnippet = `<script src="${embed.url}"><\/script>\n<${embed.tag} style="display: block; width: 100%; aspect-ratio: 16 / 9;"></${embed.tag}>`;
+    const embedSnippet = `<script src="${embed.url}"></${'script'}>\n<${embed.tag} style="display: block; width: 100%; aspect-ratio: 16 / 9;"></${embed.tag}>`;
 
     // A newer local draft means this browser holds edits the server never
     // received (reload, crash, or auto-save off) — restore those over the
@@ -198,6 +199,7 @@
         {editor}
         presentationId={presentation.id}
         talkSettings={presentation.talk_settings}
+        isPrivate={presentation.is_private}
         bind:name
         bind:view
         onExport={exportSvelte}

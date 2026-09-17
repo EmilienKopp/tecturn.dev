@@ -22,6 +22,7 @@ class PresentationModelFactory extends Factory
         return [
             'team_id' => Team::factory(),
             'name' => fake()->sentence(3),
+            'is_private' => false,
             'content' => PresentationContent::empty()->toArray(),
         ];
     }

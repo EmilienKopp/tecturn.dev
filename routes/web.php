@@ -10,6 +10,9 @@ use App\Http\Controllers\Admin\RejectBetaRequestController;
 use App\Http\Controllers\Admin\UpdateFeatureFlagController;
 use App\Http\Controllers\Beta\RequestBetaAccessController;
 use App\Http\Controllers\Beta\ShowBetaRegistrationController;
+use App\Http\Controllers\Contacts\FollowUserController;
+use App\Http\Controllers\Contacts\UnfollowUserController;
+use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Presentations\CreatePresentationController;
 use App\Http\Controllers\Presentations\DeletePresentationBackgroundController;
@@ -83,6 +86,12 @@ Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentatio
 
 Route::get('present/{presentation:embed_token}', ViewerController::class)
     ->name('presentations.viewer');
+
+Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function () {
+    Route::get('contacts', ContactsController::class)->name('contacts.index');
+    Route::post('contacts/{user}/follow', FollowUserController::class)->name('contacts.follow.store');
+    Route::delete('contacts/{user}/follow', UnfollowUserController::class)->name('contacts.follow.destroy');
+});
 
 Route::post('present/{presentation:embed_token}/reactions', SendReactionController::class)
     ->middleware('throttle:60,1')

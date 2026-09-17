@@ -22,6 +22,7 @@ class EloquentPresentationRepository implements PresentationRepository
         $attributes = [
             'team_id' => $presentation->team_id,
             'name' => $presentation->name,
+            'is_private' => $presentation->isPrivate,
             'content' => $presentation->content->toArray(),
             'talk_settings' => $presentation->talkSettings->toArray(),
             'flow' => $presentation->flow?->toArray(),

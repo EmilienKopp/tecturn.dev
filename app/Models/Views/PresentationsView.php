@@ -9,6 +9,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property int $id
  * @property int $team_id
  * @property string $name
+ * @property bool $is_private
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $talk_settings
  * @property array<string, mixed>|null $flow
@@ -31,6 +32,7 @@ class PresentationsView extends ReadOnlyModel
     protected function casts(): array
     {
         return [
+            'is_private' => 'boolean',
             'content' => 'array',
             'talk_settings' => 'array',
             'flow' => 'array',

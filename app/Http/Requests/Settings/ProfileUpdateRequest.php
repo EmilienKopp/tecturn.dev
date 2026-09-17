@@ -2,8 +2,10 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class ProfileUpdateRequest extends FormRequest
 {
@@ -16,6 +18,7 @@ class ProfileUpdateRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
+            'handle' => ['sometimes', 'nullable', 'string', 'min:3', 'max:32', 'regex:/^[a-z0-9._-]+$/', Rule::unique('users', 'handle')->ignore($this->user()?->id)],
             'social_x_handle' => ['sometimes', 'nullable', 'string', 'max:100'],
             'social_github_handle' => ['sometimes', 'nullable', 'string', 'max:100'],
         ];
@@ -37,6 +40,10 @@ class ProfileUpdateRequest extends FormRequest
         };
 
         $handles = [];
+
+        if ($this->has('handle')) {
+            $handles['handle'] = User::normalizeHandle($this->input('handle'));
+        }
 
         foreach (['social_x_handle', 'social_github_handle'] as $field) {
             if ($this->has($field)) {

@@ -19,6 +19,7 @@ use Illuminate\Support\Str;
 /**
  * @property int $id
  * @property string $name
+ * @property string|null $handle
  * @property string $email
  * @property Carbon|null $email_verified_at
  * @property string $workos_id
@@ -35,7 +36,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'email_verified_at', 'workos_id', 'avatar', 'social_x_handle', 'social_github_handle', 'branding', 'current_team_id'])]
+#[Fillable(['name', 'handle', 'email', 'email_verified_at', 'workos_id', 'avatar', 'social_x_handle', 'social_github_handle', 'branding', 'current_team_id'])]
 #[Hidden(['workos_id', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -75,5 +76,45 @@ class User extends Authenticatable
     public function isAdmin(): bool
     {
         return in_array(Str::lower($this->email), config('admin.emails', []), true);
+    }
+
+    public static function normalizeHandle(mixed $handle): ?string
+    {
+        if (! is_string($handle)) {
+            return null;
+        }
+
+        $normalized = Str::lower(ltrim(trim($handle), '@'));
+        $normalized = (string) preg_replace('/[^a-z0-9._-]+/', '-', $normalized);
+        $normalized = trim($normalized, '.-_');
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    public static function generateUniqueHandle(string $value, ?int $ignoreId = null): string
+    {
+        $base = self::normalizeHandle($value) ?? 'user';
+        $base = mb_substr($base, 0, 32);
+        $base = trim($base, '.-_');
+
+        if ($base === '') {
+            $base = 'user';
+        }
+
+        $candidate = $base;
+        $suffix = 2;
+
+        while (self::query()
+            ->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))
+            ->where('handle', $candidate)
+            ->exists()) {
+            $suffixString = '-'.$suffix;
+            $trimmed = mb_substr($base, 0, max(1, 32 - mb_strlen($suffixString)));
+            $trimmed = trim($trimmed, '.-_');
+            $candidate = ($trimmed === '' ? 'user' : $trimmed).$suffixString;
+            $suffix++;
+        }
+
+        return $candidate;
     }
 }
