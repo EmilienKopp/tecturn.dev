@@ -20,6 +20,7 @@
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
+    import UserAvatar from '@/components/UserAvatar.svelte';
     import { index as contactsIndex } from '@/routes/contacts';
     import {
         destroy as unfollowContact,
@@ -198,10 +199,10 @@
                         >
                             <div class="flex items-start justify-between gap-3">
                                 <div class="flex min-w-0 items-center gap-3">
-                                    <img
-                                        src={contact.avatar}
-                                        alt=""
-                                        class="h-12 w-12 shrink-0 rounded-full object-cover"
+                                    <UserAvatar
+                                        name={contact.name}
+                                        avatar={contact.avatar}
+                                        class="h-12 w-12 shrink-0"
                                     />
                                     <div class="min-w-0">
                                         <p
@@ -317,10 +318,10 @@
                                 data-test="followed-talk-card"
                             >
                                 <div class="flex items-center gap-3">
-                                    <img
-                                        src={talk.user.avatar}
-                                        alt=""
-                                        class="h-10 w-10 rounded-full object-cover"
+                                    <UserAvatar
+                                        name={talk.user.name}
+                                        avatar={talk.user.avatar}
+                                        class="h-10 w-10"
                                     />
                                     <div class="min-w-0">
                                         <p
@@ -406,10 +407,10 @@
                                 class="flex items-center gap-3"
                                 data-test="following-row"
                             >
-                                <img
-                                    src={contact.avatar}
-                                    alt=""
-                                    class="h-10 w-10 rounded-full object-cover"
+                                <UserAvatar
+                                    name={contact.name}
+                                    avatar={contact.avatar}
+                                    class="h-10 w-10"
                                 />
                                 <div class="min-w-0">
                                     <p
@@ -450,10 +451,10 @@
                                 class="flex items-center gap-3"
                                 data-test="follower-row"
                             >
-                                <img
-                                    src={contact.avatar}
-                                    alt=""
-                                    class="h-10 w-10 rounded-full object-cover"
+                                <UserAvatar
+                                    name={contact.name}
+                                    avatar={contact.avatar}
+                                    class="h-10 w-10"
                                 />
                                 <div class="min-w-0">
                                     <p
