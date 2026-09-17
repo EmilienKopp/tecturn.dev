@@ -14,6 +14,7 @@
     import Radio from 'lucide-svelte/icons/radio';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
+    import UserAvatar from '@/components/UserAvatar.svelte';
 
     type Engagement = {
         total_sessions: number;
@@ -66,8 +67,10 @@
         if (seconds < 60) {
             return `${seconds}s`;
         }
+
         const m = Math.floor(seconds / 60);
         const h = Math.floor(m / 60);
+
         return h > 0 ? `${h}h ${m % 60}m` : `${m}m`;
     };
 
@@ -88,10 +91,10 @@
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
     <div class="flex items-center gap-4">
-        <img
-            src={user.avatar}
-            alt=""
-            class="h-14 w-14 shrink-0 rounded-full object-cover"
+        <UserAvatar
+            name={user.name}
+            avatar={user.avatar}
+            class="h-14 w-14 shrink-0"
         />
         <Heading variant="small" title={user.name} description={user.email} />
     </div>

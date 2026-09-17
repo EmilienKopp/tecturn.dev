@@ -10,7 +10,7 @@ use App\Models\Views\PresentationsView;
 class PresentationReadModel
 {
     /**
-     * @return array<int, array{id: int, name: string, slide_count: int, updated_at: string|null}>
+     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, updated_at: string|null}>
      */
     public function listForTeam(int $teamId): array
     {
@@ -21,6 +21,7 @@ class PresentationReadModel
             ->map(fn (PresentationsView $presentation): array => [
                 'id' => $presentation->id,
                 'name' => $presentation->name,
+                'is_private' => $presentation->is_private,
                 'slide_count' => count($presentation->content['slides'] ?? []),
                 'updated_at' => $presentation->updated_at?->toISOString(),
             ])
@@ -45,6 +46,7 @@ class PresentationReadModel
      * @return array{
      *     id: int,
      *     name: string,
+     *     is_private: bool,
      *     content: array<string, mixed>,
      *     talk_settings: array<string, mixed>,
      *     flow: array<string, mixed>|null,
@@ -76,6 +78,7 @@ class PresentationReadModel
         return [
             'id' => $presentation->id,
             'name' => $presentation->name,
+            'is_private' => $presentation->is_private,
             'content' => $presentation->content,
             'talk_settings' => TalkSettings::fromArray($presentation->talk_settings ?? [])->toArray(),
             'flow' => $presentation->flow,
@@ -94,7 +97,7 @@ class PresentationReadModel
     }
 
     /**
-     * @return array{id: int, name: string, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, updated_at: string|null}
+     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, updated_at: string|null}
      */
     public function findForEditor(int $presentationId): array
     {
@@ -103,6 +106,7 @@ class PresentationReadModel
         return [
             'id' => $presentation->id,
             'name' => $presentation->name,
+            'is_private' => $presentation->is_private,
             'content' => $presentation->content,
             'talk_settings' => TalkSettings::fromArray($presentation->talk_settings ?? [])->toArray(),
             'flow' => $presentation->flow,

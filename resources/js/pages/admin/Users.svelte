@@ -13,6 +13,7 @@
     import { router } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
+    import UserAvatar from '@/components/UserAvatar.svelte';
     import { show as showUser } from '@/routes/admin/users';
 
     type UserRow = {
@@ -69,10 +70,10 @@
                     >
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
-                                <img
-                                    src={user.avatar}
-                                    alt=""
-                                    class="h-8 w-8 shrink-0 rounded-full object-cover"
+                                <UserAvatar
+                                    name={user.name}
+                                    avatar={user.avatar}
+                                    class="h-8 w-8 shrink-0"
                                 />
                                 <div class="min-w-0">
                                     <p

@@ -24,6 +24,7 @@ class UpdatePresentationRequest extends FormRequest
     {
         return [
             'name' => ['sometimes', 'string', 'max:255'],
+            'is_private' => ['sometimes', 'boolean'],
             'content' => ['sometimes', 'array'],
             'content.version' => ['required_with:content', Rule::in([PresentationContent::VERSION])],
             'content.backgroundImage' => ['sometimes', 'nullable', 'string'],

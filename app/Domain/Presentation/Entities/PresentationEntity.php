@@ -19,6 +19,7 @@ class PresentationEntity extends BaseEntity
         public int $team_id,
         public string $name,
         public PresentationContent $content,
+        public bool $isPrivate = false,
         public TalkSettings $talkSettings = new TalkSettings,
         public ?FlowGraph $flow = null,
         public ?int $id = null,
@@ -42,6 +43,11 @@ class PresentationEntity extends BaseEntity
     public function replaceContent(PresentationContent $content): void
     {
         $this->content = $content;
+    }
+
+    public function changePrivacy(bool $isPrivate): void
+    {
+        $this->isPrivate = $isPrivate;
     }
 
     /**
@@ -101,6 +107,7 @@ class PresentationEntity extends BaseEntity
             'id' => $this->id,
             'team_id' => $this->team_id,
             'name' => $this->name,
+            'is_private' => $this->isPrivate,
             'content' => $this->content->toArray(),
             'talk_settings' => $this->talkSettings->toArray(),
             'flow' => $this->flow?->toArray(),

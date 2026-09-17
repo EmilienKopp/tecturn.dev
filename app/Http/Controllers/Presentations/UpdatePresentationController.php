@@ -54,6 +54,7 @@ class UpdatePresentationController extends Controller
                 new UpdatePresentationCommand(
                     presentation_id: $presentation->id,
                     name: $request->validated('name', null),
+                    isPrivate: $request->validated('is_private', null),
                     content: $content,
                     talkSettings: $talkSettings,
                     flow: $flow,

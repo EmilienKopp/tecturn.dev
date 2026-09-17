@@ -21,7 +21,8 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'name' => $name = fake()->name(),
+            'handle' => User::generateUniqueHandle($name),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'workos_id' => 'fake-'.Str::random(10),

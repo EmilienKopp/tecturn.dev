@@ -64,8 +64,11 @@ class ProvisionUserFromWorkOS
             );
         }
 
+        $name = trim($workosUser->firstName.' '.$workosUser->lastName);
+
         return User::create([
-            'name' => trim($workosUser->firstName.' '.$workosUser->lastName),
+            'name' => $name,
+            'handle' => User::generateUniqueHandle($name !== '' ? $name : Str::before($workosUser->email, '@')),
             'email' => $workosUser->email,
             'email_verified_at' => now(),
             'workos_id' => $workosUser->id,
