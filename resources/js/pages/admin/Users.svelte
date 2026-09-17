@@ -65,8 +65,7 @@
                     <tr
                         class="cursor-pointer border-b border-border last:border-0 hover:bg-muted/50"
                         data-test="user-row"
-                        onclick={() =>
-                            router.visit(showUser(user.id).url)}
+                        onclick={() => router.visit(showUser(user.id).url)}
                     >
                         <td class="px-4 py-3">
                             <div class="flex items-center gap-3">
@@ -97,9 +96,7 @@
                         >
                             {user.team_count}
                         </td>
-                        <td
-                            class="px-4 py-3 text-right text-muted-foreground"
-                        >
+                        <td class="px-4 py-3 text-right text-muted-foreground">
                             {formatDate(user.created_at)}
                         </td>
                     </tr>

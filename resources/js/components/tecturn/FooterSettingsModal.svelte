@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
+    import ColorField from '@/components/tecturn/ColorField.svelte';
     import { Button } from '@/components/ui/button';
     import { Checkbox } from '@/components/ui/checkbox';
     import {
@@ -148,10 +149,10 @@
                 <div class="grid gap-2">
                     <Label for="footer-bg">Background</Label>
                     <div class="flex items-center gap-2">
-                        <input
+                        <ColorField
                             id="footer-bg"
-                            type="color"
-                            bind:value={bgColor}
+                            value={bgColor}
+                            onchange={(color) => (bgColor = color)}
                             disabled={transparent}
                             class="h-9 w-12 cursor-pointer rounded border bg-transparent disabled:opacity-40"
                         />
@@ -171,10 +172,10 @@
 
                 <div class="grid gap-2">
                     <Label for="footer-font">Font color</Label>
-                    <input
+                    <ColorField
                         id="footer-font"
-                        type="color"
-                        bind:value={fontColor}
+                        value={fontColor}
+                        onchange={(color) => (fontColor = color)}
                         class="h-9 w-12 cursor-pointer rounded border bg-transparent"
                     />
                 </div>

@@ -19,7 +19,10 @@ type BeaconValue = string | number | boolean | Record<string, number>;
  * plain objects are flattened to `key[subKey]` so Laravel parses them as an
  * array. Falls back to fetch(keepalive) when sendBeacon is unavailable.
  */
-export function beaconPost(url: string, fields: Record<string, BeaconValue> = {}): void {
+export function beaconPost(
+    url: string,
+    fields: Record<string, BeaconValue> = {},
+): void {
     const body = new FormData();
     body.append('_token', csrfToken());
 
@@ -33,11 +36,19 @@ export function beaconPost(url: string, fields: Record<string, BeaconValue> = {}
         }
     }
 
-    if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+    if (
+        typeof navigator !== 'undefined' &&
+        typeof navigator.sendBeacon === 'function'
+    ) {
         navigator.sendBeacon(url, body);
 
         return;
     }
 
-    void fetch(url, { method: 'POST', body, credentials: 'same-origin', keepalive: true });
+    void fetch(url, {
+        method: 'POST',
+        body,
+        credentials: 'same-origin',
+        keepalive: true,
+    });
 }

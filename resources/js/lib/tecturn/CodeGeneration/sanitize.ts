@@ -72,9 +72,7 @@ function sanitizeStyle(tagBody: string): string {
         // presented full-screen. `scaleFontSize` converts px/rem/em and passes
         // `cqw`/`%` through unchanged.
         const normalized =
-            property === 'font-size'
-                ? (scaleFontSize(value) ?? value)
-                : value;
+            property === 'font-size' ? (scaleFontSize(value) ?? value) : value;
 
         kept.push(`${property}: ${normalized}`);
     }

@@ -1,25 +1,20 @@
+import {
+    captureStickyKeys,
+    defaultSlideDefaults,
+    mergeStoredDefaults,
+    resolveBlockStyleDefaults
+    
+    
+} from '@/lib/tecturn/slide-defaults-core';
+import type {SlideDefaults, StickyBlockKind} from '@/lib/tecturn/slide-defaults-core';
 import type { BlockStyle } from '@/types/generated';
 
-export interface SlideDefaults {
-    background: string | null;
-    fontSize: string | null;
-    fontWeight: string | null;
-    fontFamily: string | null;
-    color: string | null;
-}
+export type { SlideDefaults, StickyBlockKind };
 
 const STORAGE_KEY = 'tecturn-slide-defaults';
 
-const DEFAULT_VALUES: SlideDefaults = {
-    background: null,
-    fontSize: null,
-    fontWeight: null,
-    fontFamily: null,
-    color: null,
-};
-
 class SlideDefaultsStore {
-    private defaults = $state<SlideDefaults>({ ...DEFAULT_VALUES });
+    private defaults = $state<SlideDefaults>(defaultSlideDefaults());
 
     constructor() {
         this.load();
@@ -30,8 +25,7 @@ class SlideDefaultsStore {
             const stored = localStorage.getItem(STORAGE_KEY);
 
             if (stored) {
-                const parsed = JSON.parse(stored);
-                this.defaults = { ...DEFAULT_VALUES, ...parsed };
+                this.defaults = mergeStoredDefaults(JSON.parse(stored));
             }
         } catch {
             // Ignore parse errors, use defaults
@@ -40,14 +34,17 @@ class SlideDefaultsStore {
 
     private save(): void {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.defaults));
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify($state.snapshot(this.defaults)),
+            );
         } catch {
             // Ignore storage errors
         }
     }
 
     get(): SlideDefaults {
-        return { ...this.defaults };
+        return structuredClone($state.snapshot(this.defaults));
     }
 
     setBackground(background: string | null): void {
@@ -75,35 +72,32 @@ class SlideDefaultsStore {
         this.save();
     }
 
+    /**
+     * Capture sticky style properties from an Inspector edit so the next new
+     * block of the same kind inherits them. Only the sticky keys (text color
+     * and font family) present in the patch are persisted.
+     */
+    captureFromBlockStyle(
+        kind: StickyBlockKind,
+        style: Partial<BlockStyle>,
+    ): void {
+        if (captureStickyKeys(this.defaults, kind, style)) {
+            this.save();
+        }
+    }
+
     reset(): void {
-        this.defaults = { ...DEFAULT_VALUES };
+        this.defaults = defaultSlideDefaults();
         this.save();
     }
 
     /**
-     * Returns a partial BlockStyle with only the style properties that have defaults set.
-     * This can be applied to new blocks to inherit slide defaults.
+     * Returns a partial BlockStyle with the style properties that new blocks
+     * should inherit. Global Settings > Defaults form the base; when a kind is
+     * given, its per-kind sticky captures (color, font family) take precedence.
      */
-    getBlockStyleDefaults(): Partial<BlockStyle> {
-        const style: Partial<BlockStyle> = {};
-
-        if (this.defaults.fontSize !== null) {
-            style.fontSize = this.defaults.fontSize;
-        }
-
-        if (this.defaults.fontWeight !== null) {
-            style.fontWeight = this.defaults.fontWeight;
-        }
-
-        if (this.defaults.fontFamily !== null) {
-            style.fontFamily = this.defaults.fontFamily;
-        }
-
-        if (this.defaults.color !== null) {
-            style.color = this.defaults.color;
-        }
-
-        return style;
+    getBlockStyleDefaults(kind?: StickyBlockKind): Partial<BlockStyle> {
+        return resolveBlockStyleDefaults($state.snapshot(this.defaults), kind);
     }
 }
 

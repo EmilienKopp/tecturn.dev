@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Settings\BrandingUpdateRequest;
 use App\Http\Requests\Settings\ProfileUpdateRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
@@ -36,6 +37,18 @@ class ProfileController extends Controller
         ]));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Profile updated.')]);
+
+        return to_route('profile.edit');
+    }
+
+    /**
+     * Update the user's branding palette.
+     */
+    public function updateBranding(BrandingUpdateRequest $request): RedirectResponse
+    {
+        $request->user()->update(['branding' => $request->palette()]);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Branding updated.')]);
 
         return to_route('profile.edit');
     }

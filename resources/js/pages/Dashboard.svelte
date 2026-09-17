@@ -142,7 +142,10 @@
             title="Dashboard"
             description="How your talks landed with the room"
         />
-        <Button variant="outline" onclick={() => router.visit(index(teamSlug).url)}>
+        <Button
+            variant="outline"
+            onclick={() => router.visit(index(teamSlug).url)}
+        >
             All presentations
         </Button>
     </div>
@@ -234,7 +237,9 @@
                                         <span
                                             class="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-sm"
                                         >
-                                            <span aria-hidden="true">{emoji}</span>
+                                            <span aria-hidden="true"
+                                                >{emoji}</span
+                                            >
                                             <span
                                                 class="font-mono text-xs tabular-nums text-muted-foreground"
                                                 >{count}</span
@@ -252,8 +257,8 @@
                 >
                     <Radio class="h-6 w-6 text-muted-foreground" />
                     <p class="text-sm text-muted-foreground">
-                        No talks yet. Present a deck and the room's reactions land
-                        here.
+                        No talks yet. Present a deck and the room's reactions
+                        land here.
                     </p>
                     {#if recentDecks.length > 0}
                         <Button onclick={() => presentDeck(recentDecks[0].id)}>

@@ -1,4 +1,5 @@
 <script lang="ts">
+    import ColorField from '@/components/tecturn/ColorField.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Dialog,
@@ -50,7 +51,8 @@
         }
 
         // Seed a solid color as the first stop so editing feels continuous.
-        const base = current && /^#[0-9a-f]{6}$/i.test(current) ? current : '#0f2027';
+        const base =
+            current && /^#[0-9a-f]{6}$/i.test(current) ? current : '#0f2027';
         angle = 135;
         stops = [base, '#2c5364'];
     }
@@ -125,15 +127,15 @@
                 <Label class="text-xs">Colors</Label>
                 {#each stops as stop, index (index)}
                     <div class="flex items-center gap-2">
-                        <input
-                            type="color"
+                        <ColorField
                             value={toHex(stop)}
-                            oninput={(event) =>
-                                setStop(index, event.currentTarget.value)}
+                            onchange={(color) => setStop(index, color)}
                             class="h-8 w-12 cursor-pointer rounded border bg-transparent"
-                            data-test="gradient-stop-{index}"
+                            dataTest="gradient-stop-{index}"
                         />
-                        <span class="flex-1 font-mono text-xs text-muted-foreground">
+                        <span
+                            class="flex-1 font-mono text-xs text-muted-foreground"
+                        >
                             {stop}
                         </span>
                         <Button
@@ -166,7 +168,9 @@
             <Button variant="secondary" onclick={() => (open = false)}>
                 Cancel
             </Button>
-            <Button onclick={save} data-test="gradient-save">Apply gradient</Button>
+            <Button onclick={save} data-test="gradient-save"
+                >Apply gradient</Button
+            >
         </DialogFooter>
     </DialogContent>
 </Dialog>

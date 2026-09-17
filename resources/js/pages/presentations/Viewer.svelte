@@ -39,7 +39,9 @@
         leaving: false,
     });
 
-    const batchUrl = RecordReactionsController.url({ presentation: embedToken });
+    const batchUrl = RecordReactionsController.url({
+        presentation: embedToken,
+    });
 
     let floatingReactions = $state<FloatingReactions>();
     let flaring = $state<string | null>(null);

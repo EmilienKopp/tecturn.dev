@@ -2,12 +2,15 @@
     import Bold from 'lucide-svelte/icons/bold';
     import Italic from 'lucide-svelte/icons/italic';
     import { onMount } from 'svelte';
+    import { brandingSwatches } from '@/lib/tecturn/branding';
     import {
         applyColor,
         applyFontSize,
         toggleBold,
         toggleItalic,
     } from '@/lib/tecturn/inline-format';
+
+    const swatches = $derived(brandingSwatches());
 
     const fontSizes = ['1rem', '1.5rem', '2rem', '2.5rem', '3rem', '4rem'];
 
@@ -162,5 +165,20 @@
                 data-test="inline-color"
             />
         </label>
+
+        {#each swatches as swatch (swatch.key)}
+            <button
+                type="button"
+                class="h-4 w-4 rounded-full border border-border transition-transform hover:scale-110"
+                style="background-color: {swatch.value}"
+                title={swatch.label}
+                aria-label={swatch.label}
+                onclick={() => {
+                    color = swatch.value;
+                    run(() => applyColor(swatch.value));
+                }}
+                data-test="inline-swatch-{swatch.key}"
+            ></button>
+        {/each}
     </div>
 {/if}
