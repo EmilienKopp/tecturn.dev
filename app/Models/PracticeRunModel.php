@@ -8,7 +8,10 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property int $id
@@ -18,19 +21,31 @@ use Illuminate\Support\Carbon;
  * @property Carbon $ended_at
  * @property int $duration_seconds
  * @property list<array{slide: int, seconds: int}> $slide_timings
+ * @property list<array{at_ms: int, slide: int, step: int}>|null $step_events
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $flow
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read PresentationModel $presentation
  */
-#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'slide_timings', 'content', 'flow'])]
-class PracticeRunModel extends Model
+#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'slide_timings', 'step_events', 'content', 'flow'])]
+class PracticeRunModel extends Model implements HasMedia
 {
     /** @use HasFactory<PracticeRunModelFactory> */
     use HasFactory;
 
+    use InteractsWithMedia;
+
+    public const string RECORDING_COLLECTION = 'recording';
+
     protected $table = 'practice_runs';
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::RECORDING_COLLECTION)
+            ->singleFile()
+            ->acceptsMimeTypes(['audio/webm', 'video/webm', 'audio/ogg', 'audio/mp4', 'video/mp4']);
+    }
 
     /**
      * @return BelongsTo<PresentationModel, $this>
@@ -38,6 +53,14 @@ class PracticeRunModel extends Model
     public function presentation(): BelongsTo
     {
         return $this->belongsTo(PresentationModel::class, 'presentation_id');
+    }
+
+    /**
+     * @return HasMany<RehearsalReviewModel, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(RehearsalReviewModel::class, 'practice_run_id');
     }
 
     public function toEntity(): PracticeRunEntity
@@ -51,6 +74,7 @@ class PracticeRunModel extends Model
             slide_timings: $this->slide_timings ?? [],
             content: $this->content ?? [],
             flow: $this->flow,
+            step_events: $this->step_events,
             id: $this->id,
         );
     }
@@ -69,6 +93,7 @@ class PracticeRunModel extends Model
             'started_at' => 'datetime',
             'ended_at' => 'datetime',
             'slide_timings' => 'array',
+            'step_events' => 'array',
             'content' => 'array',
             'flow' => 'array',
         ];

@@ -4,6 +4,8 @@
         ended_at: string;
         duration_seconds: number;
         slide_timings: { slide: number; seconds: number }[];
+        step_events: { at_ms: number; slide: number; step: number }[];
+        audio: File | null;
     };
 </script>
 
@@ -18,12 +20,14 @@
         talkSettings,
         slideCount = 0,
         currentSlide = 0,
+        currentStep = 0,
         saving = false,
         onFinish,
     }: {
         talkSettings: TalkSettings;
         slideCount?: number;
         currentSlide?: number;
+        currentStep?: number;
         saving?: boolean;
         onFinish: (run: PracticeRunPayload) => void;
     } = $props();
@@ -41,6 +45,75 @@
     let slideMs: Record<number, number> = {};
     let chunkStartedAt: number | null = null;
     let chunkSlide = 0;
+
+    // Navigation timeline in active-time milliseconds. Because the recorder
+    // pauses and resumes with the clock, at_ms doubles as the audio position,
+    // which is what lets replay drive the slides from the recording.
+    let stepEvents: { at_ms: number; slide: number; step: number }[] = [];
+
+    const activeMs = (): number =>
+        totalMs + (chunkStartedAt !== null ? Date.now() - chunkStartedAt : 0);
+
+    // --- Voice recording ---
+    // Recording is best-effort: a denied microphone never blocks the run.
+    let recorder: MediaRecorder | null = null;
+    let recorderChunks: Blob[] = [];
+    let micDenied = $state(false);
+    let recording = $state(false);
+
+    const recorderMimeType = (): string =>
+        typeof MediaRecorder !== 'undefined' &&
+        MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+            ? 'audio/webm;codecs=opus'
+            : 'audio/mp4';
+
+    const startRecorder = async (): Promise<void> => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: true,
+            });
+
+            recorderChunks = [];
+            recorder = new MediaRecorder(stream, {
+                mimeType: recorderMimeType(),
+            });
+            recorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recorderChunks.push(event.data);
+                }
+            };
+            recorder.start(1000);
+            recording = true;
+        } catch {
+            recorder = null;
+            micDenied = true;
+        }
+    };
+
+    const stopRecorder = (): Promise<File | null> => {
+        const active = recorder;
+
+        if (!active) {
+            return Promise.resolve(null);
+        }
+
+        return new Promise((resolve) => {
+            active.onstop = () => {
+                const type = active.mimeType || recorderMimeType();
+                const file = new File(
+                    recorderChunks,
+                    type.includes('mp4') ? 'rehearsal.m4a' : 'rehearsal.webm',
+                    { type },
+                );
+
+                active.stream.getTracks().forEach((track) => track.stop());
+                recorder = null;
+                recording = false;
+                resolve(recorderChunks.length > 0 ? file : null);
+            };
+            active.stop();
+        });
+    };
 
     // Display values, ticked by the interval below.
     let elapsedSeconds = $state(0);
@@ -79,6 +152,13 @@
         return () => clearInterval(interval);
     });
 
+    // Leaving the page mid-run must release the microphone.
+    $effect(() => {
+        return () => {
+            recorder?.stream.getTracks().forEach((track) => track.stop());
+        };
+    });
+
     // Moving to another slide closes the current slide's chunk and opens a new
     // one, so each slide accrues exactly the time it was on screen.
     let trackedSlide = $state(-1);
@@ -96,10 +176,35 @@
         }
     });
 
-    const start = (): void => {
+    // Every position change (slide or within-slide reveal) lands on the
+    // step-event timeline while running, stamped in active time.
+    let trackedStepKey = $state('');
+
+    $effect(() => {
+        const key = `${currentSlide}:${currentStep}`;
+
+        if (key !== trackedStepKey) {
+            trackedStepKey = key;
+
+            if (status === 'running') {
+                stepEvents.push({
+                    at_ms: activeMs(),
+                    slide: currentSlide,
+                    step: currentStep,
+                });
+            }
+        }
+    });
+
+    const start = async (): Promise<void> => {
         startedAtIso = new Date().toISOString();
         totalMs = 0;
         slideMs = {};
+        stepEvents = [
+            { at_ms: 0, slide: currentSlide, step: currentStep },
+        ];
+        trackedStepKey = `${currentSlide}:${currentStep}`;
+        await startRecorder();
         status = 'running';
         openChunk();
         refreshDisplay();
@@ -107,19 +212,32 @@
 
     const pause = (): void => {
         foldChunk();
+
+        // Pausing the recorder with the clock keeps audio time equal to
+        // active time, so at_ms stays a valid audio offset.
+        if (recorder?.state === 'recording') {
+            recorder.pause();
+        }
+
         status = 'paused';
         refreshDisplay();
     };
 
     const resume = (): void => {
+        if (recorder?.state === 'paused') {
+            recorder.resume();
+        }
+
         openChunk();
         status = 'running';
     };
 
-    const stop = (): void => {
+    const stop = async (): Promise<void> => {
         foldChunk();
         status = 'finished';
         refreshDisplay();
+
+        const audio = await stopRecorder();
 
         const slide_timings = Object.entries(slideMs)
             .map(([slide, ms]) => ({
@@ -133,6 +251,8 @@
             ended_at: new Date().toISOString(),
             duration_seconds: Math.round(totalMs / 1000),
             slide_timings,
+            step_events: stepEvents,
+            audio,
         });
     };
 
@@ -190,6 +310,16 @@
             Practice
             {#if status === 'paused'}
                 <span class="ml-auto normal-case text-amber-400">Paused</span>
+            {:else if recording && status === 'running'}
+                <span
+                    class="ml-auto flex items-center gap-1.5 normal-case text-red-400"
+                    data-test="practice-recording"
+                >
+                    <span
+                        class="h-2 w-2 animate-pulse rounded-full bg-red-500"
+                    ></span>
+                    Rec
+                </span>
             {/if}
         </p>
         <p
@@ -235,7 +365,8 @@
                 <Play class="h-4 w-4" /> Start rehearsal
             </button>
             <p class="text-center text-xs text-zinc-500">
-                The clock and per-slide timings only run while started.
+                The clock, per-slide timings and voice recording only run
+                while started.
             </p>
         {:else if status === 'running' || status === 'paused'}
             <div class="flex gap-2">
@@ -268,8 +399,18 @@
                 </button>
             </div>
             <p class="text-center text-xs text-zinc-500">
-                Stop saves this rehearsal with a snapshot of the deck.
+                Stop saves this rehearsal with a snapshot of the deck{recording
+                    ? ' and the voice recording'
+                    : ''}.
             </p>
+            {#if micDenied}
+                <p
+                    class="rounded-lg bg-zinc-800 px-3 py-2 text-center text-xs text-amber-400"
+                    data-test="practice-mic-denied"
+                >
+                    Microphone unavailable — timing without audio.
+                </p>
+            {/if}
         {:else}
             <div
                 class="rounded-lg bg-zinc-800 px-4 py-3 text-center text-sm text-zinc-300"

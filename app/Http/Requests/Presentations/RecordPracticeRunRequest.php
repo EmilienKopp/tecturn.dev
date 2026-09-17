@@ -31,6 +31,11 @@ class RecordPracticeRunRequest extends FormRequest
             'slide_timings' => ['present', 'array'],
             'slide_timings.*.slide' => ['required', 'integer', 'min:0'],
             'slide_timings.*.seconds' => ['required', 'integer', 'min:0', 'max:'.self::MAX_DURATION_SECONDS],
+            'step_events' => ['sometimes', 'array'],
+            'step_events.*.at_ms' => ['required', 'integer', 'min:0'],
+            'step_events.*.slide' => ['required', 'integer', 'min:0'],
+            'step_events.*.step' => ['required', 'integer', 'min:0'],
+            'audio' => ['nullable', 'file', 'mimetypes:audio/webm,video/webm,audio/ogg,audio/mp4,video/mp4', 'max:51200'],
         ];
     }
 
@@ -45,13 +50,35 @@ class RecordPracticeRunRequest extends FormRequest
     }
 
     /**
+     * Values arrive as strings when the run posts as multipart (a voice
+     * recording rides the same request), so cast before they hit the JSON
+     * columns — otherwise the frontend renders "0" + 1 as "01".
+     *
      * @return list<array{slide: int, seconds: int}>
      */
     public function slideTimings(): array
     {
-        /** @var list<array{slide: int, seconds: int}> $timings */
-        $timings = array_values($this->validated('slide_timings', []));
+        return array_map(
+            fn (array $timing): array => [
+                'slide' => (int) $timing['slide'],
+                'seconds' => (int) $timing['seconds'],
+            ],
+            array_values($this->validated('slide_timings', [])),
+        );
+    }
 
-        return $timings;
+    /**
+     * @return list<array{at_ms: int, slide: int, step: int}>
+     */
+    public function stepEvents(): array
+    {
+        return array_map(
+            fn (array $event): array => [
+                'at_ms' => (int) $event['at_ms'],
+                'slide' => (int) $event['slide'],
+                'step' => (int) $event['step'],
+            ],
+            array_values($this->validated('step_events', []) ?? []),
+        );
     }
 }

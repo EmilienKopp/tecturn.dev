@@ -8,6 +8,7 @@
         Transition,
     } from '@animotion/core';
     import '@animotion/core/theme';
+    import { isGradientBackground } from '@/lib/tecturn/background';
     import {
         QR_SIZE_CQW,
         normalizeQrSize,
@@ -26,7 +27,6 @@
     } from '@/lib/tecturn/flow-compiler';
     import { fontStack } from '@/lib/tecturn/fonts';
     import { FREE_DEFAULTS } from '@/lib/tecturn/free-drag';
-    import { isGradientBackground } from '@/lib/tecturn/background';
     import { layoutDefinition } from '@/lib/tecturn/layouts';
     import { scaleFontSize } from '@/lib/tecturn/scaling';
     import type {
@@ -40,12 +40,20 @@
         content: rawContent,
         flow: rawFlow = null,
         onSlideChange,
+        onStepChange,
         embedded = false,
     }: {
         content: PresentationContent;
         flow?: FlowGraph | null;
         /** Fires with the current slide index and the shown-slide total. */
         onSlideChange?: (current: number, total: number) => void;
+        /**
+         * Fires on every position change, including within-slide reveals:
+         * `step` is the number of fragments currently shown (0 before the
+         * first reveal). Together with onSlideChange this gives the full
+         * navigation timeline a rehearsal records for audio-synced replay.
+         */
+        onStepChange?: (slide: number, step: number) => void;
         /**
          * Sizes the deck to its host element instead of the window. Required
          * when the Presenter renders inside a small box (e.g. the rehearsal
@@ -106,23 +114,45 @@
         const deck = getPresentation().slides;
         const total = shownSlides.length;
 
-        if (!deck || !onSlideChange) {
+        if (!deck || (!onSlideChange && !onStepChange)) {
             return;
         }
 
         // Before Reveal finishes booting, getIndices() can report an
         // undefined h, which would surface as "Slide NaN" in the docks.
         const report = () => {
-            const h = deck.getIndices().h;
+            const { h, f } = deck.getIndices();
+            const slide = Number.isFinite(h) ? h : 0;
 
-            onSlideChange(Number.isFinite(h) ? h : 0, total);
+            onSlideChange?.(slide, total);
+            // Reveal reports f = -1 (or undefined) before the first fragment,
+            // so the shown-fragment count is f + 1 clamped at 0.
+            onStepChange?.(
+                slide,
+                Number.isFinite(f) ? Math.max(0, (f as number) + 1) : 0,
+            );
         };
 
         deck.on('slidechanged', report);
+        deck.on('fragmentshown', report);
+        deck.on('fragmenthidden', report);
         report();
 
-        return () => deck.off('slidechanged', report);
+        return () => {
+            deck.off('slidechanged', report);
+            deck.off('fragmentshown', report);
+            deck.off('fragmenthidden', report);
+        };
     });
+
+    /**
+     * Jumps to a slide/step position from outside — the audio-synced replay
+     * drives the deck through this. `step` is the shown-fragment count, so
+     * step 0 maps to Reveal fragment index -1 (nothing revealed yet).
+     */
+    export function navigateTo(slide: number, step: number): void {
+        getPresentation().slides?.slide(slide, 0, step - 1);
+    }
 
     const blockStyle = (block: Block): string =>
         [

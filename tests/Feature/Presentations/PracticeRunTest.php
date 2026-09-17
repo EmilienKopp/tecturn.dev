@@ -5,7 +5,21 @@ declare(strict_types=1);
 use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
 use App\Models\User;
+use Illuminate\Http\Testing\File as TestingFile;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Testing\AssertableInertia as Assert;
+
+/**
+ * A fake upload whose bytes actually sniff as WebM — both the mimetypes rule
+ * and the media library detect the type from content, not the client mime.
+ */
+function fakeWebmUpload(): TestingFile
+{
+    $bytes = hex2bin('1a45dfa39f4286810142f7810142f2810442f381084282847765626d').str_repeat("\x00", 128);
+
+    return UploadedFile::fake()->createWithContent('rehearsal.webm', $bytes);
+}
 
 test('stopping a practice run persists the timings with a snapshot of the deck', function () {
     $user = User::factory()->create();
@@ -38,6 +52,77 @@ test('stopping a practice run persists the timings with a snapshot of the deck',
         ->and($run->slide_timings)->toHaveCount(3)
         ->and($run->content)->toBe($presentation->content)
         ->and($run->content['slides'])->toHaveCount(3);
+});
+
+test('a practice run stores the step-event timeline and the voice recording', function () {
+    Storage::fake('public');
+
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user)->post(route('presentations.practice.store', [
+        'current_team' => $user->currentTeam->slug,
+        'presentation' => $presentation->id,
+    ]), [
+        'started_at' => now()->subMinutes(2)->toISOString(),
+        'ended_at' => now()->toISOString(),
+        // Numbers arrive as strings in real multipart posts (the audio file
+        // forces FormData); the backend must cast before storing the JSON.
+        'duration_seconds' => '120',
+        'slide_timings' => [['slide' => '0', 'seconds' => '70'], ['slide' => '1', 'seconds' => '50']],
+        'step_events' => [
+            ['at_ms' => '0', 'slide' => '0', 'step' => '0'],
+            ['at_ms' => '4000', 'slide' => '0', 'step' => '1'],
+            ['at_ms' => '70000', 'slide' => '1', 'step' => '0'],
+        ],
+        'audio' => fakeWebmUpload(),
+    ])->assertRedirect();
+
+    $run = PracticeRunModel::sole();
+
+    expect($run->step_events)->toHaveCount(3)
+        ->and($run->step_events[1])->toBe(['at_ms' => 4000, 'slide' => 0, 'step' => 1])
+        ->and($run->slide_timings[0])->toBe(['slide' => 0, 'seconds' => 70])
+        ->and($run->duration_seconds)->toBe(120)
+        ->and($run->getFirstMedia(PracticeRunModel::RECORDING_COLLECTION))->not->toBeNull();
+});
+
+test('a practice run without audio or step events still saves', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user)->post(route('presentations.practice.store', [
+        'current_team' => $user->currentTeam->slug,
+        'presentation' => $presentation->id,
+    ]), [
+        'started_at' => now()->subMinute()->toISOString(),
+        'ended_at' => now()->toISOString(),
+        'duration_seconds' => 60,
+        'slide_timings' => [],
+    ])->assertRedirect();
+
+    $run = PracticeRunModel::sole();
+
+    expect($run->step_events)->toBe([])
+        ->and($run->getFirstMedia(PracticeRunModel::RECORDING_COLLECTION))->toBeNull();
+});
+
+test('a non-audio upload is rejected as a rehearsal recording', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+
+    $this->actingAs($user)->postJson(route('presentations.practice.store', [
+        'current_team' => $user->currentTeam->slug,
+        'presentation' => $presentation->id,
+    ]), [
+        'started_at' => now()->subMinute()->toISOString(),
+        'ended_at' => now()->toISOString(),
+        'duration_seconds' => 60,
+        'slide_timings' => [],
+        'audio' => UploadedFile::fake()->create('notes.pdf', 20, 'application/pdf'),
+    ])->assertUnprocessable()->assertJsonValidationErrors('audio');
+
+    expect(PracticeRunModel::count())->toBe(0);
 });
 
 test('the snapshot keeps the deck as it was even after the presentation is edited', function () {

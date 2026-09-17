@@ -17,11 +17,15 @@
     import { page, router } from '@inertiajs/svelte';
     import Download from 'lucide-svelte/icons/download';
     import FilePlus from 'lucide-svelte/icons/file-plus';
+    import MessageSquare from 'lucide-svelte/icons/message-square';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import Presenter from '@/components/tecturn/Presenter.svelte';
+    import RehearsalReplay from '@/components/tecturn/RehearsalReplay.svelte';
     import { Button } from '@/components/ui/button';
+    import UserAvatar from '@/components/UserAvatar.svelte';
+    import { shownSlideTitles } from '@/lib/tecturn/flow-compiler';
     import { importJson } from '@/routes/presentations';
+    import { store as storeReviewRequest } from '@/routes/rehearsals/reviews';
     import type { FlowGraph, PresentationContent } from '@/types/generated';
 
     type Run = {
@@ -32,14 +36,60 @@
         ended_at: string;
         duration_seconds: number;
         slide_timings: { slide: number; seconds: number }[];
+        step_events: { at_ms: number; slide: number; step: number }[];
+        has_recording: boolean;
         content: PresentationContent;
         flow: FlowGraph | null;
     };
 
-    let { run }: { run: Run } = $props();
+    type ReviewComment = {
+        id: number;
+        slide_number: number;
+        message: string;
+        created_at: string | null;
+    };
+
+    type Review = {
+        id: number;
+        reviewer_user_id: number;
+        reviewer_name: string;
+        reviewer_avatar: string | null;
+        status: string;
+        requested_at: string | null;
+        comments: ReviewComment[];
+    };
+
+    type Follower = {
+        id: number;
+        name: string;
+        avatar: string | null;
+        handle: string | null;
+    };
+
+    let {
+        run,
+        reviews = [],
+        followers = [],
+        audioUrl = null,
+    }: {
+        run: Run;
+        reviews?: Review[];
+        followers?: Follower[];
+        audioUrl?: string | null;
+    } = $props();
 
     let currentSlide = $state(0);
     let slideCount = $state(run.content.slides.length);
+
+    // Shown-order slide titles, so index N matches Reveal's slide N.
+    const slideTitles = $derived(
+        shownSlideTitles(
+            $state.snapshot(run.content),
+            $state.snapshot(run.flow),
+        ),
+    );
+    const slideTitle = (index: number): string | null =>
+        slideTitles[index] ?? null;
 
     const formatTime = (seconds: number): string => {
         const m = Math.floor(seconds / 60);
@@ -119,6 +169,43 @@
         { label: 'Slides visited', value: String(timedSlides) },
         { label: 'Avg per slide', value: formatTime(avgSecondsPerSlide) },
     ]);
+
+    // --- Peer review ---
+    const reviewedIds = $derived(
+        new Set(reviews.map((review) => review.reviewer_user_id)),
+    );
+    const availableReviewers = $derived(
+        followers.filter((follower) => !reviewedIds.has(follower.id)),
+    );
+
+    let selectedReviewerId = $state<number | null>(null);
+    let requestingReview = $state(false);
+
+    const requestReview = (): void => {
+        if (selectedReviewerId === null) {
+            return;
+        }
+
+        requestingReview = true;
+        router.post(
+            storeReviewRequest({
+                current_team: teamSlug,
+                practice_run: run.id,
+            }).url,
+            { reviewer_user_id: selectedReviewerId },
+            {
+                preserveScroll: true,
+                onSuccess: () => {
+                    selectedReviewerId = null;
+                },
+                onFinish: () => {
+                    requestingReview = false;
+                },
+            },
+        );
+    };
+
+    const reviewErrors = $derived(page.props.errors ?? {});
 </script>
 
 <AppHead title="Rehearsal · {run.presentation_name}" />
@@ -177,27 +264,23 @@
                     Deck at rehearsal time
                 </h2>
                 <span class="text-xs text-muted-foreground">
-                    Slide {currentSlide + 1} / {slideCount}
+                    Slide {currentSlide + 1} / {slideCount}{slideTitle(
+                        currentSlide,
+                    )
+                        ? ` · ${slideTitle(currentSlide)}`
+                        : ''}
                 </span>
             </div>
-            <!-- The stage must be a query container: slide text is sized in
-                 cqw and otherwise falls back to viewport units, blowing up
-                 the fonts. Mirrors the [container-type:size] column on the
-                 present page. -->
-            <div
-                class="relative overflow-hidden rounded-xl border border-border bg-black [container-type:size]"
-                style="aspect-ratio: 16 / 9;"
-            >
-                <Presenter
-                    content={run.content}
-                    flow={run.flow}
-                    embedded
-                    onSlideChange={(current, total) => {
-                        currentSlide = current;
-                        slideCount = total;
-                    }}
-                />
-            </div>
+            <RehearsalReplay
+                content={run.content}
+                flow={run.flow}
+                stepEvents={run.step_events}
+                {audioUrl}
+                onSlideChange={(current, total) => {
+                    currentSlide = current;
+                    slideCount = total;
+                }}
+            />
         </section>
 
         <!-- Per-slide timing breakdown -->
@@ -216,8 +299,17 @@
                             <div
                                 class="flex items-baseline justify-between text-sm"
                             >
-                                <span class="font-medium text-foreground">
+                                <span
+                                    class="min-w-0 truncate font-medium text-foreground"
+                                >
                                     Slide {timing.slide + 1}
+                                    {#if slideTitle(timing.slide)}
+                                        <span
+                                            class="text-xs font-normal text-muted-foreground"
+                                        >
+                                            · {slideTitle(timing.slide)}
+                                        </span>
+                                    {/if}
                                 </span>
                                 <span
                                     class="font-mono tabular-nums text-muted-foreground"
@@ -246,6 +338,131 @@
                     No per-slide timings were recorded for this run.
                 </p>
             {/if}
+
+            <!-- Peer review: ask a follower to look at this run and read
+                 the feedback they leave, keyed to the shown slide. -->
+            <h2 class="mt-4 text-sm font-semibold text-foreground">
+                Peer review
+            </h2>
+
+            {#if availableReviewers.length > 0}
+                <div
+                    class="flex flex-col gap-2 rounded-xl border border-border bg-card p-3"
+                >
+                    <label
+                        class="text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        for="reviewer-picker"
+                    >
+                        Ask a follower to review
+                    </label>
+                    <div class="flex gap-2">
+                        <select
+                            id="reviewer-picker"
+                            class="min-w-0 flex-1 rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                            bind:value={selectedReviewerId}
+                            data-test="reviewer-picker"
+                        >
+                            <option value={null}>Pick a follower…</option>
+                            {#each availableReviewers as follower (follower.id)}
+                                <option value={follower.id}>
+                                    {follower.name}{follower.handle
+                                        ? ` (@${follower.handle})`
+                                        : ''}
+                                </option>
+                            {/each}
+                        </select>
+                        <Button
+                            onclick={requestReview}
+                            disabled={selectedReviewerId === null ||
+                                requestingReview}
+                            data-test="request-review"
+                        >
+                            {requestingReview ? 'Sending…' : 'Request'}
+                        </Button>
+                    </div>
+                    {#if reviewErrors.reviewer_user_id}
+                        <p class="text-xs text-red-500">
+                            {reviewErrors.reviewer_user_id}
+                        </p>
+                    {/if}
+                </div>
+            {:else if followers.length === 0}
+                <p
+                    class="rounded-xl border border-dashed border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
+                >
+                    Reviews come from people who follow you. Share your
+                    profile from Contacts to gather followers first.
+                </p>
+            {/if}
+
+            {#each reviews as review (review.id)}
+                <article
+                    class="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
+                    data-test="review-card"
+                >
+                    <div class="flex items-center gap-3">
+                        <UserAvatar
+                            name={review.reviewer_name}
+                            avatar={review.reviewer_avatar}
+                            class="h-8 w-8"
+                        />
+                        <div class="min-w-0 flex-1">
+                            <p
+                                class="truncate text-sm font-medium text-foreground"
+                            >
+                                {review.reviewer_name}
+                            </p>
+                        </div>
+                        <span
+                            class="rounded-full px-2.5 py-0.5 text-xs font-semibold {review.status ===
+                            'completed'
+                                ? 'bg-emerald-500/15 text-emerald-500'
+                                : 'bg-amber-500/15 text-amber-500'}"
+                        >
+                            {review.status === 'completed'
+                                ? 'Completed'
+                                : 'Pending'}
+                        </span>
+                    </div>
+
+                    {#if review.comments.length > 0}
+                        <ul class="flex flex-col gap-2">
+                            {#each review.comments as comment (comment.id)}
+                                <li
+                                    class="rounded-lg border p-2.5 text-sm {comment.slide_number ===
+                                    currentSlide
+                                        ? 'border-amber-500/60 bg-amber-500/10'
+                                        : 'border-border bg-background'}"
+                                    data-test="review-comment"
+                                >
+                                    <p
+                                        class="mb-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground"
+                                    >
+                                        <MessageSquare class="h-3 w-3" />
+                                        Slide {comment.slide_number + 1}
+                                        {#if slideTitle(comment.slide_number)}
+                                            <span
+                                                class="truncate font-normal"
+                                            >
+                                                · {slideTitle(
+                                                    comment.slide_number,
+                                                )}
+                                            </span>
+                                        {/if}
+                                    </p>
+                                    <p class="text-foreground">
+                                        {comment.message}
+                                    </p>
+                                </li>
+                            {/each}
+                        </ul>
+                    {:else}
+                        <p class="text-xs text-muted-foreground">
+                            No comments yet.
+                        </p>
+                    {/if}
+                </article>
+            {/each}
         </section>
     </div>
 </div>

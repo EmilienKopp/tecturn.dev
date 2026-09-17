@@ -30,4 +30,12 @@ class EloquentUserFollowRepository implements UserFollowRepository
             ->where('followed_user_id', $followedUserId)
             ->delete();
     }
+
+    public function isFollowing(int $followerUserId, int $followedUserId): bool
+    {
+        return DB::table('user_follows')
+            ->where('follower_user_id', $followerUserId)
+            ->where('followed_user_id', $followedUserId)
+            ->exists();
+    }
 }

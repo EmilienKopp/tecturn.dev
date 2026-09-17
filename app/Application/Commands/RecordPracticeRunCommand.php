@@ -10,6 +10,7 @@ readonly class RecordPracticeRunCommand
 {
     /**
      * @param  list<array{slide: int, seconds: int}>  $slideTimings
+     * @param  list<array{at_ms: int, slide: int, step: int}>  $stepEvents
      */
     public function __construct(
         public int $presentationId,
@@ -18,5 +19,8 @@ readonly class RecordPracticeRunCommand
         public DateTimeInterface $endedAt,
         public int $durationSeconds,
         public array $slideTimings,
+        public array $stepEvents = [],
+        public ?string $audioPath = null,
+        public ?string $audioFileName = null,
     ) {}
 }
