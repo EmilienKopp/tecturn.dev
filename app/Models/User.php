@@ -4,9 +4,11 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Concerns\HasTeams;
+use App\Support\Branding;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -24,6 +26,7 @@ use Illuminate\Support\Str;
  * @property string $avatar
  * @property string|null $social_x_handle
  * @property string|null $social_github_handle
+ * @property array<string, string> $branding
  * @property int|null $current_team_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -32,7 +35,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'email_verified_at', 'workos_id', 'avatar', 'social_x_handle', 'social_github_handle', 'current_team_id'])]
+#[Fillable(['name', 'email', 'email_verified_at', 'workos_id', 'avatar', 'social_x_handle', 'social_github_handle', 'branding', 'current_team_id'])]
 #[Hidden(['workos_id', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -50,6 +53,20 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * The user's branding palette, always returned as a full set of six hex
+     * colors with defaults filled in for any unset slot.
+     *
+     * @return Attribute<array<string, string>, array<string, string>>
+     */
+    protected function branding(): Attribute
+    {
+        return Attribute::make(
+            get: fn (?string $value): array => Branding::merge($value ? json_decode($value, true) : null),
+            set: fn (?array $value): string => (string) json_encode(Branding::merge($value)),
+        );
     }
 
     /**

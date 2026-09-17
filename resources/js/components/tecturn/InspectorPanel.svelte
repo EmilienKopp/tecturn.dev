@@ -7,6 +7,7 @@
     import { toast } from 'svelte-sonner';
     import DeletePresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/DeletePresentationBackgroundController';
     import UploadPresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationBackgroundController';
+    import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
     import { Button } from '@/components/ui/button';
@@ -18,12 +19,12 @@
         DialogTitle,
     } from '@/components/ui/dialog';
     import { Label } from '@/components/ui/label';
+    import { isGradientBackground } from '@/lib/tecturn/background';
     import {
         formatSpeakingTime,
         lintDeck,
         lintSlide,
     } from '@/lib/tecturn/CodeGeneration/lint';
-    import { isGradientBackground } from '@/lib/tecturn/background';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { FONTS } from '@/lib/tecturn/fonts';
     import { SUPPORTED_LANGUAGES } from '@/lib/tecturn/shiki';
@@ -394,16 +395,12 @@
 
             <div class="space-y-1">
                 <Label for="block-color" class="text-xs">Text color</Label>
-                <input
+                <ColorField
                     id="block-color"
-                    type="color"
-                    class="h-8 w-full cursor-pointer rounded-md border"
                     value={block.style.color ?? '#000000'}
-                    oninput={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            color: event.currentTarget.value,
-                        })}
-                    data-test="inspector-color"
+                    onchange={(color) =>
+                        editor.updateBlockStyle(block.id, { color })}
+                    dataTest="inspector-color"
                 />
             </div>
         {/if}
@@ -413,31 +410,23 @@
                 <Label for="block-border-color" class="text-xs"
                     >Border color</Label
                 >
-                <input
+                <ColorField
                     id="block-border-color"
-                    type="color"
-                    class="h-8 w-full cursor-pointer rounded-md border"
                     value={block.style.borderColor ?? '#e2e8f0'}
-                    oninput={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            borderColor: event.currentTarget.value,
-                        })}
-                    data-test="inspector-border-color"
+                    onchange={(borderColor) =>
+                        editor.updateBlockStyle(block.id, { borderColor })}
+                    dataTest="inspector-border-color"
                 />
             </div>
 
             <div class="space-y-1">
                 <Label for="block-bg-color" class="text-xs">Background</Label>
-                <input
+                <ColorField
                     id="block-bg-color"
-                    type="color"
-                    class="h-8 w-full cursor-pointer rounded-md border"
                     value={block.style.backgroundColor ?? '#ffffff'}
-                    oninput={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            backgroundColor: event.currentTarget.value,
-                        })}
-                    data-test="inspector-bg-color"
+                    onchange={(backgroundColor) =>
+                        editor.updateBlockStyle(block.id, { backgroundColor })}
+                    dataTest="inspector-bg-color"
                 />
             </div>
         {/if}
@@ -547,14 +536,11 @@
                     data-test="inspector-background-gradient"
                 ></button>
             {:else}
-                <input
+                <ColorField
                     id="slide-background"
-                    type="color"
-                    class="h-8 w-full cursor-pointer rounded-md border"
                     value={editor.selectedSlide.background ?? '#ffffff'}
-                    oninput={(event) =>
-                        editor.setBackground(event.currentTarget.value)}
-                    data-test="inspector-background"
+                    onchange={(color) => editor.setBackground(color)}
+                    dataTest="inspector-background"
                 />
             {/if}
             <div class="flex gap-1.5">

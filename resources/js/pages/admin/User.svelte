@@ -50,10 +50,8 @@
         created_at: string | null;
     };
 
-    let {
-        user,
-        teams = [],
-    }: { user: UserInfo; teams?: TeamAnalytics[] } = $props();
+    let { user, teams = [] }: { user: UserInfo; teams?: TeamAnalytics[] } =
+        $props();
 
     const numberFormatter = new Intl.NumberFormat();
 
@@ -193,7 +191,9 @@
                                         <span
                                             class="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-sm"
                                         >
-                                            <span aria-hidden="true">{emoji}</span>
+                                            <span aria-hidden="true"
+                                                >{emoji}</span
+                                            >
                                             <span
                                                 class="font-mono text-xs tabular-nums text-muted-foreground"
                                                 >{count}</span

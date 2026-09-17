@@ -1435,6 +1435,13 @@ export class EditorState {
         if (block) {
             block.style = { ...block.style, ...style } as MutableBlock['style'];
             this.dirty = true;
+
+            // Editing a text/box block's color or font in the Inspector makes
+            // those values sticky, so the next new block of the same kind
+            // inherits them without opening Settings > Defaults.
+            if (block.type === 'text' || block.type === 'box') {
+                slideDefaults.captureFromBlockStyle(block.type, style);
+            }
         }
     }
 
@@ -1523,7 +1530,7 @@ export class EditorState {
         // Apply slide defaults to text and box blocks
         const applyDefaults = type === 'text' || type === 'box';
         const defaults = applyDefaults
-            ? slideDefaults.getBlockStyleDefaults()
+            ? slideDefaults.getBlockStyleDefaults(type as 'text' | 'box')
             : {};
 
         const block: MutableBlock = {

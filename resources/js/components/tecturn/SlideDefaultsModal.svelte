@@ -1,6 +1,7 @@
 <script lang="ts">
     import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
     import { toast } from 'svelte-sonner';
+    import ColorField from '@/components/tecturn/ColorField.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Dialog,
@@ -42,16 +43,12 @@
                     <Label for="default-background" class="text-sm"
                         >Default slide background</Label
                     >
-                    <input
+                    <ColorField
                         id="default-background"
-                        type="color"
                         class="h-9 w-full cursor-pointer rounded-md border"
                         value={defaults.background ?? '#ffffff'}
-                        oninput={(event) =>
-                            slideDefaults.setBackground(
-                                event.currentTarget.value,
-                            )}
-                        data-test="default-background"
+                        onchange={(color) => slideDefaults.setBackground(color)}
+                        dataTest="default-background"
                     />
                 </div>
 
@@ -126,14 +123,12 @@
                     <Label for="default-color" class="text-sm"
                         >Default text color</Label
                     >
-                    <input
+                    <ColorField
                         id="default-color"
-                        type="color"
                         class="h-9 w-full cursor-pointer rounded-md border"
                         value={defaults.color ?? '#000000'}
-                        oninput={(event) =>
-                            slideDefaults.setColor(event.currentTarget.value)}
-                        data-test="default-color"
+                        onchange={(color) => slideDefaults.setColor(color)}
+                        dataTest="default-color"
                     />
                 </div>
             </div>

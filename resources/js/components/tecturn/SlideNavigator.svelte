@@ -106,7 +106,9 @@
                     </span>
                 {/if}
 
-                <div class="absolute top-1 right-1 hidden group-hover:flex gap-0.5">
+                <div
+                    class="absolute top-1 right-1 hidden group-hover:flex gap-0.5"
+                >
                     <span
                         role="button"
                         tabindex="-1"

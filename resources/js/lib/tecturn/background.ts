@@ -9,7 +9,10 @@
 export function isGradientBackground(
     background: string | null | undefined,
 ): boolean {
-    return !!background && /\b(linear|radial|conic)-gradient\s*\(/i.test(background);
+    return (
+        !!background &&
+        /\b(linear|radial|conic)-gradient\s*\(/i.test(background)
+    );
 }
 
 export type LinearGradient = {
@@ -66,7 +69,12 @@ export function parseLinearGradient(
     }
 
     const colors = colorParts
-        .map((part) => part.trim().replace(/\s+\d+(?:\.\d+)?%$/, '').trim())
+        .map((part) =>
+            part
+                .trim()
+                .replace(/\s+\d+(?:\.\d+)?%$/, '')
+                .trim(),
+        )
         .filter(Boolean);
 
     if (colors.length === 0) {

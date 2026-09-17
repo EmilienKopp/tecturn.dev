@@ -1,3 +1,13 @@
+/** The six named branding colors, reused as shortcuts beside every color picker. */
+export type BrandingColors = {
+    background: string;
+    primary: string;
+    secondary: string;
+    accent: string;
+    success: string;
+    danger: string;
+};
+
 export type User = {
     id: number;
     name: string;
@@ -5,6 +15,7 @@ export type User = {
     avatar?: string;
     social_x_handle?: string | null;
     social_github_handle?: string | null;
+    branding: BrandingColors;
     /* @chisel-2fa */
     two_factor_enabled?: boolean;
     /* @end-chisel-2fa */
