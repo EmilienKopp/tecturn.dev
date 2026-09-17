@@ -18,9 +18,12 @@ test('shared navigation reflects the current team routes', function () {
         ->where('navigation.0.children.0.title', 'Dashboard')
         ->where('navigation.0.children.0.url', route('dashboard', $team->slug))
         ->where('navigation.0.children.0.active', true)
-        ->where('navigation.0.children.1.title', 'Presentations')
-        ->where('navigation.0.children.1.url', route('presentations.index', $team->slug))
+        ->where('navigation.0.children.1.title', 'Contacts')
+        ->where('navigation.0.children.1.url', route('contacts.index'))
         ->where('navigation.0.children.1.active', false)
+        ->where('navigation.0.children.2.title', 'Presentations')
+        ->where('navigation.0.children.2.url', route('presentations.index', $team->slug))
+        ->where('navigation.0.children.2.active', false)
         ->where('navigation.1.title', 'Settings')
         ->where('navigation.1.children.0.url', route('profile.edit'))
         ->where('navigation.1.children.1.url', route('teams.index')),
@@ -38,6 +41,7 @@ test('navigation marks the presentations section active on the presentations pag
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->where('navigation.0.children.0.active', false)
-        ->where('navigation.0.children.1.active', true),
+        ->where('navigation.0.children.1.active', false)
+        ->where('navigation.0.children.2.active', true),
     );
 });

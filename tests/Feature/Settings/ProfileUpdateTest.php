@@ -38,6 +38,7 @@ test('social handles are stored and normalized', function () {
         ->actingAs($user)
         ->patch('/settings/profile', [
             'name' => $user->name,
+            'handle' => '@Emilien.Kopp',
             'social_x_handle' => '@emilienkopp',
             'social_github_handle' => 'EmilienKopp',
         ])
@@ -46,12 +47,14 @@ test('social handles are stored and normalized', function () {
 
     $user->refresh();
 
-    expect($user->social_x_handle)->toBe('emilienkopp')
+    expect($user->handle)->toBe('emilien.kopp')
+        ->and($user->social_x_handle)->toBe('emilienkopp')
         ->and($user->social_github_handle)->toBe('EmilienKopp');
 });
 
 test('social handles are shared on the auth user prop', function () {
     $user = User::factory()->create([
+        'handle' => 'emilien',
         'social_x_handle' => 'emilienkopp',
         'social_github_handle' => 'EmilienKopp',
     ]);
@@ -60,6 +63,7 @@ test('social handles are shared on the auth user prop', function () {
         ->actingAs($user)
         ->get(route('profile.edit'))
         ->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('auth.user.handle', 'emilien')
             ->where('auth.user.social_x_handle', 'emilienkopp')
             ->where('auth.user.social_github_handle', 'EmilienKopp'),
         );

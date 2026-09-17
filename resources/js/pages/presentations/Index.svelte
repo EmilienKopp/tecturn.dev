@@ -43,6 +43,7 @@
     type PresentationListItem = {
         id: number;
         name: string;
+        is_private: boolean;
         slide_count: number;
         updated_at: string | null;
     };
@@ -418,6 +419,11 @@
                                 class="h-4 w-4 text-muted-foreground"
                             />
                             {presentation.name}
+                            {#if presentation.is_private}
+                                <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                    Private
+                                </span>
+                            {/if}
                         </CardTitle>
                         <CardDescription>
                             {presentation.slide_count}

@@ -23,6 +23,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property int $id
  * @property int $team_id
  * @property string $name
+ * @property bool $is_private
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $talk_settings
  * @property array<string, mixed>|null $flow
@@ -34,7 +35,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $updated_at
  * @property-read Team $team
  */
-#[Fillable(['team_id', 'name', 'content', 'talk_settings', 'flow', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
+#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
 #[UsePolicy(PresentationPolicy::class)]
 class PresentationModel extends Model implements HasMedia
 {
@@ -48,6 +49,10 @@ class PresentationModel extends Model implements HasMedia
     public const string IMAGES_COLLECTION = 'images';
 
     protected $table = 'presentations';
+
+    protected $attributes = [
+        'is_private' => false,
+    ];
 
     public function registerMediaCollections(): void
     {
@@ -90,6 +95,7 @@ class PresentationModel extends Model implements HasMedia
             id: $this->id,
             team_id: $this->team_id,
             name: $this->name,
+            isPrivate: $this->is_private,
             content: PresentationContent::fromArray($this->content),
             talkSettings: TalkSettings::fromArray($this->talk_settings ?? []),
             flow: $this->flow !== null ? FlowGraph::fromArray($this->flow) : null,
@@ -112,6 +118,7 @@ class PresentationModel extends Model implements HasMedia
     protected function casts(): array
     {
         return [
+            'is_private' => 'boolean',
             'content' => 'array',
             'talk_settings' => 'array',
             'flow' => 'array',

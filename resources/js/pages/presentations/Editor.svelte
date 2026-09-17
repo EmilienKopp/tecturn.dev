@@ -39,6 +39,7 @@
             name: string;
             content: PresentationContent;
             talk_settings: TalkSettings;
+            is_private: boolean;
             flow: FlowGraph | null;
             updated_at: string | null;
         };
@@ -198,6 +199,7 @@
         {editor}
         presentationId={presentation.id}
         talkSettings={presentation.talk_settings}
+        isPrivate={presentation.is_private}
         bind:name
         bind:view
         onExport={exportSvelte}

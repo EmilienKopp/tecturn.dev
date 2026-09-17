@@ -23,6 +23,10 @@ class UpdatePresentation
             $presentation->rename($command->name);
         }
 
+        if ($command->isPrivate !== null) {
+            $presentation->changePrivacy($command->isPrivate);
+        }
+
         if ($command->content !== null) {
             $presentation->replaceContent($command->content);
         }

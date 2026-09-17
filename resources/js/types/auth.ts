@@ -11,6 +11,7 @@ export type BrandingColors = {
 export type User = {
     id: number;
     name: string;
+    handle?: string | null;
     email: string;
     avatar?: string;
     social_x_handle?: string | null;

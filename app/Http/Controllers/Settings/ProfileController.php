@@ -32,6 +32,7 @@ class ProfileController extends Controller
     {
         $request->user()->update($request->safe()->only([
             'name',
+            'handle',
             'social_x_handle',
             'social_github_handle',
         ]));

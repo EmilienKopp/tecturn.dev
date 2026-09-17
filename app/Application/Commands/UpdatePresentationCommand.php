@@ -13,6 +13,7 @@ readonly class UpdatePresentationCommand
     public function __construct(
         public int $presentation_id,
         public ?string $name = null,
+        public ?bool $isPrivate = null,
         public ?PresentationContent $content = null,
         public ?TalkSettings $talkSettings = null,
         public ?FlowGraph $flow = null,

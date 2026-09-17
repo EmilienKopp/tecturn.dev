@@ -2,6 +2,7 @@
     import { router, page } from '@inertiajs/svelte';
     import { Code, CurlyBraces } from 'lucide-svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
+    import Lock from 'lucide-svelte/icons/lock';
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Download from 'lucide-svelte/icons/download';
     import FlaskConical from 'lucide-svelte/icons/flask-conical';
@@ -42,6 +43,7 @@
         editor,
         presentationId,
         talkSettings,
+        isPrivate,
         name = $bindable(),
         view = $bindable(),
         onExport,
@@ -53,6 +55,7 @@
         editor: EditorState;
         presentationId: number;
         talkSettings: TalkSettings;
+        isPrivate: boolean;
         name: string;
         view: 'slides' | 'flow';
         onExport: () => void;
@@ -63,6 +66,7 @@
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
+    let presentationPrivate = $state(isPrivate);
     let showDock = $state(talkSettings.showDock);
     let showTranslation = $state(talkSettings.showTranslation);
     let savingTalkSettings = $state(false);
@@ -140,6 +144,33 @@
         persistTalkSettings(
             () => (autoSave = !autoSave),
             () => (autoSave = !autoSave),
+        );
+    };
+
+    const togglePrivacy = () => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam) {
+            return;
+        }
+
+        const next = !presentationPrivate;
+        presentationPrivate = next;
+
+        router.put(
+            update({
+                current_team: currentTeam.slug,
+                presentation: presentationId,
+            }).url,
+            {
+                is_private: next,
+            },
+            {
+                preserveState: true,
+                onError: () => {
+                    presentationPrivate = !next;
+                },
+            },
         );
     };
 
@@ -249,6 +280,7 @@
                     name,
                     content: editor.content,
                     flow: $state.snapshot(editor.flow),
+                    is_private: presentationPrivate,
                     autoSave: autoSave,
                 },
                 {
@@ -456,6 +488,13 @@
                     showTranslation,
                     toggleTranslation,
                     'editor-translation-toggle',
+                )}
+                {@render toggleRow(
+                    'Private talk',
+                    Lock,
+                    presentationPrivate,
+                    togglePrivacy,
+                    'editor-private-toggle',
                 )}
                 <button
                     type="button"
