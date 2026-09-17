@@ -7,7 +7,7 @@
         @php
             $metaTitle = ($metaTitle ?? null) ?: config('app.name', 'Tecturn').' - The stage for developer talks';
             $metaDescription = ($metaDescription ?? null) ?: 'Build slides out of blocks, wire their reveal order in a flow graph, and present with live translation and floating audience reactions. A built-in pacing coach keeps your talk on time.';
-            $metaImage = ($metaImage ?? null) ?: url('/apple-touch-icon.png');
+            $metaImage = ($metaImage ?? null) ?: url('/og-image.png');
         @endphp
 
         <meta name="description" content="{{ $metaDescription }}">
@@ -18,9 +18,11 @@
         <meta property="og:description" content="{{ $metaDescription }}">
         <meta property="og:url" content="{{ url()->current() }}">
         <meta property="og:image" content="{{ $metaImage }}">
+        <meta property="og:image:width" content="1200">
+        <meta property="og:image:height" content="630">
         <meta property="og:locale" content="{{ str_replace('-', '_', app()->getLocale()) }}">
 
-        <meta name="twitter:card" content="summary">
+        <meta name="twitter:card" content="summary_large_image">
         <meta name="twitter:title" content="{{ $metaTitle }}">
         <meta name="twitter:description" content="{{ $metaDescription }}">
         <meta name="twitter:image" content="{{ $metaImage }}">
