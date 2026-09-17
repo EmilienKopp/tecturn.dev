@@ -33,6 +33,35 @@ test('contacts can be searched by public and social handles without exposing ema
     );
 });
 
+test('discover section excludes people without any public handle', function () {
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+
+    User::factory()->create([
+        'name' => 'Handleless Harry',
+        'handle' => null,
+        'social_x_handle' => null,
+        'social_github_handle' => null,
+    ]);
+
+    User::factory()->create([
+        'name' => 'Visible Vera',
+        'handle' => null,
+        'social_x_handle' => null,
+        'social_github_handle' => 'veragit',
+    ]);
+
+    $response = $this
+        ->actingAs($viewer)
+        ->get(route('contacts.index'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Contacts')
+        ->has('results', 1)
+        ->where('results.0.name', 'Visible Vera'),
+    );
+});
+
 test('following someone shows their public talks and stats but hides private talks', function () {
     $viewer = User::factory()->create(['handle' => 'viewer']);
     $speaker = User::factory()->create([

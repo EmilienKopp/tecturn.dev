@@ -34,12 +34,20 @@ class ContactsReadModel
 
         return ContactProfileView::query()
             ->where('id', '!=', $userId)
+            ->when($term === null, function (Builder $query): void {
+                $query->where(function (Builder $query): void {
+                    $query
+                        ->whereRaw("COALESCE(handle, '') != ''")
+                        ->orWhereRaw("COALESCE(social_x_handle, '') != ''")
+                        ->orWhereRaw("COALESCE(social_github_handle, '') != ''");
+                });
+            })
             ->when($term !== null, function (Builder $query) use ($term): void {
                 $like = '%'.$term.'%';
 
                 $query->where(function (Builder $query) use ($like): void {
                     $query
-                        ->whereRaw("LOWER(name) LIKE ?", [$like])
+                        ->whereRaw('LOWER(name) LIKE ?', [$like])
                         ->orWhereRaw("LOWER(COALESCE(handle, '')) LIKE ?", [$like])
                         ->orWhereRaw("LOWER(COALESCE(social_x_handle, '')) LIKE ?", [$like])
                         ->orWhereRaw("LOWER(COALESCE(social_github_handle, '')) LIKE ?", [$like]);
