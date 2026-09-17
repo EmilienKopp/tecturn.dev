@@ -214,7 +214,7 @@ class ContactsReadModel
             return null;
         }
 
-        $term = mb_strtolower(trim($search));
+        $term = ltrim(mb_strtolower(trim($search)), '@');
 
         return $term === '' ? null : $term;
     }

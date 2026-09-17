@@ -7,6 +7,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class IndexContactsRequest extends FormRequest
 {
+    public function authorize(): bool
+    {
+        return $this->user() !== null;
+    }
+
     /**
      * @return array<string, ValidationRule|array<mixed>|string>
      */

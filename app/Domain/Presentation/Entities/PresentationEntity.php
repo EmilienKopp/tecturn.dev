@@ -18,8 +18,8 @@ class PresentationEntity extends BaseEntity
     public function __construct(
         public int $team_id,
         public string $name,
-        public bool $isPrivate = false,
         public PresentationContent $content,
+        public bool $isPrivate = false,
         public TalkSettings $talkSettings = new TalkSettings,
         public ?FlowGraph $flow = null,
         public ?int $id = null,

@@ -316,7 +316,7 @@
                                 bind:value={draftPlan}
                                 rows={10}
                                 required
-                                placeholder={'# Ship faster with X\n\n- The problem teams hit today\n- How X solves it (3 key features)\n- A quick demo\n- Pricing and next steps'}
+                                placeholder="# Ship faster with X\n\n- The problem teams hit today\n- How X solves it (3 key features)\n- A quick demo\n- Pricing and next steps"
                                 class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
                                 data-test="magic-draft-plan"
                             ></textarea>
@@ -420,7 +420,9 @@
                             />
                             {presentation.name}
                             {#if presentation.is_private}
-                                <span class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                                <span
+                                    class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                >
                                     Private
                                 </span>
                             {/if}

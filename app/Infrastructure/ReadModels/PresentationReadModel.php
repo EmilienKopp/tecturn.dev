@@ -106,6 +106,7 @@ class PresentationReadModel
         return [
             'id' => $presentation->id,
             'name' => $presentation->name,
+            'is_private' => $presentation->is_private,
             'content' => $presentation->content,
             'talk_settings' => TalkSettings::fromArray($presentation->talk_settings ?? [])->toArray(),
             'flow' => $presentation->flow,

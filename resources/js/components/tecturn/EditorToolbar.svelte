@@ -1,14 +1,14 @@
 <script lang="ts">
     import { router, page } from '@inertiajs/svelte';
-    import { Code, CurlyBraces } from 'lucide-svelte';
+    import { CurlyBraces } from 'lucide-svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
-    import Lock from 'lucide-svelte/icons/lock';
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Download from 'lucide-svelte/icons/download';
     import FlaskConical from 'lucide-svelte/icons/flask-conical';
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
     import LayoutPanelLeft from 'lucide-svelte/icons/layout-panel-left';
+    import Lock from 'lucide-svelte/icons/lock';
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
     import Play from 'lucide-svelte/icons/play';
@@ -31,13 +31,13 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
-    import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
     import SlideDefaultsModal from './SlideDefaultsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
+    import { present, update } from '@/routes/presentations';
 
     let {
         editor,
@@ -233,14 +233,6 @@
             await onExportWebComponent();
         } finally {
             exportingWebComponent = false;
-        }
-    };
-
-    const exportJSON = async () => {
-        try {
-            await onExportJSON();
-        } catch (error) {
-            console.error('Failed to export JSON:', error);
         }
     };
 

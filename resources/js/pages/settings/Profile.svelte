@@ -13,7 +13,6 @@
 
 <script lang="ts">
     import { Form, page, useForm } from '@inertiajs/svelte';
-    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';
     import Heading from '@/components/Heading.svelte';
@@ -27,6 +26,7 @@
         BRANDING_KEYS,
         BRANDING_LABELS,
     } from '@/lib/tecturn/branding';
+    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import { update as updateBranding } from '@/routes/branding';
 
     const user = $derived(page.props.auth.user);

@@ -105,7 +105,7 @@ class User extends Authenticatable
         $suffix = 2;
 
         while (self::query()
-            ->when($ignoreId !== null, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))
             ->where('handle', $candidate)
             ->exists()) {
             $suffixString = '-'.$suffix;
