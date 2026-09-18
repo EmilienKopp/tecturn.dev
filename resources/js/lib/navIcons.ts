@@ -1,6 +1,7 @@
 import BookOpen from 'lucide-svelte/icons/book-open';
 import BookUser from 'lucide-svelte/icons/book-user';
 import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+import MessageSquare from 'lucide-svelte/icons/message-square';
 import Presentation from 'lucide-svelte/icons/presentation';
 import Timer from 'lucide-svelte/icons/timer';
 import User from 'lucide-svelte/icons/user';
@@ -11,6 +12,7 @@ const icons: Record<string, NavItem['icon']> = {
     'book-open': BookOpen,
     'book-user': BookUser,
     'layout-grid': LayoutGrid,
+    'message-square': MessageSquare,
     presentation: Presentation,
     timer: Timer,
     user: User,

@@ -24,7 +24,7 @@ class RecordPracticeRun
     {
         $presentation = $this->presentations->findById($command->presentationId);
 
-        return $this->practiceRuns->save(new PracticeRunEntity(
+        $run = $this->practiceRuns->save(new PracticeRunEntity(
             presentation_id: $command->presentationId,
             team_id: $command->teamId,
             started_at: $command->startedAt,
@@ -33,6 +33,13 @@ class RecordPracticeRun
             slide_timings: $command->slideTimings,
             content: $presentation->content->toArray(),
             flow: $presentation->flow?->toArray(),
+            step_events: $command->stepEvents,
         ));
+
+        if ($command->audioPath !== null && $command->audioFileName !== null && $run->id !== null) {
+            $this->practiceRuns->storeRecording($run->id, $command->audioPath, $command->audioFileName);
+        }
+
+        return $run;
     }
 }

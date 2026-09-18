@@ -609,3 +609,23 @@ export function migrateLegacyTransitions(
 
     return { content: nextContent, flow: nextFlow };
 }
+
+/**
+ * Titles of the slides an audience actually sees, in shown order — the same
+ * migration + enabled filter the Presenter applies, so index N here matches
+ * Reveal's horizontal index N. Untitled slides yield null.
+ */
+export function shownSlideTitles(
+    content: PresentationContent,
+    flow: FlowGraph | null,
+): (string | null)[] {
+    const migrated = migrateLegacyTransitions(
+        content,
+        flow ?? defaultFlowFromContent(content),
+    );
+    const enabled = enabledSlideIds(migrated.content, migrated.flow);
+
+    return migrated.content.slides
+        .filter((slide) => enabled.has(slide.id))
+        .map((slide) => (slide.title?.trim() ? slide.title : null));
+}

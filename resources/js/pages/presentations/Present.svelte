@@ -63,8 +63,10 @@
     };
 
     // Current slide + shown-slide total, reported by the Presenter off Reveal,
-    // so the dock can pace each slide against the talk target.
+    // so the dock can pace each slide against the talk target. The step index
+    // (shown-fragment count) feeds the practice dock's replay timeline.
     let currentSlide = $state(0);
+    let currentStep = $state(0);
     let slideCount = $state(presentation.content.slides.length);
 
     // Session-only override: starts from the saved setting, toggled from the
@@ -173,6 +175,9 @@
                         currentSlide = current;
                         slideCount = total;
                     }}
+                    onStepChange={(_slide, step) => {
+                        currentStep = step;
+                    }}
                 />
             </div>
 
@@ -204,6 +209,7 @@
             talkSettings={presentation.talk_settings}
             {slideCount}
             {currentSlide}
+            {currentStep}
             saving={savingPracticeRun}
             onFinish={savePracticeRun}
         />

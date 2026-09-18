@@ -42,4 +42,18 @@ class PracticeRunModelFactory extends Factory
             'duration_seconds' => array_sum(array_column($timings, 'seconds')),
         ]);
     }
+
+    /**
+     * @param  list<array{at_ms: int, slide: int, step: int}>|null  $events
+     */
+    public function withStepEvents(?array $events = null): static
+    {
+        return $this->state(fn () => [
+            'step_events' => $events ?? [
+                ['at_ms' => 0, 'slide' => 0, 'step' => 0],
+                ['at_ms' => 4000, 'slide' => 0, 'step' => 1],
+                ['at_ms' => 9000, 'slide' => 1, 'step' => 0],
+            ],
+        ]);
+    }
 }

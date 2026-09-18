@@ -21,6 +21,9 @@ class RecordPracticeRunController extends Controller
     {
         Gate::authorize('view', $presentation);
 
+        $audio = $request->file('audio');
+        $audio = is_array($audio) ? null : $audio;
+
         $run = $this->recordPracticeRun->execute(new RecordPracticeRunCommand(
             presentationId: $presentation->id,
             teamId: $presentation->team_id,
@@ -28,11 +31,23 @@ class RecordPracticeRunController extends Controller
             endedAt: $request->endedAt(),
             durationSeconds: (int) $request->validated('duration_seconds'),
             slideTimings: $request->slideTimings(),
+            stepEvents: $request->stepEvents(),
+            audioPath: $audio === null ? null : ($audio->getRealPath() ?: null),
+            audioFileName: $audio !== null ? 'rehearsal.'.$this->extensionForMime($audio->getMimeType() ?? '') : null,
         ));
 
         return redirect()->route('rehearsals.show', [
             'current_team' => $current_team->slug,
             'practice_run' => $run->id,
         ]);
+    }
+
+    private function extensionForMime(string $mime): string
+    {
+        return match ($mime) {
+            'audio/ogg' => 'ogg',
+            'audio/mp4', 'video/mp4' => 'm4a',
+            default => 'webm',
+        };
     }
 }

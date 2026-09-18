@@ -19,6 +19,7 @@ class EloquentPracticeRunRepository implements PracticeRunRepository
             'ended_at' => $run->ended_at,
             'duration_seconds' => $run->duration_seconds,
             'slide_timings' => $run->slide_timings,
+            'step_events' => $run->step_events,
             'content' => $run->content,
             'flow' => $run->flow,
         ];
@@ -31,5 +32,18 @@ class EloquentPracticeRunRepository implements PracticeRunRepository
         }
 
         return $model->refresh()->toEntity();
+    }
+
+    public function findById(int $id): PracticeRunEntity
+    {
+        return PracticeRunModel::findOrFail($id)->toEntity();
+    }
+
+    public function storeRecording(int $runId, string $filePath, string $fileName): void
+    {
+        PracticeRunModel::findOrFail($runId)
+            ->addMedia($filePath)
+            ->usingFileName($fileName)
+            ->toMediaCollection(PracticeRunModel::RECORDING_COLLECTION);
     }
 }

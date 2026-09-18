@@ -28,6 +28,7 @@ use App\Http\Controllers\Presentations\ListPresentationsController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
 use App\Http\Controllers\Presentations\RecordPracticeRunController;
 use App\Http\Controllers\Presentations\RecordReactionsController;
+use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
 use App\Http\Controllers\Presentations\SendReactionController;
 use App\Http\Controllers\Presentations\ShowPracticeRunController;
 use App\Http\Controllers\Presentations\StartSessionController;
@@ -37,6 +38,12 @@ use App\Http\Controllers\Presentations\UpdatePresentationController;
 use App\Http\Controllers\Presentations\UploadPresentationBackgroundController;
 use App\Http\Controllers\Presentations\UploadPresentationImageController;
 use App\Http\Controllers\Presentations\ViewerController;
+use App\Http\Controllers\Reviews\AddReviewCommentController;
+use App\Http\Controllers\Reviews\CompleteRehearsalReviewController;
+use App\Http\Controllers\Reviews\ListReviewsController;
+use App\Http\Controllers\Reviews\ShowReceivedReviewController;
+use App\Http\Controllers\Reviews\ShowRehearsalReviewController;
+use App\Http\Controllers\Reviews\StreamRehearsalAudioController;
 use App\Http\Controllers\Teams\TeamInvitationController;
 use App\Http\Middleware\EnsureTeamMembership;
 use App\Http\Middleware\EnsureUserIsAdmin;
@@ -91,6 +98,16 @@ Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function ()
     Route::get('contacts', ContactsController::class)->name('contacts.index');
     Route::post('contacts/{user}/follow', FollowUserController::class)->name('contacts.follow.store');
     Route::delete('contacts/{user}/follow', UnfollowUserController::class)->name('contacts.follow.destroy');
+
+    // Reviewer-facing routes live outside the "{current_team}" group — the
+    // reviewer is generally not a member of the requester's team. Registered
+    // before that group so these paths are never captured as team slugs.
+    Route::get('reviews', ListReviewsController::class)->name('reviews.index');
+    Route::get('reviews/{rehearsal_review}', ShowRehearsalReviewController::class)->name('reviews.show');
+    Route::get('reviews/{rehearsal_review}/received', ShowReceivedReviewController::class)->name('reviews.received');
+    Route::post('reviews/{rehearsal_review}/comments', AddReviewCommentController::class)->name('reviews.comments.store');
+    Route::post('reviews/{rehearsal_review}/complete', CompleteRehearsalReviewController::class)->name('reviews.complete');
+    Route::get('rehearsal-audio/{practice_run}', StreamRehearsalAudioController::class)->name('rehearsals.audio');
 });
 
 Route::post('present/{presentation:embed_token}/reactions', SendReactionController::class)
@@ -109,6 +126,7 @@ Route::prefix('{current_team}')
 
         Route::get('rehearsals', ListPracticeRunsController::class)->name('rehearsals.index');
         Route::get('rehearsals/{practice_run}', ShowPracticeRunController::class)->name('rehearsals.show');
+        Route::post('rehearsals/{practice_run}/reviews', RequestRehearsalReviewController::class)->name('rehearsals.reviews.store');
 
         Route::get('presentations', ListPresentationsController::class)->name('presentations.index');
         Route::post('presentations', CreatePresentationController::class)->name('presentations.store');

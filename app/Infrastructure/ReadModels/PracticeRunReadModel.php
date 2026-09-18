@@ -35,7 +35,7 @@ class PracticeRunReadModel
                 'started_at' => $run->started_at->toISOString(),
                 'duration_seconds' => $run->duration_seconds,
                 'slide_count' => count($run->content['slides'] ?? []),
-                'slide_timings' => $run->slide_timings ?? [],
+                'slide_timings' => $run->slideTimings(),
             ])
             ->all();
     }
@@ -51,6 +51,8 @@ class PracticeRunReadModel
      *     ended_at: string,
      *     duration_seconds: int,
      *     slide_timings: list<array{slide: int, seconds: int}>,
+     *     step_events: list<array{at_ms: int, slide: int, step: int}>,
+     *     has_recording: bool,
      *     content: array<string, mixed>,
      *     flow: array<string, mixed>|null
      * }
@@ -66,7 +68,9 @@ class PracticeRunReadModel
             'started_at' => $run->started_at->toISOString(),
             'ended_at' => $run->ended_at->toISOString(),
             'duration_seconds' => $run->duration_seconds,
-            'slide_timings' => $run->slide_timings ?? [],
+            'slide_timings' => $run->slideTimings(),
+            'step_events' => $run->stepEvents(),
+            'has_recording' => $run->has_recording,
             'content' => $run->content,
             'flow' => $run->flow,
         ];

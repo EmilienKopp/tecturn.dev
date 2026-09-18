@@ -16,6 +16,7 @@ class PracticeRunEntity extends BaseEntity
      * @param  list<array{slide: int, seconds: int}>  $slide_timings
      * @param  array<string, mixed>  $content
      * @param  array<string, mixed>|null  $flow
+     * @param  list<array{at_ms: int, slide: int, step: int}>|null  $step_events
      */
     public function __construct(
         public int $presentation_id,
@@ -26,6 +27,7 @@ class PracticeRunEntity extends BaseEntity
         public array $slide_timings,
         public array $content,
         public ?array $flow = null,
+        public ?array $step_events = null,
         public ?int $id = null,
     ) {}
 
@@ -42,6 +44,7 @@ class PracticeRunEntity extends BaseEntity
             'slide_timings' => $this->slide_timings,
             'content' => $this->content,
             'flow' => $this->flow,
+            'step_events' => $this->step_events,
         ];
     }
 }
