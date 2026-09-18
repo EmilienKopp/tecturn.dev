@@ -18,18 +18,21 @@ class AppNavigation
         $team = $user?->currentTeam;
 
         return Navigation::make()
-            ->addIf($team !== null, 'Platform', '', function (Section $section) use ($team) {
+            ->addIf(condition: $team !== null, title: 'Platform', configure: function (Section $section) use ($team) {
                 $section
                     ->add('Dashboard', route('dashboard', $team->slug), attributes: ['icon' => 'layout-grid'])
                     ->add('Contacts', route('contacts.index'), attributes: ['icon' => 'book-user'])
                     ->add('Presentations', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
                     ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer'])
-                    ->add('Documentation', route('docs'), attributes: ['icon' => 'book-open']);
+                    ->add('Reviews', route('reviews.index'), attributes: ['icon' => 'message-square']);
             })
-            ->addIf($user !== null, 'Settings', '', function (Section $section) {
+            ->addIf(condition: $user !== null, title: 'Settings', configure: function (Section $section) {
                 $section
                     ->add('Profile', route('profile.edit'), attributes: ['icon' => 'user'])
                     ->add('Teams', route('teams.index'), attributes: ['icon' => 'users']);
+            })
+            ->add(title: 'Help', configure: function (Section $section) {
+                $section->add('Documentation', route('docs'), attributes: ['icon' => 'book-open']);
             })
             ->tree();
     }

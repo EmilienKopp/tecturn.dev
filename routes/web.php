@@ -40,6 +40,8 @@ use App\Http\Controllers\Presentations\UploadPresentationImageController;
 use App\Http\Controllers\Presentations\ViewerController;
 use App\Http\Controllers\Reviews\AddReviewCommentController;
 use App\Http\Controllers\Reviews\CompleteRehearsalReviewController;
+use App\Http\Controllers\Reviews\ListReviewsController;
+use App\Http\Controllers\Reviews\ShowReceivedReviewController;
 use App\Http\Controllers\Reviews\ShowRehearsalReviewController;
 use App\Http\Controllers\Reviews\StreamRehearsalAudioController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -100,7 +102,9 @@ Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function ()
     // Reviewer-facing routes live outside the "{current_team}" group — the
     // reviewer is generally not a member of the requester's team. Registered
     // before that group so these paths are never captured as team slugs.
+    Route::get('reviews', ListReviewsController::class)->name('reviews.index');
     Route::get('reviews/{rehearsal_review}', ShowRehearsalReviewController::class)->name('reviews.show');
+    Route::get('reviews/{rehearsal_review}/received', ShowReceivedReviewController::class)->name('reviews.received');
     Route::post('reviews/{rehearsal_review}/comments', AddReviewCommentController::class)->name('reviews.comments.store');
     Route::post('reviews/{rehearsal_review}/complete', CompleteRehearsalReviewController::class)->name('reviews.complete');
     Route::get('rehearsal-audio/{practice_run}', StreamRehearsalAudioController::class)->name('rehearsals.audio');

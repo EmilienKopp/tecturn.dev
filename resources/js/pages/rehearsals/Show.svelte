@@ -22,10 +22,10 @@
     import Heading from '@/components/Heading.svelte';
     import RehearsalReplay from '@/components/tecturn/RehearsalReplay.svelte';
     import { Button } from '@/components/ui/button';
-    import UserAvatar from '@/components/UserAvatar.svelte';
     import { shownSlideTitles } from '@/lib/tecturn/flow-compiler';
     import { importJson } from '@/routes/presentations';
     import { store as storeReviewRequest } from '@/routes/rehearsals/reviews';
+    import { index as reviewsIndex } from '@/routes/reviews';
     import type { FlowGraph, PresentationContent } from '@/types/generated';
 
     type Run = {
@@ -339,8 +339,8 @@
                 </p>
             {/if}
 
-            <!-- Peer review: ask a follower to look at this run and read
-                 the feedback they leave, keyed to the shown slide. -->
+            <!-- Peer review: ask a follower to look at this run; the
+                 feedback itself lives on the Reviews screen. -->
             <h2 class="mt-4 text-sm font-semibold text-foreground">
                 Peer review
             </h2>
@@ -390,79 +390,23 @@
                 <p
                     class="rounded-xl border border-dashed border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
                 >
-                    Reviews come from people who follow you. Share your
-                    profile from Contacts to gather followers first.
+                    Reviews come from people who follow you. Share your profile
+                    from Contacts to gather followers first.
                 </p>
             {/if}
 
-            {#each reviews as review (review.id)}
-                <article
-                    class="flex flex-col gap-3 rounded-xl border border-border bg-card p-4"
-                    data-test="review-card"
+            {#if reviews.length > 0}
+                <a
+                    href={reviewsIndex({ query: { run: run.id } }).url}
+                    class="flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-foreground hover:bg-accent"
+                    data-test="rehearsal-reviews-link"
                 >
-                    <div class="flex items-center gap-3">
-                        <UserAvatar
-                            name={review.reviewer_name}
-                            avatar={review.reviewer_avatar}
-                            class="h-8 w-8"
-                        />
-                        <div class="min-w-0 flex-1">
-                            <p
-                                class="truncate text-sm font-medium text-foreground"
-                            >
-                                {review.reviewer_name}
-                            </p>
-                        </div>
-                        <span
-                            class="rounded-full px-2.5 py-0.5 text-xs font-semibold {review.status ===
-                            'completed'
-                                ? 'bg-emerald-500/15 text-emerald-500'
-                                : 'bg-amber-500/15 text-amber-500'}"
-                        >
-                            {review.status === 'completed'
-                                ? 'Completed'
-                                : 'Pending'}
-                        </span>
-                    </div>
-
-                    {#if review.comments.length > 0}
-                        <ul class="flex flex-col gap-2">
-                            {#each review.comments as comment (comment.id)}
-                                <li
-                                    class="rounded-lg border p-2.5 text-sm {comment.slide_number ===
-                                    currentSlide
-                                        ? 'border-amber-500/60 bg-amber-500/10'
-                                        : 'border-border bg-background'}"
-                                    data-test="review-comment"
-                                >
-                                    <p
-                                        class="mb-1 flex items-center gap-1 text-xs font-semibold text-muted-foreground"
-                                    >
-                                        <MessageSquare class="h-3 w-3" />
-                                        Slide {comment.slide_number + 1}
-                                        {#if slideTitle(comment.slide_number)}
-                                            <span
-                                                class="truncate font-normal"
-                                            >
-                                                · {slideTitle(
-                                                    comment.slide_number,
-                                                )}
-                                            </span>
-                                        {/if}
-                                    </p>
-                                    <p class="text-foreground">
-                                        {comment.message}
-                                    </p>
-                                </li>
-                            {/each}
-                        </ul>
-                    {:else}
-                        <p class="text-xs text-muted-foreground">
-                            No comments yet.
-                        </p>
-                    {/if}
-                </article>
-            {/each}
+                    <MessageSquare class="h-4 w-4 text-muted-foreground" />
+                    {reviews.length === 1
+                        ? '1 review on this rehearsal'
+                        : `${reviews.length} reviews on this rehearsal`}
+                </a>
+            {/if}
         </section>
     </div>
 </div>

@@ -2,6 +2,7 @@
 
 namespace App\Models\Views;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Splitstack\Rome\Models\ReadOnlyModel;
 
@@ -49,5 +50,10 @@ class RehearsalReviewDetailView extends ReadOnlyModel
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    public function scopePendingLast(Builder $query): Builder
+    {
+        return $query->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")->orderByDesc('created_at');
     }
 }

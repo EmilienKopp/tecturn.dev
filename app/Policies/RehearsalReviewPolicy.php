@@ -17,6 +17,14 @@ class RehearsalReviewPolicy
     }
 
     /**
+     * Determine whether the user can view the review as its requester.
+     */
+    public function viewReceived(User $user, RehearsalReviewModel $review): bool
+    {
+        return $user->id === $review->requester_user_id;
+    }
+
+    /**
      * Determine whether the user can add comments to the review.
      */
     public function comment(User $user, RehearsalReviewModel $review): bool
