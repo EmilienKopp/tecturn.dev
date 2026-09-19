@@ -24,7 +24,7 @@
     } from '@/lib/tecturn/editor-draft';
     import { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
-    import { exportMethod } from '@/routes/presentations';
+    import { exportMethod, update } from '@/routes/presentations';
     import type {
         FlowGraph,
         PresentationContent,
@@ -60,6 +60,33 @@
     // slide navigator, inspector, view toggle and export, and swap the slide
     // canvas for a preview of the source.
     const isExternal = presentation.source.type !== 'editor';
+
+    // Manual slide count for external decks: persisted so the dock can show the
+    // slide number (a Google Slides iframe can't be counted automatically).
+    let slideCount = $state<number | null>(presentation.source.slideCount ?? null);
+    let savingSlideCount = $state(false);
+
+    const saveSlideCount = (): void => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam || slideCount === null || slideCount < 1) {
+            return;
+        }
+
+        savingSlideCount = true;
+        router.put(
+            update({ current_team: currentTeam.slug, presentation: presentation.id })
+                .url,
+            { source_slide_count: slideCount },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => {
+                    savingSlideCount = false;
+                },
+            },
+        );
+    };
 
     // The element must be block-level with a real height — Reveal.js sizes
     // itself to 100% of its container.
@@ -274,16 +301,40 @@
     />
 
     {#if isExternal}
-        <div
-            class="flex min-h-0 flex-1 items-center justify-center bg-zinc-950 p-6 [container-type:size]"
-        >
+        <div class="flex min-h-0 flex-1 flex-col bg-zinc-950">
             <div
-                style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9;"
+                class="flex items-center gap-2 border-b border-zinc-800 px-6 py-2 text-sm text-zinc-300"
             >
-                <ExternalPresenter
-                    source={presentation.source}
-                    {sourcePdfUrl}
+                <label for="external-slide-count">Number of slides</label>
+                <input
+                    id="external-slide-count"
+                    type="number"
+                    min="1"
+                    max="2000"
+                    bind:value={slideCount}
+                    onchange={saveSlideCount}
+                    class="h-8 w-20 rounded-md border border-zinc-700 bg-transparent px-2 text-sm text-white"
+                    data-test="external-slide-count"
                 />
+                {#if savingSlideCount}
+                    <span class="text-xs text-zinc-500">Saving…</span>
+                {/if}
+                <span class="text-xs text-zinc-500">
+                    Sets the slide counter on the dock and how far you can step.
+                </span>
+            </div>
+
+            <div
+                class="flex min-h-0 flex-1 items-center justify-center p-6 [container-type:size]"
+            >
+                <div
+                    style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9;"
+                >
+                    <ExternalPresenter
+                        source={presentation.source}
+                        {sourcePdfUrl}
+                    />
+                </div>
             </div>
         </div>
     {:else if view === 'flow'}

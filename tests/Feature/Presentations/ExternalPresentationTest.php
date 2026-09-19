@@ -182,6 +182,49 @@ test('the present page carries the external source and pdf url', function () {
     );
 });
 
+test('the manual slide count can be set on an external deck and drives the present page', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->googleSlides()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->put(route('presentations.update', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]), ['source_slide_count' => 12])
+        ->assertRedirect()
+        ->assertSessionHasNoErrors();
+
+    expect($presentation->fresh()->source['slideCount'])->toBe(12);
+
+    $this
+        ->actingAs($user)
+        ->get(route('presentations.present', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('presentation.source.slideCount', 12),
+        );
+});
+
+test('the slide count rejects values below one', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->googleSlides()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->put(route('presentations.update', [
+            'current_team' => $user->currentTeam->slug,
+            'presentation' => $presentation->id,
+        ]), ['source_slide_count' => 0])
+        ->assertSessionHasErrors('source_slide_count');
+});
+
 test('an editor deck presents with a null pdf url', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->withSlides(1)->create([

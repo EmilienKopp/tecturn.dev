@@ -72,7 +72,14 @@
     // (shown-fragment count) feeds the rehearsal dock's replay timeline.
     let currentSlide = $state(0);
     let currentStep = $state(0);
-    let slideCount = $state(presentation.content.slides.length);
+    // External decks carry a placeholder 1-slide content, so they start at 0 (no
+    // counter) until the presenter reports a real total — a PDF's page count, or
+    // a rehearsal's declared slide count. Editor decks count their own slides.
+    let slideCount = $state(
+        presentation.source.type === 'editor'
+            ? presentation.content.slides.length
+            : 0,
+    );
 
     // Session-only override: starts from the saved setting, toggled from the
     // dock without persisting.
@@ -189,6 +196,7 @@
                     <ExternalPresenter
                         source={presentation.source}
                         {sourcePdfUrl}
+                        recordNavigation={rehearsalMode}
                         onPageChange={(current, total) => {
                             currentSlide = current;
                             slideCount = total;

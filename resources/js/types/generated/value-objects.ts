@@ -125,6 +125,7 @@ readonly backgroundImage: string | null,
 export type PresentationSource = {
 readonly type: SourceType,
 readonly externalUrl: string | null,
+readonly slideCount: number | null,
 };
 export type Slide = {
 readonly id: string,
