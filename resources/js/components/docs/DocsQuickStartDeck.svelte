@@ -112,7 +112,7 @@
                 </h2>
                 <p class="text-[2.2cqw] text-[#a5947a]">
                     Same menu: Test run to check everything without recording
-                    stats, Practice to rehearse against the clock.
+                    stats, Rehearse against the clock.
                 </p>
             </div>
         </Slide>

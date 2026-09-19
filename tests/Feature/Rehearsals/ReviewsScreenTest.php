@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
+use App\Models\RehearsalModel;
 use App\Models\RehearsalReviewModel;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-/** @return array{User, PresentationModel, PracticeRunModel} */
+/** @return array{User, PresentationModel, RehearsalModel} */
 function requesterWithRun(): array
 {
     $requester = User::factory()->create();
     $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
-    $run = PracticeRunModel::factory()->withStepEvents()->create([
+    $run = RehearsalModel::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,
@@ -69,7 +69,7 @@ test('the requester sees a received review with sibling and other-run shortcuts'
     ]);
 
     // A reviewed rehearsal of the same presentation.
-    $otherRun = PracticeRunModel::factory()->withStepEvents()->create([
+    $otherRun = RehearsalModel::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,

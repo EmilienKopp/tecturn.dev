@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Presentations;
 
-use App\Application\Actions\Presentations\RecordPracticeRun;
-use App\Application\Commands\RecordPracticeRunCommand;
+use App\Application\Actions\Presentations\RecordRehearsal;
+use App\Application\Commands\RecordRehearsalCommand;
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Presentations\RecordPracticeRunRequest;
+use App\Http\Requests\Presentations\RecordRehearsalRequest;
 use App\Infrastructure\ReadModels\ContactsReadModel;
-use App\Infrastructure\ReadModels\PracticeRunReadModel;
+use App\Infrastructure\ReadModels\RehearsalReadModel;
 use App\Infrastructure\ReadModels\RehearsalReviewReadModel;
-use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
+use App\Models\RehearsalModel;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,45 +20,45 @@ use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class PracticeRunController extends Controller
+class RehearsalController extends Controller
 {
     public function __construct(
-        private readonly PracticeRunReadModel $practiceRuns,
+        private readonly RehearsalReadModel $rehearsals,
         private readonly RehearsalReviewReadModel $reviews,
         private readonly ContactsReadModel $contacts,
-        private readonly RecordPracticeRun $recordPracticeRun,
+        private readonly RecordRehearsal $recordRehearsal,
     ) {}
 
     public function index(Request $request, Team $current_team): Response
     {
         return Inertia::render('rehearsals/Index', [
-            'runs' => $this->practiceRuns->listForTeam($current_team->id),
+            'runs' => $this->rehearsals->listForTeam($current_team->id),
             'reviewRequests' => $this->reviews->listForReviewer($request->user()->id),
         ]);
     }
 
-    public function show(Request $request, Team $current_team, PracticeRunModel $practice_run): Response
+    public function show(Request $request, Team $current_team, RehearsalModel $rehearsal): Response
     {
-        $run = $this->practiceRuns->findForReplay($practice_run->id);
+        $run = $this->rehearsals->findForReplay($rehearsal->id);
 
         return Inertia::render('rehearsals/Show', [
             'run' => $run,
-            'reviews' => $this->reviews->listForRun($practice_run->id),
+            'reviews' => $this->reviews->listForRun($rehearsal->id),
             'followers' => $this->contacts->followersForUser($request->user()->id),
             'audioUrl' => $run['has_recording']
-                ? route('rehearsals.audio', ['practice_run' => $practice_run->id])
+                ? route('rehearsals.audio', ['rehearsal' => $rehearsal->id])
                 : null,
         ]);
     }
 
-    public function store(RecordPracticeRunRequest $request, Team $current_team, PresentationModel $presentation): RedirectResponse
+    public function store(RecordRehearsalRequest $request, Team $current_team, PresentationModel $presentation): RedirectResponse
     {
         Gate::authorize('view', $presentation);
 
         $audio = $request->file('audio');
         $audio = is_array($audio) ? null : $audio;
 
-        $run = $this->recordPracticeRun->execute(new RecordPracticeRunCommand(
+        $run = $this->recordRehearsal->execute(new RecordRehearsalCommand(
             presentationId: $presentation->id,
             teamId: $presentation->team_id,
             startedAt: $request->startedAt(),
@@ -72,7 +72,7 @@ class PracticeRunController extends Controller
 
         return redirect()->route('rehearsals.show', [
             'current_team' => $current_team->slug,
-            'practice_run' => $run->id,
+            'rehearsal' => $run->id,
         ]);
     }
 

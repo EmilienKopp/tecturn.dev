@@ -2,8 +2,8 @@
     import { Link, page } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import DocsQuickStartDeck from '@/components/docs/DocsQuickStartDeck.svelte';
-    import PracticeDock from '@/components/tecturn/PracticeDock.svelte';
     import PresenterDock from '@/components/tecturn/PresenterDock.svelte';
+    import RehearsalDock from '@/components/tecturn/RehearsalDock.svelte';
     import { toUrl } from '@/lib/utils';
     import { dashboard, home, login } from '@/routes';
     import type { Team } from '@/types';
@@ -239,7 +239,7 @@
                     slides and reactions end to end.
                 </li>
                 <li>
-                    <strong class="text-foreground">Practice</strong>: adds a
+                    <strong class="text-foreground">Rehearse</strong>: adds a
                     start/pause/stop timer. Hit Stop and the run is saved to the
                     <strong class="text-foreground">Rehearsals</strong>
                     page in the sidebar, together with a frozen snapshot of the deck.
@@ -258,7 +258,7 @@
                     inert
                     aria-hidden="true"
                 >
-                    <PracticeDock
+                    <RehearsalDock
                         talkSettings={demoTalkSettings}
                         slideCount={12}
                         currentSlide={2}

@@ -24,9 +24,9 @@ class PresentPresentationController extends Controller
             'sourcePdfUrl' => $presentation->sourcePdfUrl(),
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),
             'testMode' => $request->boolean('test'),
-            'practiceMode' => $request->boolean('practice'),
-            'practiceRoutes' => [
-                'store' => route('presentations.practice.store', [
+            'rehearsalMode' => $request->boolean('rehearsal'),
+            'rehearsalRoutes' => [
+                'store' => route('presentations.rehearsal.store', [
                     'current_team' => $current_team->slug,
                     'presentation' => $presentation->id,
                 ]),

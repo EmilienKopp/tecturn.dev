@@ -23,7 +23,7 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read PracticeRunModel $practiceRun
+ * @property-read RehearsalModel $rehearsal
  * @property-read Collection<int, ReviewCommentModel> $comments
  */
 #[Fillable(['practice_run_id', 'requester_user_id', 'reviewer_user_id', 'status'])]
@@ -36,11 +36,11 @@ class RehearsalReviewModel extends Model
     protected $table = 'rehearsal_reviews';
 
     /**
-     * @return BelongsTo<PracticeRunModel, $this>
+     * @return BelongsTo<RehearsalModel, $this>
      */
-    public function practiceRun(): BelongsTo
+    public function rehearsal(): BelongsTo
     {
-        return $this->belongsTo(PracticeRunModel::class, 'practice_run_id');
+        return $this->belongsTo(RehearsalModel::class, 'practice_run_id');
     }
 
     /**

@@ -250,10 +250,10 @@
     // analytics session so a rehearsal never pollutes the numbers.
     const testRunUrl = $derived(presentUrl ? `${presentUrl}?test=1` : null);
 
-    // Practice mode: same screen again, but with a start/stop rehearsal timer
+    // Rehearsal mode: same screen again, but with a start/stop rehearsal timer
     // whose runs are saved with a snapshot of the deck.
-    const practiceRunUrl = $derived(
-        presentUrl ? `${presentUrl}?practice=1` : null,
+    const rehearsalUrl = $derived(
+        presentUrl ? `${presentUrl}?rehearsal=1` : null,
     );
 
     const save = async () => {
@@ -435,12 +435,12 @@
                             <a
                                 class="{props.class} gap-2"
                                 onclick={props.onClick}
-                                href={practiceRunUrl}
+                                href={rehearsalUrl}
                                 target="_blank"
                                 rel="noopener"
-                                data-test="editor-practice-link"
+                                data-test="editor-rehearse-link"
                             >
-                                <Timer class="h-4 w-4" />Practice
+                                <Timer class="h-4 w-4" />Rehearse
                             </a>
                         {/snippet}
                     </DropdownMenuItem>

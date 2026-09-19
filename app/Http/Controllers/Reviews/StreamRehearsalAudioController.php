@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Reviews;
 
 use App\Http\Controllers\Controller;
-use App\Models\PracticeRunModel;
+use App\Models\RehearsalModel;
 use App\Models\RehearsalReviewModel;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -19,21 +19,21 @@ class StreamRehearsalAudioController extends Controller
      * users asked to review the run. The raw media URL is never exposed —
      * this route is the only way to reach the file.
      */
-    public function __invoke(Request $request, PracticeRunModel $practice_run): Response
+    public function __invoke(Request $request, RehearsalModel $rehearsal): Response
     {
         /** @var User $user */
         $user = $request->user();
 
-        abort_unless($this->canListen($user, $practice_run), 403);
+        abort_unless($this->canListen($user, $rehearsal), 403);
 
-        $media = $practice_run->getFirstMedia(PracticeRunModel::RECORDING_COLLECTION);
+        $media = $rehearsal->getFirstMedia(RehearsalModel::RECORDING_COLLECTION);
 
         abort_unless($media instanceof Media, 404);
 
         return $media->toResponse($request);
     }
 
-    private function canListen(User $user, PracticeRunModel $run): bool
+    private function canListen(User $user, RehearsalModel $run): bool
     {
         if ($user->belongsToTeam($run->presentation->team)) {
             return true;

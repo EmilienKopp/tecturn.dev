@@ -39,7 +39,7 @@
         {
             icon: History,
             title: 'Rehearsals that remember',
-            body: 'A practice timer with per-slide timings. Every run saves a snapshot of the deck, ready to replay or restore as a new deck.',
+            body: 'A rehearsal timer with per-slide timings. Every run saves a snapshot of the deck, ready to replay or restore as a new deck.',
         },
     ];
 </script>

@@ -4,11 +4,11 @@
     import AppHead from '@/components/AppHead.svelte';
     import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
-    import PracticeDock from '@/components/tecturn/PracticeDock.svelte';
-    import type { PracticeRunPayload } from '@/components/tecturn/PracticeDock.svelte';
     import Presenter from '@/components/tecturn/Presenter.svelte';
     import PresenterDock from '@/components/tecturn/PresenterDock.svelte';
     import PresentFooter from '@/components/tecturn/PresentFooter.svelte';
+    import type { RehearsalPayload } from '@/components/tecturn/RehearsalDock.svelte';
+    import RehearsalDock from '@/components/tecturn/RehearsalDock.svelte';
     import YoYoTranslatePanel from '@/components/tecturn/YoYoTranslatePanel.svelte';
     import { getEcho, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
@@ -27,8 +27,8 @@
         sessionRoutes,
         translationRoutes,
         testMode = false,
-        practiceMode = false,
-        practiceRoutes,
+        rehearsalMode = false,
+        rehearsalRoutes,
     }: {
         presentation: {
             id: number;
@@ -46,30 +46,30 @@
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
         testMode?: boolean;
-        practiceMode?: boolean;
-        practiceRoutes?: { store: string };
+        rehearsalMode?: boolean;
+        rehearsalRoutes?: { store: string };
     } = $props();
 
     // A finished rehearsal posts its timings; the backend snapshots the deck
     // and redirects to the run's replay page.
-    let savingPracticeRun = $state(false);
+    let savingRehearsal = $state(false);
 
-    const savePracticeRun = (run: PracticeRunPayload): void => {
-        if (!practiceRoutes) {
+    const saveRehearsal = (run: RehearsalPayload): void => {
+        if (!rehearsalRoutes) {
             return;
         }
 
-        savingPracticeRun = true;
-        router.post(practiceRoutes.store, run, {
+        savingRehearsal = true;
+        router.post(rehearsalRoutes.store, run, {
             onFinish: () => {
-                savingPracticeRun = false;
+                savingRehearsal = false;
             },
         });
     };
 
     // Current slide + shown-slide total, reported by the Presenter off Reveal,
     // so the dock can pace each slide against the talk target. The step index
-    // (shown-fragment count) feeds the practice dock's replay timeline.
+    // (shown-fragment count) feeds the rehearsal dock's replay timeline.
     let currentSlide = $state(0);
     let currentStep = $state(0);
     let slideCount = $state(presentation.content.slides.length);
@@ -136,11 +136,11 @@
 
     // A live session opens while the presenter is on this page and closes when
     // they leave, so reactions and viewers are attributed to a real talk. A
-    // test run or practice run skips this entirely: no session means the
+    // test run or rehearsal skips this entirely: no session means the
     // backend records no analytics. Slides, presence and instant reactions
     // still work.
     onMount(() => {
-        if (testMode || practiceMode) {
+        if (testMode || rehearsalMode) {
             return;
         }
 
@@ -220,16 +220,16 @@
         {/if}
     </div>
 
-    <!-- Dock column. Practice mode swaps the live dock for the rehearsal
+    <!-- Dock column. Rehearsal mode swaps the live dock for the rehearsal
          timer with its start/pause/stop controls, always visible. -->
-    {#if practiceMode}
-        <PracticeDock
+    {#if rehearsalMode}
+        <RehearsalDock
             talkSettings={presentation.talk_settings}
             {slideCount}
             {currentSlide}
             {currentStep}
-            saving={savingPracticeRun}
-            onFinish={savePracticeRun}
+            saving={savingRehearsal}
+            onFinish={saveRehearsal}
         />
     {:else if presentation.talk_settings.showDock}
         <PresenterDock

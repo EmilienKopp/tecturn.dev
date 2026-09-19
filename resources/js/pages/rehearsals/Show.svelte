@@ -190,7 +190,7 @@
         router.post(
             storeReviewRequest({
                 current_team: teamSlug,
-                practice_run: run.id,
+                rehearsal: run.id,
             }).url,
             { reviewer_user_id: selectedReviewerId },
             {

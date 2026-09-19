@@ -43,10 +43,10 @@ class EloquentRehearsalReviewRepository implements RehearsalReviewRepository
         return $model->refresh()->load('comments')->toEntity();
     }
 
-    public function existsForRunAndReviewer(int $practiceRunId, int $reviewerUserId): bool
+    public function existsForRunAndReviewer(int $rehearsalId, int $reviewerUserId): bool
     {
         return RehearsalReviewModel::query()
-            ->where('practice_run_id', $practiceRunId)
+            ->where('practice_run_id', $rehearsalId)
             ->where('reviewer_user_id', $reviewerUserId)
             ->exists();
     }

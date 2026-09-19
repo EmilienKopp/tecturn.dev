@@ -23,7 +23,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property int $pending_review_count
  * @property int $completed_review_count
  */
-class PracticeRunHistoryView extends ReadOnlyModel
+class RehearsalHistoryView extends ReadOnlyModel
 {
     protected $table = 'practice_run_history';
 

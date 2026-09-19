@@ -3,17 +3,17 @@
 namespace Database\Factories;
 
 use App\Domain\Presentation\ValueObjects\PresentationContent;
-use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
+use App\Models\RehearsalModel;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * @extends Factory<PracticeRunModel>
+ * @extends Factory<RehearsalModel>
  */
-class PracticeRunModelFactory extends Factory
+class RehearsalModelFactory extends Factory
 {
-    protected $model = PracticeRunModel::class;
+    protected $model = RehearsalModel::class;
 
     /**
      * @return array<string, mixed>

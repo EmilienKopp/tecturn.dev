@@ -35,7 +35,7 @@ class RehearsalReviewController extends Controller
         return Inertia::render('reviews/Show', [
             'review' => $review,
             'audioUrl' => $review['has_recording']
-                ? route('rehearsals.audio', ['practice_run' => $review['practice_run_id']])
+                ? route('rehearsals.audio', ['rehearsal' => $review['practice_run_id']])
                 : null,
         ]);
     }

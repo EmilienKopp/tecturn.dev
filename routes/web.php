@@ -17,11 +17,11 @@ use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
 use App\Http\Controllers\Presentations\GenerateDeckController;
 use App\Http\Controllers\Presentations\ImportPresentationController;
-use App\Http\Controllers\Presentations\PracticeRunController;
 use App\Http\Controllers\Presentations\PresentationBackgroundController;
 use App\Http\Controllers\Presentations\PresentationController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
 use App\Http\Controllers\Presentations\RecordReactionsController;
+use App\Http\Controllers\Presentations\RehearsalController;
 use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
 use App\Http\Controllers\Presentations\SendReactionController;
 use App\Http\Controllers\Presentations\StartSessionController;
@@ -99,7 +99,7 @@ Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function ()
     Route::get('reviews/{rehearsal_review}/received', ShowReceivedReviewController::class)->name('reviews.received');
     Route::post('reviews/{rehearsal_review}/comments', AddReviewCommentController::class)->name('reviews.comments.store');
     Route::post('reviews/{rehearsal_review}/complete', CompleteRehearsalReviewController::class)->name('reviews.complete');
-    Route::get('rehearsal-audio/{practice_run}', StreamRehearsalAudioController::class)->name('rehearsals.audio');
+    Route::get('rehearsal-audio/{rehearsal}', StreamRehearsalAudioController::class)->name('rehearsals.audio');
 });
 
 Route::post('present/{presentation:embed_token}/reactions', SendReactionController::class)
@@ -116,9 +116,9 @@ Route::prefix('{current_team}')
     ->group(function () {
         Route::get('dashboard', DashboardController::class)->name('dashboard');
 
-        Route::get('rehearsals', [PracticeRunController::class, 'index'])->name('rehearsals.index');
-        Route::get('rehearsals/{practice_run}', [PracticeRunController::class, 'show'])->name('rehearsals.show');
-        Route::post('rehearsals/{practice_run}/reviews', RequestRehearsalReviewController::class)->name('rehearsals.reviews.store');
+        Route::get('rehearsals', [RehearsalController::class, 'index'])->name('rehearsals.index');
+        Route::get('rehearsals/{rehearsal}', [RehearsalController::class, 'show'])->name('rehearsals.show');
+        Route::post('rehearsals/{rehearsal}/reviews', RequestRehearsalReviewController::class)->name('rehearsals.reviews.store');
 
         Route::get('presentations', [PresentationController::class, 'index'])->name('presentations.index');
         Route::post('presentations', [PresentationController::class, 'store'])->name('presentations.store');
@@ -126,7 +126,7 @@ Route::prefix('{current_team}')
         Route::post('presentations/import', ImportPresentationController::class)->name('presentations.importJson');
         Route::get('presentations/{presentation}', [PresentationController::class, 'edit'])->name('presentations.edit');
         Route::get('presentations/{presentation}/present', PresentPresentationController::class)->name('presentations.present');
-        Route::post('presentations/{presentation}/practice-runs', [PracticeRunController::class, 'store'])->name('presentations.practice.store');
+        Route::post('presentations/{presentation}/rehearsals', [RehearsalController::class, 'store'])->name('presentations.rehearsal.store');
         Route::post('presentations/{presentation}/session', StartSessionController::class)->name('presentations.session.start');
         // POST (not DELETE) so the presenter's unload handler can close the
         // session via navigator.sendBeacon, which only issues POST requests.

@@ -24,7 +24,7 @@ class ShowReceivedReviewController extends Controller
         return Inertia::render('reviews/Received', [
             'review' => $review,
             'audioUrl' => $review['has_recording']
-                ? route('rehearsals.audio', ['practice_run' => $review['practice_run_id']])
+                ? route('rehearsals.audio', ['rehearsal' => $review['practice_run_id']])
                 : null,
             'siblingReviews' => $this->reviews->listSiblingReviews(
                 $review['practice_run_id'],

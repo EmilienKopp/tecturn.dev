@@ -3,7 +3,7 @@
 namespace Database\Factories;
 
 use App\Domain\Presentation\Entities\RehearsalReviewEntity;
-use App\Models\PracticeRunModel;
+use App\Models\RehearsalModel;
 use App\Models\RehearsalReviewModel;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -21,7 +21,7 @@ class RehearsalReviewModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'practice_run_id' => PracticeRunModel::factory(),
+            'practice_run_id' => RehearsalModel::factory(),
             'requester_user_id' => User::factory(),
             'reviewer_user_id' => User::factory(),
             'status' => RehearsalReviewEntity::STATUS_PENDING,

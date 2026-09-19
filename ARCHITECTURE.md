@@ -93,7 +93,7 @@ migrations. Never mix view DDL into table migration files.
 
 - **CRUD operations are grouped into resource controllers** using the standard resource method
   names (`index`, `show`, `create`, `store`, `edit`, `update`, `destroy`). One controller per
-  resource: `PresentationController`, `PracticeRunController`, `FollowController`.
+  resource: `PresentationController`, `RehearsalController`, `FollowController`.
 - **Non-CRUD operations stay as single-action invokable controllers** — operations that don't
   map to a resource verb (`GenerateDeckController`, `EndSessionController`,
   `ApproveBetaRequestController`) keep their own `VerbNounController` with `__invoke()`.
@@ -531,7 +531,7 @@ Only use `fetch` when:
 | Eloquent Models (tables)     | `NounModel`                                  | `DailyLogModel`, `ClockEntryModel`                    |
 | Eloquent Models (views)      | `NounSummaryModel` / `NounViewModel`         | `DailyLogSummaryModel`, `ProjectSummaryModel`         |
 | ReadModels                   | `NounReadModel`                              | `DailyLogReadModel`, `ProjectReadModel`               |
-| Controllers (CRUD)           | `NounController` (resource methods)          | `PresentationController`, `PracticeRunController`     |
+| Controllers (CRUD)           | `NounController` (resource methods)          | `PresentationController`, `RehearsalController`     |
 | Controllers (non-CRUD)       | `VerbNounController` (invokable)             | `StopTimerController`, `GenerateDeckController`       |
 | Form Requests                | `VerbNounRequest`                            | `StopTimerRequest`, `CreateProjectRequest`            |
 | Svelte Pages                 | `kebab-case.svelte` in `resources/js/pages/` | `dashboard.svelte`, `daily-log.svelte`                |

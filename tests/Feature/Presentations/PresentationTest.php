@@ -373,7 +373,7 @@ test('the present page flags a test run so no analytics session opens', function
     );
 });
 
-test('the present page flags a practice run and exposes the save route', function () {
+test('the present page flags a rehearsal and exposes the save route', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->create([
         'team_id' => $user->currentTeam->id,
@@ -384,14 +384,14 @@ test('the present page flags a practice run and exposes the save route', functio
         ->get(route('presentations.present', [
             'current_team' => $user->currentTeam->slug,
             'presentation' => $presentation->id,
-            'practice' => 1,
+            'rehearsal' => 1,
         ]));
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
         ->component('presentations/Present')
-        ->where('practiceMode', true)
-        ->where('practiceRoutes.store', route('presentations.practice.store', [
+        ->where('rehearsalMode', true)
+        ->where('rehearsalRoutes.store', route('presentations.rehearsal.store', [
             'current_team' => $user->currentTeam->slug,
             'presentation' => $presentation->id,
         ])),

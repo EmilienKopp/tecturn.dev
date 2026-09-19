@@ -158,12 +158,12 @@
                             class="h-[1.4cqw] w-[1.4cqw] rounded-full bg-[#d98a12]"
                         ></span>
                         12:40 · slide 8 / 17
-                        <span class="text-[#b06e10]">· practice</span>
+                        <span class="text-[#b06e10]">· rehearse</span>
                     </div>
                 </Transition>
                 <Transition order={2}>
                     <p class="text-[2cqw] text-[#6e6250]">
-                        Practice mode times every slide, and every run saves a
+                        Rehearsal mode times every slide, and every run saves a
                         snapshot of the deck as it was that day.
                     </p>
                 </Transition>

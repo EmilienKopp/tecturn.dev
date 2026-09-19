@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Application\Actions\Presentations;
 
-use App\Application\Commands\RecordPracticeRunCommand;
-use App\Domain\Presentation\Contracts\PracticeRunRepository;
+use App\Application\Commands\RecordRehearsalCommand;
 use App\Domain\Presentation\Contracts\PresentationRepository;
-use App\Domain\Presentation\Entities\PracticeRunEntity;
+use App\Domain\Presentation\Contracts\RehearsalRepository;
+use App\Domain\Presentation\Entities\RehearsalEntity;
 
-class RecordPracticeRun
+class RecordRehearsal
 {
     public function __construct(
-        private readonly PracticeRunRepository $practiceRuns,
+        private readonly RehearsalRepository $rehearsals,
         private readonly PresentationRepository $presentations,
     ) {}
 
@@ -20,11 +20,11 @@ class RecordPracticeRun
      * Persists a finished rehearsal together with a frozen copy of the deck,
      * so the run can be replayed later exactly as it was practiced.
      */
-    public function execute(RecordPracticeRunCommand $command): PracticeRunEntity
+    public function execute(RecordRehearsalCommand $command): RehearsalEntity
     {
         $presentation = $this->presentations->findById($command->presentationId);
 
-        $run = $this->practiceRuns->save(new PracticeRunEntity(
+        $run = $this->rehearsals->save(new RehearsalEntity(
             presentation_id: $command->presentationId,
             team_id: $command->teamId,
             started_at: $command->startedAt,
@@ -37,7 +37,7 @@ class RecordPracticeRun
         ));
 
         if ($command->audioPath !== null && $command->audioFileName !== null && $run->id !== null) {
-            $this->practiceRuns->storeRecording($run->id, $command->audioPath, $command->audioFileName);
+            $this->rehearsals->storeRecording($run->id, $command->audioPath, $command->audioFileName);
         }
 
         return $run;

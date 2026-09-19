@@ -6,7 +6,7 @@ namespace App\Application\Commands;
 
 use DateTimeInterface;
 
-readonly class RecordPracticeRunCommand
+readonly class RecordRehearsalCommand
 {
     /**
      * @param  list<array{slide: int, seconds: int}>  $slideTimings

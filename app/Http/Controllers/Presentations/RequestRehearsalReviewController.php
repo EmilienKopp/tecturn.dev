@@ -10,7 +10,7 @@ use App\Domain\Presentation\Exceptions\DuplicateReviewRequest;
 use App\Domain\Presentation\Exceptions\ReviewerDoesNotFollowRequester;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\RequestRehearsalReviewRequest;
-use App\Models\PracticeRunModel;
+use App\Models\RehearsalModel;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -20,13 +20,13 @@ class RequestRehearsalReviewController extends Controller
 {
     public function __construct(private readonly RequestRehearsalReview $requestReview) {}
 
-    public function __invoke(RequestRehearsalReviewRequest $request, Team $current_team, PracticeRunModel $practice_run): RedirectResponse
+    public function __invoke(RequestRehearsalReviewRequest $request, Team $current_team, RehearsalModel $rehearsal): RedirectResponse
     {
-        Gate::authorize('view', $practice_run->presentation);
+        Gate::authorize('view', $rehearsal->presentation);
 
         try {
             $this->requestReview->execute(new RequestRehearsalReviewCommand(
-                practiceRunId: $practice_run->id,
+                rehearsalId: $rehearsal->id,
                 requesterUserId: $request->user()->id,
                 reviewerUserId: (int) $request->validated('reviewer_user_id'),
             ));

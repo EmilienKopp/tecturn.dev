@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ReadModels;
 
-use App\Models\Views\PracticeRunHistoryView;
+use App\Models\Views\RehearsalHistoryView;
 
-class PracticeRunReadModel
+class RehearsalReadModel
 {
     /**
      * A team's rehearsal history, most recent first, without the heavy deck
@@ -24,11 +24,11 @@ class PracticeRunReadModel
      */
     public function listForTeam(int $teamId): array
     {
-        return PracticeRunHistoryView::query()
+        return RehearsalHistoryView::query()
             ->where('team_id', $teamId)
             ->orderByDesc('started_at')
             ->get()
-            ->map(fn (PracticeRunHistoryView $run): array => [
+            ->map(fn (RehearsalHistoryView $run): array => [
                 'id' => $run->id,
                 'presentation_id' => $run->presentation_id,
                 'presentation_name' => $run->presentation_name,
@@ -59,7 +59,7 @@ class PracticeRunReadModel
      */
     public function findForReplay(int $runId): array
     {
-        $run = PracticeRunHistoryView::query()->findOrFail($runId);
+        $run = RehearsalHistoryView::query()->findOrFail($runId);
 
         return [
             'id' => $run->id,

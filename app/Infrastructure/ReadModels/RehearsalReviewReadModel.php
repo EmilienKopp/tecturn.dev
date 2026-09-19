@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ReadModels;
 
-use App\Models\Views\PracticeRunHistoryView;
+use App\Models\Views\RehearsalHistoryView;
 use App\Models\Views\RehearsalReviewDetailView;
 use App\Models\Views\ReviewCommentDetailView;
 
@@ -106,7 +106,7 @@ class RehearsalReviewReadModel
     public function findForReviewPage(int $reviewId): array
     {
         $review = RehearsalReviewDetailView::query()->findOrFail($reviewId);
-        $run = PracticeRunHistoryView::query()->findOrFail($review->practice_run_id);
+        $run = RehearsalHistoryView::query()->findOrFail($review->practice_run_id);
 
         return [
             'id' => $review->id,

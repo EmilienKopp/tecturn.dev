@@ -1,5 +1,5 @@
 <script module lang="ts">
-    export type PracticeRunPayload = {
+    export type RehearsalPayload = {
         started_at: string;
         ended_at: string;
         duration_seconds: number;
@@ -29,7 +29,7 @@
         currentSlide?: number;
         currentStep?: number;
         saving?: boolean;
-        onFinish: (run: PracticeRunPayload) => void;
+        onFinish: (run: RehearsalPayload) => void;
     } = $props();
 
     // --- Run state machine ---
@@ -299,7 +299,7 @@
 
 <aside
     class="flex h-full w-72 flex-col gap-4 overflow-y-auto bg-zinc-900 p-4 text-white"
-    data-test="practice-dock"
+    data-test="rehearsal-dock"
 >
     <!-- Rehearsal timer -->
     <section class="rounded-lg bg-zinc-800 p-4">
@@ -307,13 +307,13 @@
             class="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-zinc-400"
         >
             <Timer class="h-3.5 w-3.5" />
-            Practice
+            Rehearsal
             {#if status === 'paused'}
                 <span class="ml-auto normal-case text-amber-400">Paused</span>
             {:else if recording && status === 'running'}
                 <span
                     class="ml-auto flex items-center gap-1.5 normal-case text-red-400"
-                    data-test="practice-recording"
+                    data-test="rehearsal-recording"
                 >
                     <span
                         class="h-2 w-2 animate-pulse rounded-full bg-red-500"
@@ -326,7 +326,7 @@
             class="font-mono text-4xl font-bold tabular-nums {isOverTime
                 ? 'text-red-400'
                 : 'text-white'}"
-            data-test="practice-elapsed"
+            data-test="rehearsal-elapsed"
         >
             {formatTime(elapsedSeconds)}
         </p>
@@ -338,7 +338,7 @@
                 {#if slideBudgetSeconds}
                     <span
                         class="font-mono tabular-nums {slidePaceClass}"
-                        data-test="practice-slide-pace"
+                        data-test="rehearsal-slide-pace"
                     >
                         {formatTime(slideElapsedSeconds)} / {formatTime(
                             slideBudgetSeconds,
@@ -360,7 +360,7 @@
                 type="button"
                 class="flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-3 font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
                 onclick={start}
-                data-test="practice-start"
+                data-test="rehearsal-start"
             >
                 <Play class="h-4 w-4" /> Start rehearsal
             </button>
@@ -375,7 +375,7 @@
                         type="button"
                         class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-zinc-700 px-4 py-3 font-semibold text-white transition-colors hover:bg-zinc-600"
                         onclick={pause}
-                        data-test="practice-pause"
+                        data-test="rehearsal-pause"
                     >
                         <Pause class="h-4 w-4" /> Pause
                     </button>
@@ -384,7 +384,7 @@
                         type="button"
                         class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-3 font-semibold text-zinc-950 transition-colors hover:bg-amber-400"
                         onclick={resume}
-                        data-test="practice-resume"
+                        data-test="rehearsal-resume"
                     >
                         <Play class="h-4 w-4" /> Resume
                     </button>
@@ -393,7 +393,7 @@
                     type="button"
                     class="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-500/90 px-4 py-3 font-semibold text-white transition-colors hover:bg-red-500"
                     onclick={stop}
-                    data-test="practice-stop"
+                    data-test="rehearsal-stop"
                 >
                     <Square class="h-4 w-4" /> Stop
                 </button>
@@ -406,7 +406,7 @@
             {#if micDenied}
                 <p
                     class="rounded-lg bg-zinc-800 px-3 py-2 text-center text-xs text-amber-400"
-                    data-test="practice-mic-denied"
+                    data-test="rehearsal-mic-denied"
                 >
                     Microphone unavailable — timing without audio.
                 </p>
@@ -414,7 +414,7 @@
         {:else}
             <div
                 class="rounded-lg bg-zinc-800 px-4 py-3 text-center text-sm text-zinc-300"
-                data-test="practice-saving"
+                data-test="rehearsal-saving"
             >
                 {saving ? 'Saving rehearsal…' : 'Rehearsal saved.'}
             </div>

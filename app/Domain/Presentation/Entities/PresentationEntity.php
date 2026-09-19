@@ -74,6 +74,16 @@ class PresentationEntity extends BaseEntity
         $this->talkSettings = $talkSettings;
     }
 
+    /** Set the presenter-declared slide count for an external deck. */
+    public function setSourceSlideCount(?int $slideCount): void
+    {
+        $this->source = new PresentationSource(
+            type: $this->source->type,
+            externalUrl: $this->source->externalUrl,
+            slideCount: $slideCount,
+        );
+    }
+
     /**
      * Cross-aggregate invariants live here — the flow VO cannot see the
      * slides, so slide references are validated against the current content.

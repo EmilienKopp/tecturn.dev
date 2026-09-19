@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
 use App\Models\PresentationSessionModel;
+use App\Models\RehearsalModel;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -244,7 +244,7 @@ test('re-requesting after acceptance does not downgrade the follow to pending', 
 test('a pending follower cannot be asked for a rehearsal review', function () {
     $requester = User::factory()->create(['handle' => 'requester']);
     $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
-    $run = PracticeRunModel::factory()->withStepEvents()->create([
+    $run = RehearsalModel::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,
@@ -255,6 +255,6 @@ test('a pending follower cannot be asked for a rehearsal review', function () {
 
     $this->actingAs($requester)->post(route('rehearsals.reviews.store', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $pendingFollower->id])->assertSessionHasErrors('reviewer_user_id');
 });

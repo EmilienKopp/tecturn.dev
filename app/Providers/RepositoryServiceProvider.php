@@ -4,17 +4,17 @@ namespace App\Providers;
 
 use App\Domain\Beta\Contracts\BetaRequestRepository;
 use App\Domain\Networking\Contracts\UserFollowRepository;
-use App\Domain\Presentation\Contracts\PracticeRunRepository;
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Contracts\PresentationSessionRepository;
+use App\Domain\Presentation\Contracts\RehearsalRepository;
 use App\Domain\Presentation\Contracts\RehearsalReviewRepository;
 use App\Domain\Presentation\Contracts\TranslationServiceContract;
 use App\Infrastructure\Adapters\UnconfiguredTranslationService;
 use App\Infrastructure\Adapters\YoYoTranslateAdapter;
 use App\Infrastructure\Persistence\Repositories\EloquentBetaRequestRepository;
-use App\Infrastructure\Persistence\Repositories\EloquentPracticeRunRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentPresentationRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentPresentationSessionRepository;
+use App\Infrastructure\Persistence\Repositories\EloquentRehearsalRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentRehearsalReviewRepository;
 use App\Infrastructure\Persistence\Repositories\EloquentUserFollowRepository;
 use Illuminate\Support\Facades\Http;
@@ -26,7 +26,7 @@ class RepositoryServiceProvider extends ServiceProvider
     {
         $this->app->bind(PresentationRepository::class, EloquentPresentationRepository::class);
         $this->app->bind(PresentationSessionRepository::class, EloquentPresentationSessionRepository::class);
-        $this->app->bind(PracticeRunRepository::class, EloquentPracticeRunRepository::class);
+        $this->app->bind(RehearsalRepository::class, EloquentRehearsalRepository::class);
         $this->app->bind(RehearsalReviewRepository::class, EloquentRehearsalReviewRepository::class);
         $this->app->bind(BetaRequestRepository::class, EloquentBetaRequestRepository::class);
         $this->app->bind(UserFollowRepository::class, EloquentUserFollowRepository::class);

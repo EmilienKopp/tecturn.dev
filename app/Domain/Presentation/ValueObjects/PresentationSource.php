@@ -19,6 +19,13 @@ readonly class PresentationSource
         public SourceType $type = SourceType::Editor,
         /** Published Google Slides URL — only set for Google Slides decks. */
         public ?string $externalUrl = null,
+        /**
+         * Presenter-declared slide count for external decks. Google Slides can't
+         * be introspected across origins, so the presenter sets this manually; it
+         * drives the dock's slide counter and paces the deck. Null = unset (or an
+         * editor deck, which counts its own slides).
+         */
+        public ?int $slideCount = null,
     ) {
         if ($this->type === SourceType::GoogleSlides) {
             if ($this->externalUrl === null || ! $this->isValidGoogleSlidesUrl($this->externalUrl)) {
@@ -26,6 +33,10 @@ readonly class PresentationSource
             }
         } elseif ($this->externalUrl !== null) {
             throw new InvalidPresentationContent('Only Google Slides decks may carry an external URL.');
+        }
+
+        if ($this->slideCount !== null && $this->slideCount < 1) {
+            throw new InvalidPresentationContent('Slide count must be at least 1.');
         }
     }
 
@@ -46,6 +57,9 @@ readonly class PresentationSource
             externalUrl: $type === SourceType::GoogleSlides
                 ? (isset($data['externalUrl']) ? (string) $data['externalUrl'] : null)
                 : null,
+            slideCount: isset($data['slideCount']) && is_numeric($data['slideCount'])
+                ? (int) $data['slideCount']
+                : null,
         );
     }
 
@@ -60,6 +74,7 @@ readonly class PresentationSource
         return [
             'type' => $this->type->value,
             'externalUrl' => $this->externalUrl,
+            'slideCount' => $this->slideCount,
         ];
     }
 

@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Domain\Presentation\Entities\PracticeRunEntity;
-use Database\Factories\PracticeRunModelFactory;
+use App\Domain\Presentation\Entities\RehearsalEntity;
+use Database\Factories\RehearsalModelFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,9 +29,9 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property-read PresentationModel $presentation
  */
 #[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'slide_timings', 'step_events', 'content', 'flow'])]
-class PracticeRunModel extends Model implements HasMedia
+class RehearsalModel extends Model implements HasMedia
 {
-    /** @use HasFactory<PracticeRunModelFactory> */
+    /** @use HasFactory<RehearsalModelFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -63,9 +63,9 @@ class PracticeRunModel extends Model implements HasMedia
         return $this->hasMany(RehearsalReviewModel::class, 'practice_run_id');
     }
 
-    public function toEntity(): PracticeRunEntity
+    public function toEntity(): RehearsalEntity
     {
-        return new PracticeRunEntity(
+        return new RehearsalEntity(
             presentation_id: $this->presentation_id,
             team_id: $this->team_id,
             started_at: $this->started_at->toDateTimeImmutable(),
@@ -79,9 +79,9 @@ class PracticeRunModel extends Model implements HasMedia
         );
     }
 
-    protected static function newFactory(): PracticeRunModelFactory
+    protected static function newFactory(): RehearsalModelFactory
     {
-        return PracticeRunModelFactory::new();
+        return RehearsalModelFactory::new();
     }
 
     /**

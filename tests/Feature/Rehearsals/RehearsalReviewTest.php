@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
+use App\Models\RehearsalModel;
 use App\Models\RehearsalReviewModel;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -19,12 +19,12 @@ function follow(User $follower, User $followed): void
     ]);
 }
 
-/** @return array{User, PracticeRunModel} */
+/** @return array{User, RehearsalModel} */
 function runForUser(): array
 {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $user->currentTeam->id]);
-    $run = PracticeRunModel::factory()->withStepEvents()->create([
+    $run = RehearsalModel::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
         'content' => $presentation->content,
@@ -40,7 +40,7 @@ test('a review can be requested from a follower', function () {
 
     $this->actingAs($requester)->post(route('rehearsals.reviews.store', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $reviewer->id])->assertRedirect();
 
     $review = RehearsalReviewModel::sole();
@@ -57,10 +57,10 @@ test('a review cannot be requested from someone who does not follow the requeste
 
     $this->actingAs($requester)->from(route('rehearsals.show', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]))->post(route('rehearsals.reviews.store', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $stranger->id])->assertSessionHasErrors('reviewer_user_id');
 
     expect(RehearsalReviewModel::count())->toBe(0);
@@ -78,7 +78,7 @@ test('the same person cannot be asked twice for one run', function () {
 
     $this->actingAs($requester)->post(route('rehearsals.reviews.store', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $reviewer->id])->assertSessionHasErrors('reviewer_user_id');
 
     expect(RehearsalReviewModel::count())->toBe(1);
@@ -194,7 +194,7 @@ test('the requester sees reviews and comments on the rehearsal replay page', fun
 
     $response = $this->actingAs($requester)->get(route('rehearsals.show', [
         'current_team' => $requester->currentTeam->slug,
-        'practice_run' => $run->id,
+        'rehearsal' => $run->id,
     ]));
 
     $response->assertSuccessful();

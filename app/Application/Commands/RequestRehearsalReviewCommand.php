@@ -7,7 +7,7 @@ namespace App\Application\Commands;
 readonly class RequestRehearsalReviewCommand
 {
     public function __construct(
-        public int $practiceRunId,
+        public int $rehearsalId,
         public int $requesterUserId,
         public int $reviewerUserId,
     ) {}

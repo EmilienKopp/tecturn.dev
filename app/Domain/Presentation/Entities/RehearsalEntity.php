@@ -7,7 +7,7 @@ namespace App\Domain\Presentation\Entities;
 use App\Domain\BaseEntity;
 use DateTimeInterface;
 
-class PracticeRunEntity extends BaseEntity
+class RehearsalEntity extends BaseEntity
 {
     /**
      * A finished rehearsal. Content and flow are frozen copies of the deck at

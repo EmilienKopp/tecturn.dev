@@ -29,12 +29,12 @@ class RequestRehearsalReview
             throw new ReviewerDoesNotFollowRequester('Reviews can only be requested from people who follow you.');
         }
 
-        if ($this->reviews->existsForRunAndReviewer($command->practiceRunId, $command->reviewerUserId)) {
+        if ($this->reviews->existsForRunAndReviewer($command->rehearsalId, $command->reviewerUserId)) {
             throw new DuplicateReviewRequest('This person has already been asked to review this rehearsal.');
         }
 
         $review = $this->reviews->save(new RehearsalReviewEntity(
-            practice_run_id: $command->practiceRunId,
+            practice_run_id: $command->rehearsalId,
             requester_user_id: $command->requesterUserId,
             reviewer_user_id: $command->reviewerUserId,
         ));

@@ -125,6 +125,7 @@ class PresentationController extends Controller
                     content: $content,
                     talkSettings: $talkSettings,
                     flow: $flow,
+                    sourceSlideCount: $request->validated('source_slide_count', null),
                 ),
             );
         } catch (InvalidFlowGraph $exception) {

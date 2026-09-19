@@ -14,5 +14,5 @@ interface RehearsalReviewRepository
     /** Persists the review and any comments that do not have an id yet. */
     public function save(RehearsalReviewEntity $review): RehearsalReviewEntity;
 
-    public function existsForRunAndReviewer(int $practiceRunId, int $reviewerUserId): bool;
+    public function existsForRunAndReviewer(int $rehearsalId, int $reviewerUserId): bool;
 }

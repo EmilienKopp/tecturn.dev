@@ -98,7 +98,7 @@
     };
 
     const openRun = (id: number) =>
-        router.visit(show({ current_team: teamSlug, practice_run: id }).url);
+        router.visit(show({ current_team: teamSlug, rehearsal: id }).url);
 </script>
 
 <AppHead title="Rehearsals" />
@@ -107,7 +107,7 @@
     <Heading
         variant="small"
         title="Rehearsals"
-        description="Your practice runs, each saved with the deck as it was that day"
+        description="Your rehearsals, each saved with the deck as it was that day"
     />
 
     {#if reviewRequests.length > 0}
@@ -215,7 +215,7 @@
         >
             <Timer class="h-6 w-6 text-muted-foreground" />
             <p class="text-sm text-muted-foreground">
-                No rehearsals yet. Open a deck and pick "Practice" from the
+                No rehearsals yet. Open a deck and pick "Rehearse" from the
                 Present menu to time a run-through.
             </p>
             <Button

@@ -8,7 +8,7 @@ use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Carbon;
 
-class RecordPracticeRunRequest extends FormRequest
+class RecordRehearsalRequest extends FormRequest
 {
     /** Upper bound on a single rehearsal — guards against tampering. */
     private const int MAX_DURATION_SECONDS = 60 * 60 * 24;
