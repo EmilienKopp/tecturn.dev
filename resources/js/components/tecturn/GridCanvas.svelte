@@ -4,6 +4,7 @@
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
     import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
+    import { clickOutside } from '@/lib/tecturn/click-outside';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
 
     let { editor }: { editor: EditorState } = $props();
@@ -123,6 +124,10 @@
             return;
         }
 
+        // A dblclick's native word selection would otherwise wrap the
+        // popover buttons rendered at that spot.
+        window.getSelection()?.removeAllRanges();
+
         const gridRect = gridEl.getBoundingClientRect();
         const bounds = selectionBounds();
         // Position near the bottom-right of the selection
@@ -213,8 +218,9 @@
     <!-- Block type popover -->
     {#if popoverVisible && popoverRect}
         <div
-            class="absolute z-50 flex gap-1 rounded-md border bg-popover p-1 shadow-md"
+            class="absolute z-50 flex gap-1 select-none rounded-md border bg-popover p-1 shadow-md"
             style="top: {popoverRect.top}px; left: {popoverRect.left}px;"
+            use:clickOutside={() => (popoverVisible = false)}
             onclick={(e) => e.stopPropagation()}
         >
             <button

@@ -4,6 +4,7 @@
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
     import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
+    import { clickOutside } from '@/lib/tecturn/click-outside';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
 
     let {
@@ -22,6 +23,10 @@
         if (!slotEl) {
             return;
         }
+
+        // The dblclick's native word selection would otherwise wrap the
+        // popover buttons rendered at that exact spot.
+        window.getSelection()?.removeAllRanges();
 
         const rect = slotEl.getBoundingClientRect();
         popover = {
@@ -68,19 +73,18 @@
         </BlockPinMenu>
     {/each}
 
+    <!-- Keeps an empty slot's double-click target from collapsing; the
+         add-block hint itself lives under the stage in SlideCanvas. -->
     {#if blocks.length === 0}
-        <div
-            class="pointer-events-none flex flex-1 items-center justify-center py-4 text-xs opacity-40"
-        >
-            Double-click to add a block
-        </div>
+        <div class="pointer-events-none flex-1 py-4"></div>
     {/if}
 
     {#if popoverVisible}
         <!-- svelte-ignore a11y_no_static_element_interactions -->
         <div
-            class="absolute z-50 flex gap-1 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+            class="absolute z-50 flex gap-1 select-none rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
             style="top: {popover.top}px; left: {popover.left}px;"
+            use:clickOutside={() => (popoverVisible = false)}
             onclick={(e) => e.stopPropagation()}
         >
             <button
