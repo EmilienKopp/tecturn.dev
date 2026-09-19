@@ -2,6 +2,7 @@
     import { sanitizeInlineHtml } from '@/lib/tecturn/CodeGeneration/sanitize';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { fontStack } from '@/lib/tecturn/fonts';
+    import { pastePlainText } from '@/lib/tecturn/plain-paste';
     import { scaleFontSize } from '@/lib/tecturn/scaling';
     import type { Block } from '@/types/generated';
 
@@ -64,6 +65,7 @@
         data-inline-format
         class="min-h-8 w-full outline-none"
         onkeydown={onKeydown}
+        onpaste={pastePlainText}
         oninput={onInput}
     ></div>
 </div>

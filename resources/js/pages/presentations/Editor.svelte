@@ -22,12 +22,12 @@
         saveEditorDraft,
     } from '@/lib/tecturn/editor-draft';
     import { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { exportMethod } from '@/routes/presentations';
     import type {
         FlowGraph,
         PresentationContent,
         TalkSettings,
     } from '@/types/generated';
-    import { exportMethod } from '@/routes/presentations';
 
     let {
         presentation,
@@ -127,6 +127,53 @@
         view = 'slides';
     };
 
+    // Ctrl/Cmd+C copies the selected block, Ctrl/Cmd+V pastes it onto the
+    // current slide. Native clipboard behavior wins while typing in a field
+    // or contenteditable, or when actual text is selected on the page.
+    const handleBlockClipboardKeys = (event: KeyboardEvent) => {
+        if (view !== 'slides' || !(event.ctrlKey || event.metaKey)) {
+            return;
+        }
+
+        const key = event.key.toLowerCase();
+
+        if (key !== 'c' && key !== 'v') {
+            return;
+        }
+
+        const target = event.target as HTMLElement | null;
+
+        if (key === 'c') {
+            const selection = window.getSelection();
+
+            if (
+                !target?.closest(
+                    'input, textarea, select, [contenteditable="true"]',
+                )
+            ) {
+                console.log(
+                    'Target is an input, textarea, select, or contenteditable element.',
+                );
+
+                return;
+            }
+
+            if (
+                editor.selectedBlockId &&
+                (selection === null || selection.isCollapsed) &&
+                editor.copyBlock(editor.selectedBlockId)
+            ) {
+                event.preventDefault();
+            }
+
+            return;
+        }
+
+        if (editor.pasteBlock()) {
+            event.preventDefault();
+        }
+    };
+
     const exportSvelte = () => {
         // Snapshots: codegen structuredClones its inputs, which rejects
         // $state proxies.
@@ -191,6 +238,8 @@
         downloadBlob(`${slugify(name)}.json`, await response.blob());
     };
 </script>
+
+<svelte:window onkeydown={handleBlockClipboardKeys} />
 
 <AppHead title={name} />
 

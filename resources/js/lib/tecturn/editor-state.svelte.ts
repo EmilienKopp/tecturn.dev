@@ -1,4 +1,5 @@
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { cloneBlockForPaste } from '@/lib/tecturn/block-clipboard';
 import { stripInlineFormatting } from '@/lib/tecturn/CodeGeneration/sanitize';
 import {
     codeActionsForBlock,
@@ -7,7 +8,7 @@ import {
     migrateLegacyTransitions,
     transitionsForSlide,
 } from '@/lib/tecturn/flow-compiler';
-import { layoutDefinitions } from '@/lib/tecturn/layouts';
+import { layoutDefinition, layoutDefinitions } from '@/lib/tecturn/layouts';
 import { slideDefaults } from '@/lib/tecturn/slide-defaults.svelte';
 import type {
     Block,
@@ -34,6 +35,9 @@ export class EditorState {
     selectedSlideIndex = $state(0);
     selectedBlockId = $state<string | null>(null);
     dirty = $state(false);
+
+    /** Editor-local clipboard for Ctrl+C/Ctrl+V on blocks; plain snapshot, not a $state proxy. */
+    private blockClipboard: { slot: string; block: Block } | null = null;
 
     constructor(content: PresentationContent, flow: FlowGraph | null = null) {
         // Inertia props arrive as $state proxies, which structuredClone
@@ -1499,6 +1503,65 @@ export class EditorState {
         }
     }
 
+    /**
+     * Snapshots a block onto the editor-local clipboard together with the
+     * slot it lives in, so paste can land it in the matching slot. Richtext
+     * blocks are inseparable from their layout and are not copyable.
+     */
+    copyBlock(blockId: string): boolean {
+        const location = this.findBlockLocation(blockId);
+
+        if (!location || location.block.type === 'richtext') {
+            return false;
+        }
+
+        this.blockClipboard = {
+            slot: location.slotName,
+            block: $state.snapshot(location.block) as Block,
+        };
+
+        return true;
+    }
+
+    /**
+     * Clones the clipboard block into the current slide with fresh block and
+     * action ids, offsetting free-position copies so they don't hide the
+     * original. Transition pinning is not carried over, matching duplicateSlide.
+     */
+    pasteBlock(): boolean {
+        if (!this.blockClipboard) {
+            return false;
+        }
+
+        const slide = this.selectedSlide;
+
+        if (slide.layout === 'rich-text') {
+            return false;
+        }
+
+        const block = cloneBlockForPaste(
+            this.blockClipboard.block,
+        ) as MutableBlock;
+
+        // Same [] vs {} normalisation as addBlock: an empty slots map arrives
+        // from the backend as an array.
+        if (Array.isArray(slide.slots)) {
+            slide.slots = {};
+        }
+
+        // A slot the target layout doesn't render would swallow the paste
+        // invisibly; land it in the layout's first slot instead.
+        const definition = layoutDefinition(slide.layout);
+        const slot = definition.slots.includes(this.blockClipboard.slot)
+            ? this.blockClipboard.slot
+            : (definition.slots[0] ?? 'main');
+        slide.slots[slot] = [...(slide.slots[slot] ?? []), block];
+        this.selectedBlockId = block.id;
+        this.dirty = true;
+
+        return true;
+    }
+
     private buildRichtextBlock(): MutableBlock {
         return {
             id: `block-${crypto.randomUUID()}`,
@@ -1577,6 +1640,24 @@ export class EditorState {
     /** Public lookup for surfaces that address a block by id (e.g. the sequence modal). */
     blockById(blockId: string): MutableBlock | null {
         return this.findBlock(blockId);
+    }
+
+    private findBlockLocation(
+        blockId: string,
+    ): { block: MutableBlock; slotName: string } | null {
+        for (const slide of this.content.slides) {
+            for (const [slotName, blocks] of Object.entries(slide.slots)) {
+                const block = blocks.find(
+                    (candidate) => candidate.id === blockId,
+                );
+
+                if (block) {
+                    return { block, slotName };
+                }
+            }
+        }
+
+        return null;
     }
 
     private findBlock(blockId: string): MutableBlock | null {
