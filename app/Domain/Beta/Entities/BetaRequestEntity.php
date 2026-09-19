@@ -11,7 +11,7 @@ use DateTimeInterface;
 
 class BetaRequestEntity extends BaseEntity
 {
-    public function __construct(
+    private function __construct(
         public string $name,
         public string $email,
         public ?string $message = null,
@@ -34,15 +34,35 @@ class BetaRequestEntity extends BaseEntity
         $this->name = $name;
         $this->email = $email;
         $this->message = $message !== null && trim($message) !== '' ? trim($message) : null;
+        $this->status = $status;
+    }
+
+    public static function create(
+        string $name,
+        string $email,
+        ?string $message = null,
+        ?BetaRequestStatus $status = BetaRequestStatus::Pending,
+    ): self {
+        $self = new self(
+            name: $name,
+            email: $email,
+            message: $message,
+            status: $status,
+        );
+        $self->onCreated();
+
+        return $self;
     }
 
     public function approve(): void
     {
         $this->status = BetaRequestStatus::Approved;
+        $this->onUpdated();
     }
 
     public function reject(): void
     {
         $this->status = BetaRequestStatus::Rejected;
+        $this->onUpdated();
     }
 }

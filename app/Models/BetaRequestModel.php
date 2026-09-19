@@ -30,14 +30,10 @@ class BetaRequestModel extends Model
 
     public function toEntity(): BetaRequestEntity
     {
-        return new BetaRequestEntity(
+        return BetaRequestEntity::create(
             name: $this->name,
             email: $this->email,
             message: $this->message,
-            status: $this->status,
-            id: $this->id,
-            created_at: $this->created_at?->toDateTimeImmutable(),
-            updated_at: $this->updated_at?->toDateTimeImmutable(),
         );
     }
 
