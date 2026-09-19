@@ -12,7 +12,7 @@ use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 
 #[Signature('deck:generate {team : Team slug or id} {--file= : Path to a markdown plan file (omit to read from stdin)} {--name= : Deck name (defaults to the generated title)}')]
-#[Description('Generate a Tecturn deck from a markdown plan using the DeckArchitect agent.')]
+#[Description('Generate a Tecturn deck from a markdown plan using the Deckster agent.')]
 class GenerateDeckCommand extends Command
 {
     public function handle(GenerateDeckFromPlan $generateDeck): int
@@ -33,7 +33,7 @@ class GenerateDeckCommand extends Command
             return self::FAILURE;
         }
 
-        $this->info('Asking the DeckArchitect to build your deck…');
+        $this->info('Asking Deckster to build your deck…');
 
         $presentation = $generateDeck->execute(
             new GenerateDeckFromPlanCommand(

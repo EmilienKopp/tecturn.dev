@@ -24,14 +24,14 @@ use Laravel\Ai\Promptable;
 #[Model('mistral-medium-3-5')]
 #[MaxTokens(16000)]
 #[Temperature(0.4)]
-class DeckArchitect implements Agent, HasStructuredOutput
+class Deckster implements Agent, HasStructuredOutput
 {
     use Promptable;
 
     public function instructions(): string
     {
         return <<<'PROMPT'
-        You are a slide deck architect for Tecturn, a developer-focused presentation tool.
+        You are Deckster, the slide deck architect for Tecturn, a developer-focused presentation tool.
         You receive a talk plan in markdown or raw text and return a structured deck.
 
         Think of each markdown section or logical beat as one slide. Aim for one clear

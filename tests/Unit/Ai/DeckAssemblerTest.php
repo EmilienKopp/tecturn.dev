@@ -203,6 +203,52 @@ it('leaves background and config null when no theme is given', function () {
         ->and($slide->slots['main'][0]->style->color)->toBeNull();
 });
 
+it('locks the deck onto the user branding, overriding the agent theme and per-slide backgrounds', function () {
+    $result = (new DeckAssembler)->assemble([
+        'title' => 'T',
+        'theme' => ['background' => '#0b1021', 'textColor' => '#f5f5f5', 'bodyFont' => 'Inter'],
+        'slides' => [
+            [
+                'layout' => 'center',
+                'background' => '#123456',
+                'blocks' => [
+                    ['slot' => 'main', 'type' => 'text', 'content' => 'A'],
+                    ['slot' => 'main', 'type' => 'text', 'content' => 'B', 'style' => ['color' => '#ff9900']],
+                ],
+            ],
+        ],
+    ], [
+        'background' => 'linear-gradient(135deg, #0f2027, #2c5364)',
+        'primary' => '#111827',
+        'fontFamily' => 'Lora',
+    ]);
+
+    $slide = $result['content']->slides[0];
+
+    expect($slide->background)->toBe('linear-gradient(135deg, #0f2027, #2c5364)')
+        ->and($slide->config)->toBe(['textColor' => '#111827'])
+        ->and($slide->slots['main'][0]->style->color)->toBe('#111827')
+        ->and($slide->slots['main'][0]->style->fontFamily)->toBe('Lora')
+        // Explicit per-block accents from the agent still win.
+        ->and($slide->slots['main'][1]->style->color)->toBe('#ff9900');
+});
+
+it('keeps the agent bodyFont when the branding has no font set', function () {
+    $result = (new DeckAssembler)->assemble([
+        'title' => 'T',
+        'theme' => ['background' => '#0b1021', 'textColor' => '#f5f5f5', 'bodyFont' => 'Inter'],
+        'slides' => [
+            ['layout' => 'center', 'blocks' => [['slot' => 'main', 'type' => 'text', 'content' => 'A']]],
+        ],
+    ], [
+        'background' => '#fafafa',
+        'primary' => '#111827',
+        'fontFamily' => null,
+    ]);
+
+    expect($result['content']->slides[0]->slots['main'][0]->style->fontFamily)->toBe('Inter');
+});
+
 it('produces a graph whose slide nodes all reference existing slides', function () {
     $result = assemble([
         'title' => 'T',
