@@ -10,13 +10,31 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Beta\RequestBetaAccessRequest;
 use App\Support\Features;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
-class RequestBetaAccessController extends Controller
+class BetaRequestController extends Controller
 {
     public function __construct(private readonly RequestBetaAccess $requestBetaAccess) {}
 
-    public function __invoke(RequestBetaAccessRequest $request): RedirectResponse
+    public function create(Request $request): Response
+    {
+        abort_unless(Features::registration()->allowsBetaRequests(), 404);
+
+        // Prefilled when a would-be user was bounced here from the login gate,
+        // so they don't retype the name/email they just gave WorkOS.
+        $prefill = $request->session()->get('beta_prefill', []);
+
+        return Inertia::render('beta/register', [
+            'prefill' => [
+                'name' => $prefill['name'] ?? '',
+                'email' => $prefill['email'] ?? '',
+            ],
+        ]);
+    }
+
+    public function store(RequestBetaAccessRequest $request): RedirectResponse
     {
         abort_unless(Features::registration()->allowsBetaRequests(), 404);
 

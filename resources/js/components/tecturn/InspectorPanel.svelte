@@ -6,8 +6,7 @@
     import SquarePen from 'lucide-svelte/icons/square-pen';
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import { toast } from 'svelte-sonner';
-    import DeletePresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/DeletePresentationBackgroundController';
-    import UploadPresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationBackgroundController';
+    import PresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/PresentationBackgroundController';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
@@ -107,7 +106,7 @@
 
         try {
             const url = await uploadImage(
-                UploadPresentationBackgroundController({
+                PresentationBackgroundController.store({
                     current_team: currentTeam.slug,
                     presentation: presentationId,
                 }).url,
@@ -135,7 +134,7 @@
         }
 
         await fetch(
-            DeletePresentationBackgroundController({
+            PresentationBackgroundController.destroy({
                 current_team: currentTeam.slug,
                 presentation: presentationId,
             }).url,

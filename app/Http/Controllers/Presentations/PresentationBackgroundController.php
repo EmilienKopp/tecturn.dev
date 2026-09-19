@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Presentations;
 
+use App\Application\Actions\Presentations\RemovePresentationBackground;
 use App\Application\Actions\Presentations\UploadPresentationBackground;
 use App\Application\Commands\UploadPresentationBackgroundCommand;
 use App\Http\Controllers\Controller;
@@ -11,11 +12,14 @@ use App\Models\Team;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
 
-class UploadPresentationBackgroundController extends Controller
+class PresentationBackgroundController extends Controller
 {
-    public function __construct(private readonly UploadPresentationBackground $uploadBackground) {}
+    public function __construct(
+        private readonly UploadPresentationBackground $uploadBackground,
+        private readonly RemovePresentationBackground $removeBackground,
+    ) {}
 
-    public function __invoke(
+    public function store(
         UploadPresentationBackgroundRequest $request,
         Team $current_team,
         PresentationModel $presentation,
@@ -33,5 +37,16 @@ class UploadPresentationBackgroundController extends Controller
         );
 
         return response()->json(['url' => $url]);
+    }
+
+    public function destroy(
+        Team $current_team,
+        PresentationModel $presentation,
+    ): JsonResponse {
+        Gate::authorize('update', $presentation);
+
+        $this->removeBackground->execute($presentation->id);
+
+        return response()->json(['url' => null]);
     }
 }
