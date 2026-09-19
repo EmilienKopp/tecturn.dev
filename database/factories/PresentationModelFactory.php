@@ -59,4 +59,23 @@ class PresentationModelFactory extends Factory
             return ['content' => ['version' => '1.0', 'slides' => $slides]];
         });
     }
+
+    /** A Google Slides external deck. */
+    public function googleSlides(string $url = 'https://docs.google.com/presentation/d/e/abc/pub'): static
+    {
+        return $this->state(fn () => [
+            'source' => ['type' => 'google_slides', 'externalUrl' => $url],
+        ]);
+    }
+
+    /**
+     * A PDF external deck. The PDF media is attached separately in the test,
+     * since a factory can't fabricate a real uploaded file.
+     */
+    public function pdf(): static
+    {
+        return $this->state(fn () => [
+            'source' => ['type' => 'pdf', 'externalUrl' => null],
+        ]);
+    }
 }

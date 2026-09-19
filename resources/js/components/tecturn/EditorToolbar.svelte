@@ -42,6 +42,7 @@
         presentationId,
         talkSettings,
         isPrivate,
+        external = false,
         name = $bindable(),
         view = $bindable(),
         onExport,
@@ -54,6 +55,9 @@
         presentationId: number;
         talkSettings: TalkSettings;
         isPrivate: boolean;
+        // External decks bring their own slides (PDF / Google Slides), so the
+        // view toggle, auto-save and export make no sense for them.
+        external?: boolean;
         name: string;
         view: 'slides' | 'flow';
         onExport: () => void;
@@ -300,45 +304,47 @@
         data-test="editor-presentation-name"
     />
 
-    <div class="flex items-center rounded-md border p-0.5">
-        <Button
-            variant={view === 'slides' ? 'secondary' : 'ghost'}
-            size="sm"
-            onclick={() => (view = 'slides')}
-            aria-pressed={view === 'slides'}
-            data-test="editor-view-slides"
-        >
-            <LayoutPanelLeft class="h-4 w-4" /> Slides
-        </Button>
-        <Button
-            variant={view === 'flow' ? 'secondary' : 'ghost'}
-            size="sm"
-            onclick={() => {
-                editor.syncSlideNodes();
-                view = 'flow';
-            }}
-            aria-pressed={view === 'flow'}
-            data-test="editor-view-flow"
-        >
-            <Workflow class="h-4 w-4" /> Flow
-        </Button>
-    </div>
+    {#if !external}
+        <div class="flex items-center rounded-md border p-0.5">
+            <Button
+                variant={view === 'slides' ? 'secondary' : 'ghost'}
+                size="sm"
+                onclick={() => (view = 'slides')}
+                aria-pressed={view === 'slides'}
+                data-test="editor-view-slides"
+            >
+                <LayoutPanelLeft class="h-4 w-4" /> Slides
+            </Button>
+            <Button
+                variant={view === 'flow' ? 'secondary' : 'ghost'}
+                size="sm"
+                onclick={() => {
+                    editor.syncSlideNodes();
+                    view = 'flow';
+                }}
+                aria-pressed={view === 'flow'}
+                data-test="editor-view-flow"
+            >
+                <Workflow class="h-4 w-4" /> Flow
+            </Button>
+        </div>
 
-    <div
-        class="text-sm flex items-center gap-1 justify-center"
-        title="Toggle auto save (every {AUTO_SAVE_INTERVAL.seconds()}s)"
-        class:text-muted-foreground={!autoSave}
-    >
-        <Checkbox
-            id="auto-save-toggle"
-            size="sm"
-            class="text-muted-foreground"
-            data-test="editor-toggle-auto-save"
-            onclick={toggleAutoSave}
-            checked={autoSave}
-        />
-        <Label for="auto-save-toggle">Auto Save</Label>
-    </div>
+        <div
+            class="text-sm flex items-center gap-1 justify-center"
+            title="Toggle auto save (every {AUTO_SAVE_INTERVAL.seconds()}s)"
+            class:text-muted-foreground={!autoSave}
+        >
+            <Checkbox
+                id="auto-save-toggle"
+                size="sm"
+                class="text-muted-foreground"
+                data-test="editor-toggle-auto-save"
+                onclick={toggleAutoSave}
+                checked={autoSave}
+            />
+            <Label for="auto-save-toggle">Auto Save</Label>
+        </div>
+    {/if}
 
     {#snippet toggleRow(
         label: string,
@@ -399,42 +405,42 @@
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
                                 href={presentUrl}
                                 target="_blank"
                                 rel="noopener"
                                 data-test="editor-present-link"
                             >
-                                <Play class="h-4 w-4" /> Go Live
+                                <Play class="h-4 w-4" />Go Live
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
                                 href={testRunUrl}
                                 target="_blank"
                                 rel="noopener"
                                 data-test="editor-test-run-link"
                             >
-                                <FlaskConical class="h-4 w-4" /> Test run
+                                <FlaskConical class="h-4 w-4" />Test run
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
                                 href={practiceRunUrl}
                                 target="_blank"
                                 rel="noopener"
                                 data-test="editor-practice-link"
                             >
-                                <Timer class="h-4 w-4" /> Practice
+                                <Timer class="h-4 w-4" />Practice
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
@@ -522,7 +528,8 @@
             </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
+        {#if !external}
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 {#snippet children(props)}
                     <Button
@@ -602,7 +609,8 @@
                     {/snippet}
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenu>
+        {/if}
 
         <Button
             size="sm"

@@ -22,6 +22,12 @@ interface PresentationRepository
     public function clearBackgroundImage(int $id): void;
 
     /**
+     * Stores the presentation's source PDF (external decks) and returns its
+     * public URL.
+     */
+    public function storeSourcePdf(int $id, string $filePath, string $fileName): string;
+
+    /**
      * Stores a content image (used by blocks) and returns its public URL.
      */
     public function storeImage(int $id, string $filePath, string $fileName): string;

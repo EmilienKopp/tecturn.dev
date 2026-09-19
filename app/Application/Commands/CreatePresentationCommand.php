@@ -11,5 +11,13 @@ readonly class CreatePresentationCommand
         public string $name,
         /** Default background (hex or gradient) for the first slide, from the creator's branding. */
         public ?string $slide_background = null,
+        /** One of the SourceType values: editor (default), pdf, google_slides. */
+        public string $sourceType = 'editor',
+        /** Published Google Slides URL — only for google_slides decks. */
+        public ?string $externalUrl = null,
+        /** Absolute path to the uploaded PDF on disk — only for pdf decks. */
+        public ?string $pdfFilePath = null,
+        /** Original file name for the uploaded PDF. */
+        public ?string $pdfFileName = null,
     ) {}
 }

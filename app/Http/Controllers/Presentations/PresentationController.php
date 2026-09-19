@@ -49,11 +49,18 @@ class PresentationController extends Controller
     {
         Gate::authorize('create', [PresentationModel::class, $current_team]);
 
+        $sourceType = $request->validated('source_type', 'editor');
+        $pdf = $sourceType === 'pdf' ? $request->file('file') : null;
+
         $presentation = $this->createPresentation->execute(
             new CreatePresentationCommand(
                 team_id: $current_team->id,
                 name: $request->validated('name'),
                 slide_background: $request->user()->branding['background'],
+                sourceType: $sourceType,
+                externalUrl: $sourceType === 'google_slides' ? $request->validated('external_url') : null,
+                pdfFilePath: $pdf?->getRealPath(),
+                pdfFileName: $pdf !== null ? 'source.'.$pdf->getClientOriginalExtension() : null,
             ),
         );
 
@@ -67,8 +74,13 @@ class PresentationController extends Controller
     {
         Gate::authorize('view', $presentation);
 
+        // Both editor and external decks (PDF / Google Slides) use the same
+        // Editor shell. External decks hide the slide navigator, inspector,
+        // view toggle and export, and swap the slide canvas for the source
+        // preview — driven client-side off `presentation.source`.
         return Inertia::render('presentations/Editor', [
             'presentation' => $this->presentations->findForEditor($presentation->id),
+            'sourcePdfUrl' => $presentation->sourcePdfUrl(),
             'embed' => [
                 'url' => route('presentations.embed', ['presentation' => $presentation->embed_token]),
                 'tag' => $this->embeds->customElementTag($presentation->embed_token),

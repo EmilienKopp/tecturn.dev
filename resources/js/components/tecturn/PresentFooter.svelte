@@ -68,7 +68,7 @@
         </section>
     {:else}
         <div
-            class="pointer-events-auto absolute inset-x-0 bottom-0 z-[9998] w-full flex items-center justify-between gap-6 pb-4 px-16 text-3xl font-medium"
+            class="flex w-full shrink-0 items-center justify-between gap-6 px-16 py-3 text-3xl font-medium"
             style="{backgroundStyle} color: {footer.fontColor};"
             data-test="present-footer"
         >

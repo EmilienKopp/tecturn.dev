@@ -13,6 +13,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $talk_settings
  * @property array<string, mixed>|null $flow
+ * @property array<string, mixed>|null $source
  * @property string $embed_token
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
@@ -36,6 +37,7 @@ class PresentationsView extends ReadOnlyModel
             'content' => 'array',
             'talk_settings' => 'array',
             'flow' => 'array',
+            'source' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
             'yoyotranslate_session_started_at' => 'datetime',

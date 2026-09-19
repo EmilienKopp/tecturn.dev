@@ -2,6 +2,7 @@
     import { router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
     import PracticeDock from '@/components/tecturn/PracticeDock.svelte';
     import type { PracticeRunPayload } from '@/components/tecturn/PracticeDock.svelte';
@@ -14,12 +15,14 @@
     import type {
         FlowGraph,
         PresentationContent,
+        PresentationSource,
         TalkSettings,
         YoYoTranslateInfo,
     } from '@/types/generated';
 
     let {
         presentation,
+        sourcePdfUrl = null,
         viewerUrl,
         sessionRoutes,
         translationRoutes,
@@ -33,10 +36,12 @@
             content: PresentationContent;
             talk_settings: TalkSettings;
             flow: FlowGraph | null;
+            source: PresentationSource;
             embed_token: string;
             updated_at: string | null;
             yoyotranslate: YoYoTranslateInfo;
         };
+        sourcePdfUrl?: string | null;
         viewerUrl: string;
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
@@ -168,31 +173,44 @@
             <div
                 style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9;"
             >
-                <Presenter
-                    content={presentation.content}
-                    flow={presentation.flow}
-                    onSlideChange={(current, total) => {
-                        currentSlide = current;
-                        slideCount = total;
-                    }}
-                    onStepChange={(_slide, step) => {
-                        currentStep = step;
-                    }}
-                />
+                {#if presentation.source.type === 'editor'}
+                    <Presenter
+                        content={presentation.content}
+                        flow={presentation.flow}
+                        onSlideChange={(current, total) => {
+                            currentSlide = current;
+                            slideCount = total;
+                        }}
+                        onStepChange={(_slide, step) => {
+                            currentStep = step;
+                        }}
+                    />
+                {:else}
+                    <ExternalPresenter
+                        source={presentation.source}
+                        {sourcePdfUrl}
+                        onPageChange={(current, total) => {
+                            currentSlide = current;
+                            slideCount = total;
+                        }}
+                    />
+                {/if}
             </div>
 
             <FloatingReactions
                 bind:this={floatingReactions}
                 enabled={showReactions}
             />
-
-            {#if presentation.talk_settings.footer.enabled && !presentation.talk_settings.footer.showInDock}
-                <PresentFooter
-                    footer={presentation.talk_settings.footer}
-                    variant="overlay"
-                />
-            {/if}
         </div>
+
+        <!-- The footer is its own row beneath the slide area so it shrinks the
+             slide instead of overlapping it. -->
+        {#if presentation.talk_settings.footer.enabled && !presentation.talk_settings.footer.showInDock}
+            <PresentFooter
+                footer={presentation.talk_settings.footer}
+                variant="overlay"
+            />
+        {/if}
 
         {#if presentation.talk_settings.showTranslation}
             <YoYoTranslatePanel

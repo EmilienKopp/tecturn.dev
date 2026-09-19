@@ -26,6 +26,7 @@ class EloquentPresentationRepository implements PresentationRepository
             'content' => $presentation->content->toArray(),
             'talk_settings' => $presentation->talkSettings->toArray(),
             'flow' => $presentation->flow?->toArray(),
+            'source' => $presentation->source->toArray(),
             'yoyotranslate_session_id' => $presentation->yoyotranslateSessionId,
             'yoyotranslate_session_started_at' => $presentation->yoyotranslateSessionStartedAt,
             'yoyotranslate_languages' => $presentation->yoyotranslateLanguages,
@@ -61,6 +62,17 @@ class EloquentPresentationRepository implements PresentationRepository
     {
         PresentationModel::findOrFail($id)
             ->clearMediaCollection(PresentationModel::BACKGROUND_COLLECTION);
+    }
+
+    public function storeSourcePdf(int $id, string $filePath, string $fileName): string
+    {
+        $model = PresentationModel::findOrFail($id);
+
+        $media = $model->addMedia($filePath)
+            ->usingFileName($fileName)
+            ->toMediaCollection(PresentationModel::SOURCE_COLLECTION);
+
+        return $media->getFullUrl();
     }
 
     public function storeImage(int $id, string $filePath, string $fileName): string

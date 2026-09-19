@@ -21,6 +21,7 @@ class PresentPresentationController extends Controller
 
         return Inertia::render('presentations/Present', [
             'presentation' => $this->presentations->findForPresent($presentation->id),
+            'sourcePdfUrl' => $presentation->sourcePdfUrl(),
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),
             'testMode' => $request->boolean('test'),
             'practiceMode' => $request->boolean('practice'),

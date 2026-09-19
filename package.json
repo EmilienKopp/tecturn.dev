@@ -50,6 +50,7 @@
         "laravel-echo": "^2.4.0",
         "laravel-vite-plugin": "^3.1",
         "lucide-svelte": "^0.468.0",
+        "pdfjs-dist": "^6.3.289",
         "pusher-js": "^8.6.0",
         "qrcode": "^1.5.4",
         "shiki": "^4.3.1",

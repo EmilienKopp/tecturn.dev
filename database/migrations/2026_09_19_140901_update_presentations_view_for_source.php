@@ -1,0 +1,19 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        DB::statement('DROP VIEW IF EXISTS presentations_view');
+        DB::statement(file_get_contents(database_path('views/2026_09_19_140900_presentations.sql')));
+    }
+
+    public function down(): void
+    {
+        DB::statement('DROP VIEW IF EXISTS presentations_view');
+        DB::statement(file_get_contents(database_path('views/2026_09_17_150303_presentations.sql')));
+    }
+};

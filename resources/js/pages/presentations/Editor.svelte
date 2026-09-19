@@ -5,6 +5,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import CodeSequenceModal from '@/components/tecturn/CodeSequenceModal.svelte';
     import EditorToolbar from '@/components/tecturn/EditorToolbar.svelte';
+    import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import FlowCanvas from '@/components/tecturn/flow/FlowCanvas.svelte';
     import InspectorPanel from '@/components/tecturn/InspectorPanel.svelte';
     import SlideCanvas from '@/components/tecturn/SlideCanvas.svelte';
@@ -27,6 +28,7 @@
     import type {
         FlowGraph,
         PresentationContent,
+        PresentationSource,
         TalkSettings,
     } from '@/types/generated';
 
@@ -34,6 +36,7 @@
         presentation,
         embed,
         viewerUrl,
+        sourcePdfUrl = null,
     }: {
         presentation: {
             id: number;
@@ -42,6 +45,7 @@
             talk_settings: TalkSettings;
             is_private: boolean;
             flow: FlowGraph | null;
+            source: PresentationSource;
             updated_at: string | null;
         };
         embed: {
@@ -49,7 +53,13 @@
             tag: string;
         };
         viewerUrl: string;
+        sourcePdfUrl?: string | null;
     } = $props();
+
+    // External decks (PDF / Google Slides) reuse this whole shell but hide the
+    // slide navigator, inspector, view toggle and export, and swap the slide
+    // canvas for a preview of the source.
+    const isExternal = presentation.source.type !== 'editor';
 
     // The element must be block-level with a real height — Reveal.js sizes
     // itself to 100% of its container.
@@ -253,6 +263,7 @@
         presentationId={presentation.id}
         talkSettings={presentation.talk_settings}
         isPrivate={presentation.is_private}
+        external={isExternal}
         bind:name
         bind:view
         onExport={exportSvelte}
@@ -262,7 +273,20 @@
         {viewerUrl}
     />
 
-    {#if view === 'flow'}
+    {#if isExternal}
+        <div
+            class="flex min-h-0 flex-1 items-center justify-center bg-zinc-950 p-6 [container-type:size]"
+        >
+            <div
+                style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9;"
+            >
+                <ExternalPresenter
+                    source={presentation.source}
+                    {sourcePdfUrl}
+                />
+            </div>
+        </div>
+    {:else if view === 'flow'}
         <div class="min-h-0 flex-1">
             <FlowCanvas
                 {editor}
