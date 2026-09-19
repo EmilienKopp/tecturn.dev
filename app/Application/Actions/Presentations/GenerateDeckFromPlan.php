@@ -35,6 +35,9 @@ class GenerateDeckFromPlan
             flow: $deck['flow'],
         );
 
-        return $this->presentations->save($presentation);
+        $saved = $this->presentations->save($presentation);
+        $saved->onCreated();
+
+        return $saved;
     }
 }

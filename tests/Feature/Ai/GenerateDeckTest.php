@@ -43,7 +43,8 @@ it('generates and persists a deck from a plan via the action', function () {
     expect($entity->id)->not->toBeNull()
         ->and($entity->name)->toBe('Intro to Widgets') // falls back to the generated title
         ->and($entity->content->slides)->toHaveCount(2)
-        ->and($entity->flow)->not->toBeNull();
+        ->and($entity->flow)->not->toBeNull()
+        ->and($entity->getCreatedEvents())->toHaveCount(1); // records a domain event for the app layer to dispatch
 
     $this->assertDatabaseHas('presentations', [
         'id' => $entity->id,

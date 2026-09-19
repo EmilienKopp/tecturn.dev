@@ -21,15 +21,15 @@ class AppNavigation
             ->addIf(condition: $team !== null, title: 'Platform', configure: function (Section $section) use ($team) {
                 $section
                     ->add('Dashboard', route('dashboard', $team->slug), attributes: ['icon' => 'layout-grid'])
-                    ->add('Contacts', route('contacts.index'), attributes: ['icon' => 'book-user'])
                     ->add('Presentations', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
                     ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer'])
-                    ->add('Reviews', route('reviews.index'), attributes: ['icon' => 'message-square']);
+                    ->add('Reviews', route('reviews.index'), attributes: ['icon' => 'message-square'])
+                    ->add('Contacts', route('contacts.index'), attributes: ['icon' => 'book-user']);
             })
             ->addIf(condition: $user !== null, title: 'Settings', configure: function (Section $section) {
                 $section
-                    ->add('Profile', route('profile.edit'), attributes: ['icon' => 'user'])
                     ->add('Branding', route('branding.edit'), attributes: ['icon' => 'palette'])
+                    ->add('Profile', route('profile.edit'), attributes: ['icon' => 'user'])
                     ->add('Teams', route('teams.index'), attributes: ['icon' => 'users']);
             })
             ->add(title: 'Help', configure: function (Section $section) {

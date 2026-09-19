@@ -32,6 +32,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import { Skeleton } from '@/components/ui/skeleton';
     import {
         destroy,
         edit,
@@ -50,8 +51,10 @@
 
     let {
         presentations,
+        generatingCount = 0,
     }: {
         presentations: PresentationListItem[];
+        generatingCount?: number;
     } = $props();
 
     let createDialogOpen = $state(false);
@@ -156,6 +159,14 @@
             generate(teamSlug).url,
             { name: draftName, plan: draftPlan },
             {
+                onSuccess: () => {
+                    // The build runs in the background; close the modal and let a
+                    // skeleton hold its place until the "ready" toast arrives.
+                    draftDialogOpen = false;
+                    draftName = '';
+                    draftPlan = '';
+                    draftError = null;
+                },
                 onError: (errors) => {
                     draftError =
                         errors.plan ??
@@ -408,6 +419,24 @@
     {/if}
 
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {#each Array.from({ length: generatingCount }) as _, index (index)}
+            <div class="relative" data-test="presentation-skeleton">
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2">
+                            <Sparkles
+                                class="h-4 w-4 animate-pulse text-muted-foreground"
+                            />
+                            <Skeleton class="h-4 w-40" />
+                        </CardTitle>
+                        <CardDescription>
+                            <Skeleton class="mt-1 h-3 w-28" />
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        {/each}
+
         {#each presentations as presentation (presentation.id)}
             <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
             <div
@@ -457,7 +486,7 @@
         {/each}
     </div>
 
-    {#if presentations.length === 0}
+    {#if presentations.length === 0 && generatingCount === 0}
         <p class="py-12 text-center text-muted-foreground">
             No presentations yet. Create your first one to get started.
         </p>

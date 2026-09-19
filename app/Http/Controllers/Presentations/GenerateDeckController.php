@@ -2,47 +2,42 @@
 
 namespace App\Http\Controllers\Presentations;
 
-use App\Application\Actions\Presentations\GenerateDeckFromPlan;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
-use App\Domain\Presentation\Entities\PresentationEntity;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\GenerateDeckRequest;
+use App\Jobs\GenerateDeckJob;
 use App\Models\PresentationModel;
 use App\Models\Team;
+use App\Presentation\GeneratingDeckTally;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Validation\ValidationException;
-use Throwable;
+use Inertia\Inertia;
 
 class GenerateDeckController extends Controller
 {
-    public function __construct(private readonly GenerateDeckFromPlan $generateDeck) {}
-
-    public function __invoke(GenerateDeckRequest $request, Team $current_team): RedirectResponse
+    public function __invoke(GenerateDeckRequest $request, Team $current_team, GeneratingDeckTally $tally): RedirectResponse
     {
         Gate::authorize('create', [PresentationModel::class, $current_team]);
 
-        try {
-            $presentation = $this->generateDeck->execute(
-                new GenerateDeckFromPlanCommand(
-                    team_id: $current_team->id,
-                    name: (string) $request->validated('name', ''),
-                    plan: $request->validated('plan'),
-                    branding: $request->user()->branding,
-                ),
-            );
-        } catch (Throwable $exception) {
-            report($exception);
+        GenerateDeckJob::dispatch(
+            new GenerateDeckFromPlanCommand(
+                team_id: $current_team->id,
+                name: (string) $request->validated('name', ''),
+                plan: $request->validated('plan'),
+                branding: $request->user()->branding,
+            ),
+            $request->user()->id,
+            $current_team->slug,
+        );
 
-            throw ValidationException::withMessages([
-                'plan' => 'The draft could not be generated. Please try again or refine your outline.',
-            ]);
-        }
+        // Surface a "building…" skeleton on the index straight away.
+        $tally->increment($current_team->id);
 
-        /** @var PresentationEntity $presentation */
-        return redirect()->route('presentations.edit', [
-            'current_team' => $current_team->slug,
-            'presentation' => $presentation->id,
+        Inertia::flash('toast', [
+            'type' => 'info',
+            'message' => __("We're building your deck. You'll get a notification when it's ready."),
         ]);
+
+        return redirect()->back();
     }
 }
