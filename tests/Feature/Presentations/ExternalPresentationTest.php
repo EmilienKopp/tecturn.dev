@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\PresentationModel;
+use App\Models\RehearsalModel;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -223,6 +224,37 @@ test('the slide count rejects values below one', function () {
             'presentation' => $presentation->id,
         ]), ['source_slide_count' => 0])
         ->assertSessionHasErrors('source_slide_count');
+});
+
+test('the rehearsal replay carries the external source so it can render the slides', function () {
+    $user = User::factory()->create();
+    $presentation = PresentationModel::factory()->googleSlides()->create([
+        'team_id' => $user->currentTeam->id,
+    ]);
+    $presentation->update(['source' => [
+        'type' => 'google_slides',
+        'externalUrl' => 'https://docs.google.com/presentation/d/e/abc/pub',
+        'slideCount' => 8,
+    ]]);
+
+    $rehearsal = RehearsalModel::factory()->withStepEvents()->create([
+        'presentation_id' => $presentation->id,
+        'team_id' => $user->currentTeam->id,
+    ]);
+
+    $this
+        ->actingAs($user)
+        ->get(route('rehearsals.show', [
+            'current_team' => $user->currentTeam->slug,
+            'rehearsal' => $rehearsal->id,
+        ]))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->component('rehearsals/Show')
+            ->where('source.type', 'google_slides')
+            ->where('source.slideCount', 8)
+            ->where('sourcePdfUrl', null),
+        );
 });
 
 test('an editor deck presents with a null pdf url', function () {

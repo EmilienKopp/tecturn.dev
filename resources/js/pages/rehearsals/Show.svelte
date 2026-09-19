@@ -26,7 +26,11 @@
     import { importJson } from '@/routes/presentations';
     import { store as storeReviewRequest } from '@/routes/rehearsals/reviews';
     import { index as reviewsIndex } from '@/routes/reviews';
-    import type { FlowGraph, PresentationContent } from '@/types/generated';
+    import type {
+        FlowGraph,
+        PresentationContent,
+        PresentationSource,
+    } from '@/types/generated';
 
     type Run = {
         id: number;
@@ -71,15 +75,27 @@
         reviews = [],
         followers = [],
         audioUrl = null,
+        source = null,
+        sourcePdfUrl = null,
     }: {
         run: Run;
         reviews?: Review[];
         followers?: Follower[];
         audioUrl?: string | null;
+        source?: PresentationSource | null;
+        sourcePdfUrl?: string | null;
     } = $props();
 
+    const isExternal = $derived(source != null && source.type !== 'editor');
+
     let currentSlide = $state(0);
-    let slideCount = $state(run.content.slides.length);
+    // External decks carry a placeholder content, so seed the count from the
+    // declared slide count; RehearsalReplay corrects it as the timeline plays.
+    let slideCount = $state(
+        source != null && source.type !== 'editor'
+            ? (source.slideCount ?? 0)
+            : run.content.slides.length,
+    );
 
     // Shown-order slide titles, so index N matches Reveal's slide N.
     const slideTitles = $derived(
@@ -163,9 +179,15 @@
         );
     };
 
+    const deckSlides = $derived(
+        isExternal
+            ? (source?.slideCount ?? timedSlides)
+            : run.content.slides.length,
+    );
+
     const stats = $derived([
         { label: 'Total time', value: formatTime(run.duration_seconds) },
-        { label: 'Slides in deck', value: String(run.content.slides.length) },
+        { label: 'Slides in deck', value: String(deckSlides) },
         { label: 'Slides visited', value: String(timedSlides) },
         { label: 'Avg per slide', value: formatTime(avgSecondsPerSlide) },
     ]);
@@ -276,6 +298,8 @@
                 flow={run.flow}
                 stepEvents={run.step_events}
                 {audioUrl}
+                {source}
+                {sourcePdfUrl}
                 onSlideChange={(current, total) => {
                     currentSlide = current;
                     slideCount = total;

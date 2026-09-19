@@ -13,6 +13,7 @@
         sourcePdfUrl,
         onPageChange,
         recordNavigation = false,
+        controlledIndex = null,
     }: {
         source: PresentationSource;
         sourcePdfUrl: string | null;
@@ -24,7 +25,12 @@
         // poor live experience, so live/test decks just embed the frame and let
         // the presenter drive it natively — no counter, no intercepted events.
         recordNavigation?: boolean;
+        // Replay mode: the parent (audio timeline) drives the slide; the
+        // component shows this 0-based index and takes no input of its own.
+        controlledIndex?: number | null;
     } = $props();
+
+    const controlled = $derived(controlledIndex !== null);
 
     // --- Google Slides ---------------------------------------------------
     // A Slides iframe can't be introspected or key-driven across origins. So when
@@ -41,9 +47,23 @@
     let slideIndex = $state(0);
 
     // Reloading the iframe with a 1-based `slide` param jumps Google to that slide.
-    const slidesSrc = $derived(
-        embedUrl === null ? null : `${embedUrl}&slide=${slideIndex + 1}`,
-    );
+    // Replay drives the slide from the audio timeline; recording from our own
+    // controls; live/test just shows the frame and lets the presenter drive it.
+    const slidesIframeSrc = $derived.by(() => {
+        if (embedUrl === null) {
+            return null;
+        }
+
+        if (controlled) {
+            return `${embedUrl}&slide=${(controlledIndex ?? 0) + 1}`;
+        }
+
+        if (drivesSlides) {
+            return `${embedUrl}&slide=${slideIndex + 1}`;
+        }
+
+        return embedUrl;
+    });
 
     const slidesGoTo = (index: number): void => {
         if (
@@ -158,8 +178,13 @@
         // handles its own keys.
     };
 
-    // PDF always uses our keyboard; Google Slides only while recording.
+    // PDF always uses our keyboard; Google Slides only while recording. Replay
+    // takes no keyboard — the audio timeline drives it.
     onMount(() => {
+        if (controlled) {
+            return;
+        }
+
         window.addEventListener('keydown', onKeydown);
 
         if (drivesSlides) {
@@ -167,6 +192,20 @@
         }
 
         return () => window.removeEventListener('keydown', onKeydown);
+    });
+
+    // Replay: render the page the audio timeline asks for.
+    $effect(() => {
+        if (!controlled || controlledIndex === null || numPages < 1) {
+            return;
+        }
+
+        const target = Math.min(controlledIndex + 1, numPages);
+
+        if (target !== pageNum) {
+            pageNum = target;
+            void renderPage(target);
+        }
     });
 
     onMount(() => {
@@ -198,7 +237,13 @@
             }
 
             numPages = pdfDoc.numPages;
-            onPageChange?.(0, numPages);
+
+            if (controlled) {
+                pageNum = Math.min((controlledIndex ?? 0) + 1, numPages);
+            } else {
+                onPageChange?.(0, numPages);
+            }
+
             await renderPage(pageNum);
 
             // Re-fit the current page when the box resizes (window, dock toggle).
@@ -226,7 +271,7 @@
     {#if embedUrl}
         <div class="group relative h-full w-full">
             <iframe
-                src={drivesSlides ? slidesSrc : embedUrl}
+                src={slidesIframeSrc}
                 title="Google Slides presentation"
                 class="h-full w-full border-0"
                 allow="fullscreen"

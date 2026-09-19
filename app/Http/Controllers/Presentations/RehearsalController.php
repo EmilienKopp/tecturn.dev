@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Presentations;
 
 use App\Application\Actions\Presentations\RecordRehearsal;
 use App\Application\Commands\RecordRehearsalCommand;
+use App\Domain\Presentation\ValueObjects\PresentationSource;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\RecordRehearsalRequest;
 use App\Infrastructure\ReadModels\ContactsReadModel;
@@ -41,8 +42,15 @@ class RehearsalController extends Controller
     {
         $run = $this->rehearsals->findForReplay($rehearsal->id);
 
+        // External decks (PDF / Google Slides) aren't in the frozen snapshot —
+        // their slides live on the presentation, so the replay renders the live
+        // source and steps it along the recorded timeline.
+        $presentation = PresentationModel::find($run['presentation_id']);
+
         return Inertia::render('rehearsals/Show', [
             'run' => $run,
+            'source' => PresentationSource::fromArray($presentation?->source ?? [])->toArray(),
+            'sourcePdfUrl' => $presentation?->sourcePdfUrl(),
             'reviews' => $this->reviews->listForRun($rehearsal->id),
             'followers' => $this->contacts->followersForUser($request->user()->id),
             'audioUrl' => $run['has_recording']

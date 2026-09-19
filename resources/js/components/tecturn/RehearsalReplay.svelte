@@ -1,24 +1,51 @@
 <script lang="ts">
+    import { onMount } from 'svelte';
+    import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import Presenter from '@/components/tecturn/Presenter.svelte';
-    import type { FlowGraph, PresentationContent } from '@/types/generated';
+    import type {
+        FlowGraph,
+        PresentationContent,
+        PresentationSource,
+    } from '@/types/generated';
 
     let {
         content,
         flow = null,
         stepEvents = [],
         audioUrl = null,
+        source = null,
+        sourcePdfUrl = null,
         onSlideChange,
     }: {
         content: PresentationContent;
         flow?: FlowGraph | null;
         stepEvents?: { at_ms: number; slide: number; step: number }[];
         audioUrl?: string | null;
+        source?: PresentationSource | null;
+        sourcePdfUrl?: string | null;
         onSlideChange?: (current: number, total: number) => void;
     } = $props();
+
+    // External decks (PDF / Google Slides) aren't in the frozen content snapshot,
+    // so we render the live source and step it by index off the same timeline.
+    const isExternal = $derived(source != null && source.type !== 'editor');
+    const externalTotal = $derived(
+        source?.slideCount ??
+            (stepEvents.length > 0
+                ? Math.max(...stepEvents.map((event) => event.slide)) + 1
+                : 1),
+    );
+    let externalIndex = $state(0);
 
     let presenter = $state<Presenter>();
     let audioElement = $state<HTMLAudioElement>();
     let playing = $state(false);
+
+    onMount(() => {
+        if (isExternal) {
+            onSlideChange?.(0, externalTotal);
+        }
+    });
 
     // The last position the sync loop drove to, so timeupdate only calls
     // into Reveal when the recorded position actually changed. While the
@@ -42,7 +69,7 @@
     };
 
     const syncToAudio = (): void => {
-        if (!playing || !audioElement || !presenter) {
+        if (!playing || !audioElement) {
             return;
         }
 
@@ -54,9 +81,17 @@
 
         const key = `${event.slide}:${event.step}`;
 
-        if (key !== syncedKey) {
-            syncedKey = key;
-            presenter.navigateTo(event.slide, event.step);
+        if (key === syncedKey) {
+            return;
+        }
+
+        syncedKey = key;
+
+        if (isExternal) {
+            externalIndex = event.slide;
+            onSlideChange?.(event.slide, externalTotal);
+        } else {
+            presenter?.navigateTo(event.slide, event.step);
         }
     };
 
@@ -70,13 +105,17 @@
         class="relative overflow-hidden rounded-xl border border-border bg-black [container-type:size]"
         style="aspect-ratio: 16 / 9;"
     >
-        <Presenter
-            bind:this={presenter}
-            {content}
-            {flow}
-            embedded
-            {onSlideChange}
-        />
+        {#if isExternal && source}
+            <ExternalPresenter {source} {sourcePdfUrl} controlledIndex={externalIndex} />
+        {:else}
+            <Presenter
+                bind:this={presenter}
+                {content}
+                {flow}
+                embedded
+                {onSlideChange}
+            />
+        {/if}
     </div>
 
     {#if audioUrl}
