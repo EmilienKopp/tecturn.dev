@@ -10,7 +10,9 @@ use App\Http\Controllers\Admin\RejectBetaRequestController;
 use App\Http\Controllers\Admin\UpdateFeatureFlagController;
 use App\Http\Controllers\Beta\RequestBetaAccessController;
 use App\Http\Controllers\Beta\ShowBetaRegistrationController;
+use App\Http\Controllers\Contacts\AcceptFollowRequestController;
 use App\Http\Controllers\Contacts\FollowUserController;
+use App\Http\Controllers\Contacts\RejectFollowRequestController;
 use App\Http\Controllers\Contacts\UnfollowUserController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\DashboardController;
@@ -98,6 +100,8 @@ Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function ()
     Route::get('contacts', ContactsController::class)->name('contacts.index');
     Route::post('contacts/{user}/follow', FollowUserController::class)->name('contacts.follow.store');
     Route::delete('contacts/{user}/follow', UnfollowUserController::class)->name('contacts.follow.destroy');
+    Route::post('contacts/{user}/follow/accept', AcceptFollowRequestController::class)->name('contacts.follow.accept');
+    Route::delete('contacts/{user}/follow/reject', RejectFollowRequestController::class)->name('contacts.follow.reject');
 
     // Reviewer-facing routes live outside the "{current_team}" group — the
     // reviewer is generally not a member of the requester's team. Registered

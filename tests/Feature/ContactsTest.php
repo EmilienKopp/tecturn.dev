@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\PracticeRunModel;
 use App\Models\PresentationModel;
 use App\Models\PresentationSessionModel;
 use App\Models\User;
@@ -99,6 +100,12 @@ test('following someone shows their public talks and stats but hides private tal
         ->post(route('contacts.follow.store', $speaker))
         ->assertRedirect();
 
+    // Following only counts once the speaker accepts the request.
+    $this
+        ->actingAs($speaker)
+        ->post(route('contacts.follow.accept', $viewer))
+        ->assertRedirect();
+
     $response = $this
         ->actingAs($viewer)
         ->get(route('contacts.index'));
@@ -138,4 +145,116 @@ test('contacts can be unfollowed', function () {
         'follower_user_id' => $viewer->id,
         'followed_user_id' => $speaker->id,
     ]);
+});
+
+test('following starts as a pending request that does not grant follower status', function () {
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+    $speaker = User::factory()->create(['handle' => 'speaker']);
+
+    $this
+        ->actingAs($viewer)
+        ->post(route('contacts.follow.store', $speaker))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('user_follows', [
+        'follower_user_id' => $viewer->id,
+        'followed_user_id' => $speaker->id,
+        'status' => 'pending',
+    ]);
+
+    // The requester sees "pending", not an established follow.
+    $this
+        ->actingAs($viewer)
+        ->get(route('contacts.index', ['search' => 'speaker']))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('results.0.follow_status', 'pending')
+            ->has('following', 0),
+        );
+
+    // The speaker sees the incoming request but no follower yet.
+    $this
+        ->actingAs($speaker)
+        ->get(route('contacts.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('followRequests', 1)
+            ->where('followRequests.0.id', $viewer->id)
+            ->has('followers', 0),
+        );
+});
+
+test('accepting a follow request turns it into a follow', function () {
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+    $speaker = User::factory()->create(['handle' => 'speaker']);
+
+    $this->actingAs($viewer)->post(route('contacts.follow.store', $speaker));
+
+    $this
+        ->actingAs($speaker)
+        ->post(route('contacts.follow.accept', $viewer))
+        ->assertRedirect();
+
+    $this->assertDatabaseHas('user_follows', [
+        'follower_user_id' => $viewer->id,
+        'followed_user_id' => $speaker->id,
+        'status' => 'accepted',
+    ]);
+
+    $this
+        ->actingAs($speaker)
+        ->get(route('contacts.index'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->has('followRequests', 0)
+            ->has('followers', 1)
+            ->where('followers.0.id', $viewer->id),
+        );
+});
+
+test('rejecting a follow request removes it', function () {
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+    $speaker = User::factory()->create(['handle' => 'speaker']);
+
+    $this->actingAs($viewer)->post(route('contacts.follow.store', $speaker));
+
+    $this
+        ->actingAs($speaker)
+        ->delete(route('contacts.follow.reject', $viewer))
+        ->assertRedirect();
+
+    $this->assertDatabaseMissing('user_follows', [
+        'follower_user_id' => $viewer->id,
+        'followed_user_id' => $speaker->id,
+    ]);
+});
+
+test('re-requesting after acceptance does not downgrade the follow to pending', function () {
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+    $speaker = User::factory()->create(['handle' => 'speaker']);
+
+    $this->actingAs($viewer)->post(route('contacts.follow.store', $speaker));
+    $this->actingAs($speaker)->post(route('contacts.follow.accept', $viewer));
+    $this->actingAs($viewer)->post(route('contacts.follow.store', $speaker));
+
+    $this->assertDatabaseHas('user_follows', [
+        'follower_user_id' => $viewer->id,
+        'followed_user_id' => $speaker->id,
+        'status' => 'accepted',
+    ]);
+});
+
+test('a pending follower cannot be asked for a rehearsal review', function () {
+    $requester = User::factory()->create(['handle' => 'requester']);
+    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
+    $run = PracticeRunModel::factory()->withStepEvents()->create([
+        'presentation_id' => $presentation->id,
+        'team_id' => $requester->currentTeam->id,
+        'content' => $presentation->content,
+    ]);
+    $pendingFollower = User::factory()->create(['handle' => 'pending']);
+
+    $this->actingAs($pendingFollower)->post(route('contacts.follow.store', $requester));
+
+    $this->actingAs($requester)->post(route('rehearsals.reviews.store', [
+        'current_team' => $requester->currentTeam->slug,
+        'practice_run' => $run->id,
+    ]), ['reviewer_user_id' => $pendingFollower->id])->assertSessionHasErrors('reviewer_user_id');
 });

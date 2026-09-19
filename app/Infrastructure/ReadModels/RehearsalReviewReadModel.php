@@ -204,6 +204,13 @@ class RehearsalReviewReadModel
             ->where('id', '!=', $excludeReviewId)
             ->orderByDesc('created_at')
             ->get(['id', 'reviewer_name', 'reviewer_avatar', 'status', 'created_at'])
+            ->map(fn (RehearsalReviewDetailView $review): array => [
+                'id' => $review->id,
+                'reviewer_name' => $review->reviewer_name,
+                'reviewer_avatar' => $review->reviewer_avatar,
+                'status' => $review->status,
+                'requested_at' => $review->created_at?->toISOString(),
+            ])
             ->all();
     }
 

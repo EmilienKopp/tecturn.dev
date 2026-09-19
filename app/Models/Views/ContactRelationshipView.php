@@ -9,6 +9,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property int $id
  * @property int $follower_user_id
  * @property int $followed_user_id
+ * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property string $follower_name

@@ -23,7 +23,7 @@ class FollowUserController extends Controller
             followedUserId: $user->id,
         ));
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => __('Contact followed.')]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Follow request sent.')]);
 
         return back();
     }
