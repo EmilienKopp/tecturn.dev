@@ -29,6 +29,7 @@ class AppNavigation
             ->addIf(condition: $user !== null, title: 'Settings', configure: function (Section $section) {
                 $section
                     ->add('Profile', route('profile.edit'), attributes: ['icon' => 'user'])
+                    ->add('Branding', route('branding.edit'), attributes: ['icon' => 'palette'])
                     ->add('Teams', route('teams.index'), attributes: ['icon' => 'users']);
             })
             ->add(title: 'Help', configure: function (Section $section) {

@@ -1,5 +1,6 @@
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
 import { cloneBlockForPaste } from '@/lib/tecturn/block-clipboard';
+import { currentBranding } from '@/lib/tecturn/branding';
 import { stripInlineFormatting } from '@/lib/tecturn/CodeGeneration/sanitize';
 import {
     codeActionsForBlock,
@@ -8,8 +9,8 @@ import {
     migrateLegacyTransitions,
     transitionsForSlide,
 } from '@/lib/tecturn/flow-compiler';
+import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
 import { layoutDefinition, layoutDefinitions } from '@/lib/tecturn/layouts';
-import { slideDefaults } from '@/lib/tecturn/slide-defaults.svelte';
 import type {
     Block,
     BlockStyle,
@@ -70,12 +71,13 @@ export class EditorState {
 
     addSlide(layout: SlideLayout = 'free'): void {
         const id = `slide-${crypto.randomUUID()}`;
-        const defaults = slideDefaults.get();
 
         this.content.slides.push({
             id,
             layout,
-            background: defaults.background,
+            // Branding is the single source of defaults: its background slot
+            // (hex or gradient) is the default slide background.
+            background: currentBranding().background,
             slots: {},
             config: null,
             title: null,
@@ -1440,13 +1442,40 @@ export class EditorState {
             block.style = { ...block.style, ...style } as MutableBlock['style'];
             this.dirty = true;
 
-            // Editing a text/box block's color or font in the Inspector makes
-            // those values sticky, so the next new block of the same kind
-            // inherits them without opening Settings > Defaults.
+            // Editing a text/box block's style in the Inspector captures it
+            // as the "last used" for that kind, so the next new block starts
+            // from it instead of the branding defaults.
             if (block.type === 'text' || block.type === 'box') {
-                slideDefaults.captureFromBlockStyle(block.type, style);
+                lastUsedStyle.captureFromBlockStyle(block.type, style);
             }
         }
+    }
+
+    /**
+     * Reset a text/box block's typography and color to the branding defaults
+     * and drop the kind's last-used captures, so subsequent new blocks start
+     * from branding again. Bypasses updateBlockStyle on purpose — going
+     * through it would re-capture the reset as a "last used" pick.
+     */
+    resetBlockStyleToBranding(blockId: string): void {
+        const block = this.findBlock(blockId);
+
+        if (!block || (block.type !== 'text' && block.type !== 'box')) {
+            return;
+        }
+
+        const branding = currentBranding();
+
+        block.style = {
+            ...block.style,
+            color: branding.primary,
+            fontFamily: branding.fontFamily,
+            fontSize: branding.fontSize,
+            fontWeight: branding.fontWeight,
+        } as MutableBlock['style'];
+
+        lastUsedStyle.clearKind(block.type);
+        this.dirty = true;
     }
 
     updateBlockLang(blockId: string, lang: string | null): void {
@@ -1590,10 +1619,11 @@ export class EditorState {
     }
 
     private addBlock(slot: string, type: string): MutableBlock {
-        // Apply slide defaults to text and box blocks
+        // Text and box blocks inherit branding (primary as text color,
+        // typography) with the kind's last-used Inspector picks on top.
         const applyDefaults = type === 'text' || type === 'box';
         const defaults = applyDefaults
-            ? slideDefaults.getBlockStyleDefaults(type as 'text' | 'box')
+            ? lastUsedStyle.resolveNewBlockStyle(type as 'text' | 'box')
             : {};
 
         const block: MutableBlock = {

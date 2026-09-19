@@ -7,6 +7,7 @@
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
     import { edit as editAppearance } from '@/routes/appearance';
+    import { edit as editBranding } from '@/routes/branding';
     import { edit as editProfile } from '@/routes/profile';
     import { index as teams } from '@/routes/teams';
     import type { NavItem } from '@/types';
@@ -21,6 +22,10 @@
         {
             title: 'Profile',
             href: editProfile(),
+        },
+        {
+            title: 'Branding',
+            href: editBranding(),
         },
         {
             title: 'Teams',

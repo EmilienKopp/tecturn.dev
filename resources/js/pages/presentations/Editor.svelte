@@ -22,6 +22,7 @@
         saveEditorDraft,
     } from '@/lib/tecturn/editor-draft';
     import { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
     import { exportMethod } from '@/routes/presentations';
     import type {
         FlowGraph,
@@ -57,6 +58,9 @@
     // A newer local draft means this browser holds edits the server never
     // received (reload, crash, or auto-save off) — restore those over the
     // server copy; anything stale or in sync is discarded by the effect below.
+    // Last-used style overrides are transient and per presentation.
+    lastUsedStyle.scope(presentation.id);
+
     const draft = loadEditorDraft(presentation.id);
     const restoringDraft =
         draft !== null && isDraftNewer(draft, presentation.updated_at);
