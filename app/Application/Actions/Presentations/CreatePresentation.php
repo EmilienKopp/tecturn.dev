@@ -20,7 +20,7 @@ class CreatePresentation
         $presentation = new PresentationEntity(
             team_id: $command->team_id,
             name: $command->name,
-            content: PresentationContent::empty(),
+            content: PresentationContent::empty($command->slide_background),
         );
 
         return $this->presentations->save($presentation);

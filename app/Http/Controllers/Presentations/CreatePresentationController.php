@@ -23,6 +23,7 @@ class CreatePresentationController extends Controller
             new CreatePresentationCommand(
                 team_id: $current_team->id,
                 name: $request->validated('name'),
+                slide_background: $request->user()->branding['background'],
             ),
         );
 

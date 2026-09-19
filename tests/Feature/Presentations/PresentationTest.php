@@ -53,6 +53,22 @@ test('a presentation can be created and redirects to the editor', function () {
         ->and($presentation->content['slides'])->toHaveCount(1);
 });
 
+test('a new presentation first slide uses the creator branding background', function () {
+    $user = User::factory()->create();
+    $gradient = 'linear-gradient(135deg, #0f2027, #2c5364)';
+    $user->update(['branding' => [...$user->branding, 'background' => $gradient]]);
+
+    $this
+        ->actingAs($user)
+        ->post(route('presentations.store', ['current_team' => $user->currentTeam->slug]), [
+            'name' => 'Branded deck',
+        ]);
+
+    $presentation = PresentationModel::query()->firstOrFail();
+
+    expect($presentation->content['slides'][0]['background'])->toBe($gradient);
+});
+
 test('the editor page renders with the presentation content', function () {
     $user = User::factory()->create();
     $presentation = PresentationModel::factory()->withSlides(2)->create([

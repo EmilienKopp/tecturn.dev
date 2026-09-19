@@ -27,7 +27,7 @@ use Illuminate\Support\Str;
  * @property string $avatar
  * @property string|null $social_x_handle
  * @property string|null $social_github_handle
- * @property array<string, string> $branding
+ * @property array<string, string|null> $branding
  * @property int|null $current_team_id
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -57,10 +57,10 @@ class User extends Authenticatable
     }
 
     /**
-     * The user's branding palette, always returned as a full set of six hex
-     * colors with defaults filled in for any unset slot.
+     * The user's branding, always returned as a full set of color and
+     * typography slots with defaults filled in for any unset slot.
      *
-     * @return Attribute<array<string, string>, array<string, string>>
+     * @return Attribute<array<string, string|null>, array<string, string|null>>
      */
     protected function branding(): Attribute
     {

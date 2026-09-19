@@ -13,7 +13,7 @@ test('shared navigation reflects the current team routes', function () {
 
     $response->assertOk();
     $response->assertInertia(fn (Assert $page) => $page
-        ->has('navigation', 2)
+        ->has('navigation', 3)
         ->where('navigation.0.title', 'Platform')
         ->where('navigation.0.children.0.title', 'Dashboard')
         ->where('navigation.0.children.0.url', route('dashboard', $team->slug))
@@ -26,7 +26,8 @@ test('shared navigation reflects the current team routes', function () {
         ->where('navigation.0.children.2.active', false)
         ->where('navigation.1.title', 'Settings')
         ->where('navigation.1.children.0.url', route('profile.edit'))
-        ->where('navigation.1.children.1.url', route('teams.index')),
+        ->where('navigation.1.children.1.url', route('branding.edit'))
+        ->where('navigation.1.children.2.url', route('teams.index')),
     );
 });
 

@@ -2,6 +2,7 @@
     import { page } from '@inertiajs/svelte';
     import Eye from 'lucide-svelte/icons/eye';
     import EyeOff from 'lucide-svelte/icons/eye-off';
+    import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
     import SquarePen from 'lucide-svelte/icons/square-pen';
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import { toast } from 'svelte-sonner';
@@ -429,6 +430,18 @@
                     dataTest="inspector-bg-color"
                 />
             </div>
+        {/if}
+
+        {#if block.type === 'text' || block.type === 'box'}
+            <Button
+                variant="outline"
+                size="sm"
+                onclick={() => editor.resetBlockStyleToBranding(block.id)}
+                title="Reset this block's color and typography to your branding, and forget the last-used picks for this block kind"
+                data-test="inspector-reset-to-branding"
+            >
+                <RotateCcw class="h-4 w-4" /> Reset to branding
+            </Button>
         {/if}
 
         <Button

@@ -1,4 +1,6 @@
 import { SvelteMap, SvelteSet } from 'svelte/reactivity';
+import { cloneBlockForPaste } from '@/lib/tecturn/block-clipboard';
+import { currentBranding } from '@/lib/tecturn/branding';
 import { stripInlineFormatting } from '@/lib/tecturn/CodeGeneration/sanitize';
 import {
     codeActionsForBlock,
@@ -7,8 +9,8 @@ import {
     migrateLegacyTransitions,
     transitionsForSlide,
 } from '@/lib/tecturn/flow-compiler';
-import { layoutDefinitions } from '@/lib/tecturn/layouts';
-import { slideDefaults } from '@/lib/tecturn/slide-defaults.svelte';
+import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
+import { layoutDefinition, layoutDefinitions } from '@/lib/tecturn/layouts';
 import type {
     Block,
     BlockStyle,
@@ -34,6 +36,9 @@ export class EditorState {
     selectedSlideIndex = $state(0);
     selectedBlockId = $state<string | null>(null);
     dirty = $state(false);
+
+    /** Editor-local clipboard for Ctrl+C/Ctrl+V on blocks; plain snapshot, not a $state proxy. */
+    private blockClipboard: { slot: string; block: Block } | null = null;
 
     constructor(content: PresentationContent, flow: FlowGraph | null = null) {
         // Inertia props arrive as $state proxies, which structuredClone
@@ -66,12 +71,13 @@ export class EditorState {
 
     addSlide(layout: SlideLayout = 'free'): void {
         const id = `slide-${crypto.randomUUID()}`;
-        const defaults = slideDefaults.get();
 
         this.content.slides.push({
             id,
             layout,
-            background: defaults.background,
+            // Branding is the single source of defaults: its background slot
+            // (hex or gradient) is the default slide background.
+            background: currentBranding().background,
             slots: {},
             config: null,
             title: null,
@@ -1436,13 +1442,40 @@ export class EditorState {
             block.style = { ...block.style, ...style } as MutableBlock['style'];
             this.dirty = true;
 
-            // Editing a text/box block's color or font in the Inspector makes
-            // those values sticky, so the next new block of the same kind
-            // inherits them without opening Settings > Defaults.
+            // Editing a text/box block's style in the Inspector captures it
+            // as the "last used" for that kind, so the next new block starts
+            // from it instead of the branding defaults.
             if (block.type === 'text' || block.type === 'box') {
-                slideDefaults.captureFromBlockStyle(block.type, style);
+                lastUsedStyle.captureFromBlockStyle(block.type, style);
             }
         }
+    }
+
+    /**
+     * Reset a text/box block's typography and color to the branding defaults
+     * and drop the kind's last-used captures, so subsequent new blocks start
+     * from branding again. Bypasses updateBlockStyle on purpose — going
+     * through it would re-capture the reset as a "last used" pick.
+     */
+    resetBlockStyleToBranding(blockId: string): void {
+        const block = this.findBlock(blockId);
+
+        if (!block || (block.type !== 'text' && block.type !== 'box')) {
+            return;
+        }
+
+        const branding = currentBranding();
+
+        block.style = {
+            ...block.style,
+            color: branding.primary,
+            fontFamily: branding.fontFamily,
+            fontSize: branding.fontSize,
+            fontWeight: branding.fontWeight,
+        } as MutableBlock['style'];
+
+        lastUsedStyle.clearKind(block.type);
+        this.dirty = true;
     }
 
     updateBlockLang(blockId: string, lang: string | null): void {
@@ -1499,6 +1532,65 @@ export class EditorState {
         }
     }
 
+    /**
+     * Snapshots a block onto the editor-local clipboard together with the
+     * slot it lives in, so paste can land it in the matching slot. Richtext
+     * blocks are inseparable from their layout and are not copyable.
+     */
+    copyBlock(blockId: string): boolean {
+        const location = this.findBlockLocation(blockId);
+
+        if (!location || location.block.type === 'richtext') {
+            return false;
+        }
+
+        this.blockClipboard = {
+            slot: location.slotName,
+            block: $state.snapshot(location.block) as Block,
+        };
+
+        return true;
+    }
+
+    /**
+     * Clones the clipboard block into the current slide with fresh block and
+     * action ids, offsetting free-position copies so they don't hide the
+     * original. Transition pinning is not carried over, matching duplicateSlide.
+     */
+    pasteBlock(): boolean {
+        if (!this.blockClipboard) {
+            return false;
+        }
+
+        const slide = this.selectedSlide;
+
+        if (slide.layout === 'rich-text') {
+            return false;
+        }
+
+        const block = cloneBlockForPaste(
+            this.blockClipboard.block,
+        ) as MutableBlock;
+
+        // Same [] vs {} normalisation as addBlock: an empty slots map arrives
+        // from the backend as an array.
+        if (Array.isArray(slide.slots)) {
+            slide.slots = {};
+        }
+
+        // A slot the target layout doesn't render would swallow the paste
+        // invisibly; land it in the layout's first slot instead.
+        const definition = layoutDefinition(slide.layout);
+        const slot = definition.slots.includes(this.blockClipboard.slot)
+            ? this.blockClipboard.slot
+            : (definition.slots[0] ?? 'main');
+        slide.slots[slot] = [...(slide.slots[slot] ?? []), block];
+        this.selectedBlockId = block.id;
+        this.dirty = true;
+
+        return true;
+    }
+
     private buildRichtextBlock(): MutableBlock {
         return {
             id: `block-${crypto.randomUUID()}`,
@@ -1527,10 +1619,11 @@ export class EditorState {
     }
 
     private addBlock(slot: string, type: string): MutableBlock {
-        // Apply slide defaults to text and box blocks
+        // Text and box blocks inherit branding (primary as text color,
+        // typography) with the kind's last-used Inspector picks on top.
         const applyDefaults = type === 'text' || type === 'box';
         const defaults = applyDefaults
-            ? slideDefaults.getBlockStyleDefaults(type as 'text' | 'box')
+            ? lastUsedStyle.resolveNewBlockStyle(type as 'text' | 'box')
             : {};
 
         const block: MutableBlock = {
@@ -1577,6 +1670,24 @@ export class EditorState {
     /** Public lookup for surfaces that address a block by id (e.g. the sequence modal). */
     blockById(blockId: string): MutableBlock | null {
         return this.findBlock(blockId);
+    }
+
+    private findBlockLocation(
+        blockId: string,
+    ): { block: MutableBlock; slotName: string } | null {
+        for (const slide of this.content.slides) {
+            for (const [slotName, blocks] of Object.entries(slide.slots)) {
+                const block = blocks.find(
+                    (candidate) => candidate.id === blockId,
+                );
+
+                if (block) {
+                    return { block, slotName };
+                }
+            }
+        }
+
+        return null;
     }
 
     private findBlock(blockId: string): MutableBlock | null {

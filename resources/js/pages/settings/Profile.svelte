@@ -12,38 +12,17 @@
 </script>
 
 <script lang="ts">
-    import { Form, page, useForm } from '@inertiajs/svelte';
+    import { Form, page } from '@inertiajs/svelte';
+    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
-    import ColorField from '@/components/tecturn/ColorField.svelte';
     import { Button } from '@/components/ui/button';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
-    import {
-        BRANDING_FALLBACK,
-        BRANDING_KEYS,
-        BRANDING_LABELS,
-    } from '@/lib/tecturn/branding';
-    import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
-    import { update as updateBranding } from '@/routes/branding';
 
     const user = $derived(page.props.auth.user);
-
-    const brandingForm = useForm({
-        branding: { ...(page.props.auth.user.branding ?? BRANDING_FALLBACK) },
-    });
-
-    function saveBranding(): void {
-        brandingForm.patch(updateBranding.url(), { preserveScroll: true });
-    }
-
-    function resetBranding(): void {
-        for (const key of BRANDING_KEYS) {
-            brandingForm.branding[key] = BRANDING_FALLBACK[key];
-        }
-    }
 </script>
 
 <AppHead title="Profile settings" />
@@ -150,52 +129,6 @@
             </div>
         {/snippet}
     </Form>
-</div>
-
-<div class="mt-12 flex flex-col space-y-6">
-    <Heading
-        variant="small"
-        title="Branding"
-        description="Your palette of six brand colors. They appear as one-click shortcuts next to every color picker in the editor."
-    />
-
-    <div class="grid gap-4 sm:grid-cols-2">
-        {#each BRANDING_KEYS as key (key)}
-            <div class="grid gap-2">
-                <Label for="branding-{key}">{BRANDING_LABELS[key]}</Label>
-                <div class="flex items-center gap-3">
-                    <ColorField
-                        id="branding-{key}"
-                        class="h-9 w-16 cursor-pointer rounded-md border"
-                        value={brandingForm.branding[key]}
-                        onchange={(color) =>
-                            (brandingForm.branding[key] = color)}
-                        showSwatches={false}
-                        dataTest="branding-{key}"
-                    />
-                    <span class="font-mono text-xs text-muted-foreground">
-                        {brandingForm.branding[key]}
-                    </span>
-                </div>
-                <InputError
-                    class="mt-1"
-                    message={brandingForm.errors[`branding.${key}`]}
-                />
-            </div>
-        {/each}
-    </div>
-
-    <div class="flex items-center gap-4">
-        <Button
-            type="button"
-            onclick={saveBranding}
-            disabled={brandingForm.processing}
-            data-test="save-branding-button">Save branding</Button
-        >
-        <Button type="button" variant="ghost" onclick={resetBranding}>
-            Reset to defaults
-        </Button>
-    </div>
 </div>
 
 <DeleteUser />

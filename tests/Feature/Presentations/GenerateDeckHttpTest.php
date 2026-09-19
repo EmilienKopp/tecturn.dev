@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Ai\Agents\DeckArchitect;
+use App\Ai\Agents\Deckster;
 use App\Models\PresentationModel;
 use App\Models\User;
 
@@ -23,7 +23,7 @@ function fakeHttpDeck(): array
 }
 
 test('a magic draft is generated from a plan and redirects to the editor', function () {
-    DeckArchitect::fake([fakeHttpDeck()]);
+    Deckster::fake([fakeHttpDeck()]);
 
     $user = User::factory()->create();
     $team = $user->currentTeam;
@@ -44,11 +44,11 @@ test('a magic draft is generated from a plan and redirects to the editor', funct
     expect($presentation->team_id)->toBe($team->id)
         ->and($presentation->name)->toBe('Intro to Widgets');
 
-    DeckArchitect::assertPrompted('# My talk plan');
+    Deckster::assertPrompted('# My talk plan');
 });
 
 test('an explicit name overrides the generated title', function () {
-    DeckArchitect::fake([fakeHttpDeck()]);
+    Deckster::fake([fakeHttpDeck()]);
 
     $user = User::factory()->create();
     $team = $user->currentTeam;
@@ -77,7 +77,7 @@ test('the plan is required', function () {
 });
 
 test('a failed generation surfaces a validation error and creates nothing', function () {
-    DeckArchitect::fake([function () {
+    Deckster::fake([function () {
         throw new RuntimeException('provider exploded');
     }]);
 

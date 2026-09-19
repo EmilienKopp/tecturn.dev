@@ -15,7 +15,6 @@
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
-    import Sliders from 'lucide-svelte/icons/sliders';
     import Timer from 'lucide-svelte/icons/timer';
     import Workflow from 'lucide-svelte/icons/workflow';
     import { toast } from 'svelte-sonner';
@@ -31,13 +30,12 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
-    import SlideDefaultsModal from './SlideDefaultsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
-    import { present, update } from '@/routes/presentations';
 
     let {
         editor,
@@ -76,7 +74,6 @@
     let durationMinutes = $state<number | null>(talkSettings.durationMinutes);
     let timerMode = $state(talkSettings.timerMode);
     let talkLengthModalOpen = $state(false);
-    let slideDefaultsModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
 
@@ -522,16 +519,6 @@
                         {footer.enabled ? 'On' : 'Off'}
                     </span>
                 </button>
-                <button
-                    type="button"
-                    role="menuitem"
-                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                    onclick={() => (slideDefaultsModalOpen = true)}
-                    data-test="editor-slide-defaults-menu-item"
-                >
-                    <Sliders class="h-4 w-4" />
-                    Slide Defaults…
-                </button>
             </DropdownMenuContent>
         </DropdownMenu>
 
@@ -645,5 +632,3 @@
     bind:open={talkLengthModalOpen}
     onSave={saveTalkLength}
 />
-
-<SlideDefaultsModal bind:open={slideDefaultsModalOpen} />

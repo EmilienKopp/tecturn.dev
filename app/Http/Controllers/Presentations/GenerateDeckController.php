@@ -28,6 +28,7 @@ class GenerateDeckController extends Controller
                     team_id: $current_team->id,
                     name: (string) $request->validated('name', ''),
                     plan: $request->validated('plan'),
+                    branding: $request->user()->branding,
                 ),
             );
         } catch (Throwable $exception) {

@@ -292,9 +292,10 @@
                         <div class="space-y-3">
                             <DialogTitle>Magic draft</DialogTitle>
                             <DialogDescription>
-                                Describe your talk and we'll draft the slides
-                                for you. Rough bullet points work great. You can
-                                edit everything afterwards.
+                                Describe your talk and Deckster will draft the
+                                slides for you, styled with your branding. Rough
+                                bullet points work great. You can edit
+                                everything afterwards.
                             </DialogDescription>
                         </div>
 
@@ -337,7 +338,9 @@
                                 disabled={drafting || draftPlan.trim() === ''}
                                 data-test="magic-draft-submit"
                             >
-                                {drafting ? 'Drafting…' : 'Generate draft'}
+                                {drafting
+                                    ? 'Deckster is drafting…'
+                                    : 'Generate draft'}
                             </Button>
                         </DialogFooter>
                     </form>
