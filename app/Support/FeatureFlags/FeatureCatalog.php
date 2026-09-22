@@ -32,6 +32,13 @@ class FeatureCatalog
                 ],
             ),
             new FeatureDefinition(
+                key: 'discovery',
+                label: 'People discovery',
+                description: 'Lets the contacts directory surface and search other people. Off until per-user discoverability settings exist.',
+                type: 'boolean',
+                scope: 'global',
+            ),
+            new FeatureDefinition(
                 key: 'live_translation',
                 label: 'Live translation',
                 description: 'Lets the team start real-time translation sessions while presenting.',
