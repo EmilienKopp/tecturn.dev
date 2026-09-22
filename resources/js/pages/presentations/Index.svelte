@@ -32,6 +32,7 @@
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
+    import { Skeleton } from '@/components/ui/skeleton';
     import {
         destroy,
         edit,
@@ -50,13 +51,19 @@
 
     let {
         presentations,
+        generatingCount = 0,
     }: {
         presentations: PresentationListItem[];
+        generatingCount?: number;
     } = $props();
 
     let createDialogOpen = $state(false);
     let newName = $state('');
     let creating = $state(false);
+    let sourceType = $state<'editor' | 'pdf' | 'google_slides'>('editor');
+    let externalUrl = $state('');
+    let pdfFile = $state<File | null>(null);
+    let createError = $state<string | null>(null);
     let deleteDialogOpen = $state(false);
     let presentationDeleting = $state<PresentationListItem | null>(null);
     let importing = $state(false);
@@ -124,22 +131,55 @@
         });
     };
 
+    const resetCreateForm = () => {
+        newName = '';
+        sourceType = 'editor';
+        externalUrl = '';
+        pdfFile = null;
+        createError = null;
+    };
+
+    const createDisabled = $derived(
+        creating ||
+            newName.trim() === '' ||
+            (sourceType === 'pdf' && !pdfFile) ||
+            (sourceType === 'google_slides' && externalUrl.trim() === ''),
+    );
+
     const createPresentation = (event: SubmitEvent) => {
         event.preventDefault();
 
         creating = true;
+        createError = null;
 
-        router.post(
-            store(teamSlug).url,
-            { name: newName },
-            {
-                onFinish: () => {
-                    creating = false;
-                    createDialogOpen = false;
-                    newName = '';
-                },
+        const payload: Record<string, unknown> = {
+            name: newName,
+            source_type: sourceType,
+        };
+
+        if (sourceType === 'google_slides') {
+            payload.external_url = externalUrl;
+        } else if (sourceType === 'pdf' && pdfFile) {
+            payload.file = pdfFile;
+        }
+
+        router.post(store(teamSlug).url, payload, {
+            forceFormData: sourceType === 'pdf',
+            onError: (errors) => {
+                createError =
+                    errors.file ??
+                    errors.external_url ??
+                    errors.name ??
+                    'Could not create that presentation.';
             },
-        );
+            onSuccess: () => {
+                createDialogOpen = false;
+                resetCreateForm();
+            },
+            onFinish: () => {
+                creating = false;
+            },
+        });
     };
 
     const generateDraft = (event: SubmitEvent) => {
@@ -156,6 +196,14 @@
             generate(teamSlug).url,
             { name: draftName, plan: draftPlan },
             {
+                onSuccess: () => {
+                    // The build runs in the background; close the modal and let a
+                    // skeleton hold its place until the "ready" toast arrives.
+                    draftDialogOpen = false;
+                    draftName = '';
+                    draftPlan = '';
+                    draftError = null;
+                },
                 onError: (errors) => {
                     draftError =
                         errors.plan ??
@@ -292,9 +340,10 @@
                         <div class="space-y-3">
                             <DialogTitle>Magic draft</DialogTitle>
                             <DialogDescription>
-                                Describe your talk and we'll draft the slides
-                                for you. Rough bullet points work great. You can
-                                edit everything afterwards.
+                                Describe your talk and Deckster will draft the
+                                slides for you, styled with your branding. Rough
+                                bullet points work great. You can edit
+                                everything afterwards.
                             </DialogDescription>
                         </div>
 
@@ -337,7 +386,9 @@
                                 disabled={drafting || draftPlan.trim() === ''}
                                 data-test="magic-draft-submit"
                             >
-                                {drafting ? 'Drafting…' : 'Generate draft'}
+                                {drafting
+                                    ? 'Deckster is drafting…'
+                                    : 'Generate draft'}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -364,8 +415,9 @@
                         <div class="space-y-3">
                             <DialogTitle>New presentation</DialogTitle>
                             <DialogDescription>
-                                Give your presentation a name. You can rename it
-                                later.
+                                Build slides in the editor, or bring your own
+                                deck as a PDF or Google Slides link and get the
+                                live dock, translation, and footer on top.
                             </DialogDescription>
                         </div>
 
@@ -380,10 +432,82 @@
                             />
                         </div>
 
+                        <div class="space-y-2">
+                            <Label>Source</Label>
+                            <div
+                                class="grid grid-cols-3 gap-2"
+                                data-test="new-presentation-source"
+                            >
+                                {#each [{ value: 'editor', label: 'Editor' }, { value: 'pdf', label: 'PDF' }, { value: 'google_slides', label: 'Google Slides' }] as option (option.value)}
+                                    <button
+                                        type="button"
+                                        class="rounded-md border px-3 py-2 text-sm transition-colors {sourceType ===
+                                        option.value
+                                            ? 'border-primary bg-primary/10 font-medium text-primary'
+                                            : 'border-input text-muted-foreground hover:bg-muted'}"
+                                        onclick={() => {
+                                            sourceType = option.value as typeof sourceType;
+                                            createError = null;
+                                        }}
+                                        data-test="new-presentation-source-{option.value}"
+                                    >
+                                        {option.label}
+                                    </button>
+                                {/each}
+                            </div>
+                        </div>
+
+                        {#if sourceType === 'pdf'}
+                            <div class="space-y-2">
+                                <Label for="new-presentation-pdf">PDF file</Label
+                                >
+                                <input
+                                    id="new-presentation-pdf"
+                                    type="file"
+                                    accept="application/pdf,.pdf"
+                                    class="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-muted/80"
+                                    onchange={(event) => {
+                                        pdfFile =
+                                            (
+                                                event.currentTarget as HTMLInputElement
+                                            ).files?.[0] ?? null;
+                                        createError = null;
+                                    }}
+                                    data-test="new-presentation-pdf-input"
+                                />
+                            </div>
+                        {:else if sourceType === 'google_slides'}
+                            <div class="space-y-2">
+                                <Label for="new-presentation-url"
+                                    >Google Slides link</Label
+                                >
+                                <Input
+                                    id="new-presentation-url"
+                                    bind:value={externalUrl}
+                                    type="url"
+                                    placeholder="https://docs.google.com/presentation/d/…"
+                                    data-test="new-presentation-url-input"
+                                />
+                                <p class="text-xs text-muted-foreground">
+                                    Paste the share or publish link to your
+                                    Google Slides deck.
+                                </p>
+                            </div>
+                        {/if}
+
+                        {#if createError}
+                            <p
+                                class="text-sm text-destructive"
+                                data-test="new-presentation-error"
+                            >
+                                {createError}
+                            </p>
+                        {/if}
+
                         <DialogFooter>
                             <Button
                                 type="submit"
-                                disabled={creating || newName.trim() === ''}
+                                disabled={createDisabled}
                                 data-test="new-presentation-submit"
                             >
                                 {creating ? 'Creating…' : 'Create'}
@@ -405,6 +529,24 @@
     {/if}
 
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {#each Array.from({ length: generatingCount }) as _, index (index)}
+            <div class="relative" data-test="presentation-skeleton">
+                <Card>
+                    <CardHeader>
+                        <CardTitle class="flex items-center gap-2">
+                            <Sparkles
+                                class="h-4 w-4 animate-pulse text-muted-foreground"
+                            />
+                            <Skeleton class="h-4 w-40" />
+                        </CardTitle>
+                        <CardDescription>
+                            <Skeleton class="mt-1 h-3 w-28" />
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        {/each}
+
         {#each presentations as presentation (presentation.id)}
             <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
             <div
@@ -454,7 +596,7 @@
         {/each}
     </div>
 
-    {#if presentations.length === 0}
+    {#if presentations.length === 0 && generatingCount === 0}
         <p class="py-12 text-center text-muted-foreground">
             No presentations yet. Create your first one to get started.
         </p>

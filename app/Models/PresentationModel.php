@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Presentation\Entities\PresentationEntity;
 use App\Domain\Presentation\ValueObjects\FlowGraph;
 use App\Domain\Presentation\ValueObjects\PresentationContent;
+use App\Domain\Presentation\ValueObjects\PresentationSource;
 use App\Domain\Presentation\ValueObjects\TalkSettings;
 use App\Policies\PresentationPolicy;
 use Database\Factories\PresentationModelFactory;
@@ -27,6 +28,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $talk_settings
  * @property array<string, mixed>|null $flow
+ * @property array<string, mixed>|null $source
  * @property string $embed_token
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
@@ -35,7 +37,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $updated_at
  * @property-read Team $team
  */
-#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
+#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
 #[UsePolicy(PresentationPolicy::class)]
 class PresentationModel extends Model implements HasMedia
 {
@@ -47,6 +49,8 @@ class PresentationModel extends Model implements HasMedia
     public const string BACKGROUND_COLLECTION = 'background';
 
     public const string IMAGES_COLLECTION = 'images';
+
+    public const string SOURCE_COLLECTION = 'source';
 
     protected $table = 'presentations';
 
@@ -64,12 +68,24 @@ class PresentationModel extends Model implements HasMedia
 
         $this->addMediaCollection(self::IMAGES_COLLECTION)
             ->acceptsMimeTypes($imageMimes);
+
+        $this->addMediaCollection(self::SOURCE_COLLECTION)
+            ->singleFile()
+            ->acceptsMimeTypes(['application/pdf']);
     }
 
     /** Public URL of the deck-wide background image, or null when unset. */
     public function backgroundImageUrl(): ?string
     {
         $media = $this->getFirstMedia(self::BACKGROUND_COLLECTION);
+
+        return $media instanceof Media ? $media->getFullUrl() : null;
+    }
+
+    /** Public URL of the uploaded source PDF, or null when there isn't one. */
+    public function sourcePdfUrl(): ?string
+    {
+        $media = $this->getFirstMedia(self::SOURCE_COLLECTION);
 
         return $media instanceof Media ? $media->getFullUrl() : null;
     }
@@ -99,6 +115,7 @@ class PresentationModel extends Model implements HasMedia
             content: PresentationContent::fromArray($this->content),
             talkSettings: TalkSettings::fromArray($this->talk_settings ?? []),
             flow: $this->flow !== null ? FlowGraph::fromArray($this->flow) : null,
+            source: PresentationSource::fromArray($this->source ?? []),
             created_at: $this->created_at?->toDateTimeImmutable(),
             updated_at: $this->updated_at?->toDateTimeImmutable(),
             yoyotranslateSessionId: $this->yoyotranslate_session_id,
@@ -122,6 +139,7 @@ class PresentationModel extends Model implements HasMedia
             'content' => 'array',
             'talk_settings' => 'array',
             'flow' => 'array',
+            'source' => 'array',
             'yoyotranslate_session_started_at' => 'datetime',
             'yoyotranslate_languages' => 'array',
         ];

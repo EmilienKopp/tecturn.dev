@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Ai\Agents\DeckArchitect;
+use App\Ai\Agents\Deckster;
 use App\Application\Actions\Presentations\GenerateDeckFromPlan;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Models\Team;
@@ -32,7 +32,7 @@ function fakeDeck(): array
 }
 
 it('generates and persists a deck from a plan via the action', function () {
-    DeckArchitect::fake([fakeDeck()]);
+    Deckster::fake([fakeDeck()]);
 
     $team = Team::factory()->create();
 
@@ -43,7 +43,8 @@ it('generates and persists a deck from a plan via the action', function () {
     expect($entity->id)->not->toBeNull()
         ->and($entity->name)->toBe('Intro to Widgets') // falls back to the generated title
         ->and($entity->content->slides)->toHaveCount(2)
-        ->and($entity->flow)->not->toBeNull();
+        ->and($entity->flow)->not->toBeNull()
+        ->and($entity->getCreatedEvents())->toHaveCount(1); // records a domain event for the app layer to dispatch
 
     $this->assertDatabaseHas('presentations', [
         'id' => $entity->id,
@@ -51,11 +52,37 @@ it('generates and persists a deck from a plan via the action', function () {
         'name' => 'Intro to Widgets',
     ]);
 
-    DeckArchitect::assertPrompted('# My plan');
+    Deckster::assertPrompted('# My plan');
+});
+
+it('generates a deck locked onto the creator branding', function () {
+    Deckster::fake([
+        ['theme' => ['background' => '#0b1021', 'textColor' => '#f5f5f5'], ...fakeDeck()],
+    ]);
+
+    $team = Team::factory()->create();
+
+    $entity = app(GenerateDeckFromPlan::class)->execute(
+        new GenerateDeckFromPlanCommand(
+            team_id: $team->id,
+            name: '',
+            plan: '# My plan',
+            branding: [
+                'background' => 'linear-gradient(135deg, #0f2027, #2c5364)',
+                'primary' => '#111827',
+                'fontFamily' => 'Lora',
+            ],
+        ),
+    );
+
+    foreach ($entity->content->slides as $slide) {
+        expect($slide->background)->toBe('linear-gradient(135deg, #0f2027, #2c5364)')
+            ->and($slide->config)->toBe(['textColor' => '#111827']);
+    }
 });
 
 it('prefers an explicit name over the generated title', function () {
-    DeckArchitect::fake([fakeDeck()]);
+    Deckster::fake([fakeDeck()]);
 
     $team = Team::factory()->create();
 
@@ -67,7 +94,7 @@ it('prefers an explicit name over the generated title', function () {
 });
 
 it('generates a deck through the artisan command from a file', function () {
-    DeckArchitect::fake([fakeDeck()]);
+    Deckster::fake([fakeDeck()]);
 
     $team = Team::factory()->create();
 
@@ -86,7 +113,7 @@ it('generates a deck through the artisan command from a file', function () {
 });
 
 it('fails cleanly for an unknown team', function () {
-    DeckArchitect::fake([fakeDeck()]);
+    Deckster::fake([fakeDeck()]);
 
     $path = tempnam(sys_get_temp_dir(), 'plan').'.md';
     file_put_contents($path, '# plan');

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ReadModels;
 
+use App\Enums\FollowStatus;
 use App\Models\Views\ContactProfileView;
 use App\Models\Views\ContactRelationshipView;
 use App\Models\Views\ContactTalkView;
@@ -24,12 +25,12 @@ class ContactsReadModel
      *     total_reactions: int,
      *     followers_count: int,
      *     following_count: int,
-     *     is_following: bool
+     *     follow_status: string
      * }>
      */
     public function directoryForUser(int $userId, ?string $search = null, int $limit = 20): array
     {
-        $followingIds = $this->followingIds($userId);
+        $followStatuses = $this->followStatuses($userId);
         $term = $this->normalizedSearch($search);
 
         return ContactProfileView::query()
@@ -58,7 +59,7 @@ class ContactsReadModel
             ->orderByRaw('LOWER(name)')
             ->limit($limit)
             ->get()
-            ->map(fn (ContactProfileView $profile): array => $this->mapProfile($profile, in_array($profile->id, $followingIds, true)))
+            ->map(fn (ContactProfileView $profile): array => $this->mapProfile($profile, $followStatuses[$profile->id] ?? 'none'))
             ->all();
     }
 
@@ -77,6 +78,7 @@ class ContactsReadModel
     {
         return ContactRelationshipView::query()
             ->where('follower_user_id', $userId)
+            ->where('status', FollowStatus::Accepted->value)
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (ContactRelationshipView $relationship): array => [
@@ -106,6 +108,7 @@ class ContactsReadModel
     {
         return ContactRelationshipView::query()
             ->where('followed_user_id', $userId)
+            ->where('status', FollowStatus::Accepted->value)
             ->orderByDesc('created_at')
             ->get()
             ->map(fn (ContactRelationshipView $relationship): array => [
@@ -171,14 +174,61 @@ class ContactsReadModel
     }
 
     /**
+     * People who asked to follow this user and are waiting on an answer.
+     *
+     * @return array<int, array{
+     *     id: int,
+     *     name: string,
+     *     avatar: string,
+     *     handle: string|null,
+     *     social_x_handle: string|null,
+     *     social_github_handle: string|null,
+     *     requested_at: string|null
+     * }>
+     */
+    public function followRequestsForUser(int $userId): array
+    {
+        return ContactRelationshipView::query()
+            ->where('followed_user_id', $userId)
+            ->where('status', FollowStatus::Pending->value)
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (ContactRelationshipView $relationship): array => [
+                'id' => $relationship->follower_user_id,
+                'name' => $relationship->follower_name,
+                'avatar' => $relationship->follower_avatar,
+                'handle' => $relationship->follower_handle,
+                'social_x_handle' => $relationship->follower_social_x_handle,
+                'social_github_handle' => $relationship->follower_social_github_handle,
+                'requested_at' => $relationship->created_at?->toISOString(),
+            ])
+            ->all();
+    }
+
+    /**
      * @return array<int, int>
      */
     private function followingIds(int $userId): array
     {
         return ContactRelationshipView::query()
             ->where('follower_user_id', $userId)
+            ->where('status', FollowStatus::Accepted->value)
             ->pluck('followed_user_id')
             ->map(fn (mixed $id): int => (int) $id)
+            ->all();
+    }
+
+    /**
+     * The signed-in user's outgoing follow rows, keyed by followed user id.
+     *
+     * @return array<int, string>
+     */
+    private function followStatuses(int $userId): array
+    {
+        return ContactRelationshipView::query()
+            ->where('follower_user_id', $userId)
+            ->pluck('status', 'followed_user_id')
+            ->mapWithKeys(fn (mixed $status, mixed $id): array => [(int) $id => (string) $status])
             ->all();
     }
 
@@ -195,10 +245,10 @@ class ContactsReadModel
      *     total_reactions: int,
      *     followers_count: int,
      *     following_count: int,
-     *     is_following: bool
+     *     follow_status: string
      * }
      */
-    private function mapProfile(ContactProfileView $profile, bool $isFollowing): array
+    private function mapProfile(ContactProfileView $profile, string $followStatus): array
     {
         return [
             'id' => $profile->id,
@@ -212,7 +262,7 @@ class ContactsReadModel
             'total_reactions' => $profile->total_reactions,
             'followers_count' => $profile->followers_count,
             'following_count' => $profile->following_count,
-            'is_following' => $isFollowing,
+            'follow_status' => $followStatus,
         ];
     }
 

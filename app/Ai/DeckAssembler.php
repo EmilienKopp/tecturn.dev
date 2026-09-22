@@ -17,7 +17,7 @@ use App\Domain\Presentation\ValueObjects\SlideLayout;
 use App\Domain\Presentation\ValueObjects\Transition;
 
 /**
- * Translates the DeckArchitect agent's structured output into the domain value
+ * Translates the Deckster agent's structured output into the domain value
  * objects. The agent describes slides loosely (layout, slots, blocks, per-block
  * reveal steps); this class enforces every invariant the value objects require:
  * stable ids, blocks clamped to layout-legal slots, and a valid flow graph
@@ -31,16 +31,24 @@ class DeckAssembler
 
     /**
      * @param  array<string, mixed>  $deck
+     * @param  array<string, string|null>|null  $branding  The creating user's branding; when given it overrides the agent's theme (background, text color) and fills unset typography, so generated decks stay on brand.
      * @return array{content: PresentationContent, flow: FlowGraph}
      */
-    public function assemble(array $deck): array
+    public function assemble(array $deck, ?array $branding = null): array
     {
         $rawSlides = is_array($deck['slides'] ?? null) ? array_values($deck['slides']) : [];
 
         $rawTheme = is_array($deck['theme'] ?? null) ? $deck['theme'] : [];
-        $themeBackground = $this->stringOrNull($rawTheme['background'] ?? null);
-        $themeTextColor = $this->stringOrNull($rawTheme['textColor'] ?? null);
-        $themeBodyFont = $this->stringOrNull($rawTheme['bodyFont'] ?? null);
+        $brandingLocked = $branding !== null && $branding !== [];
+        $themeBackground = $brandingLocked
+            ? $this->stringOrNull($branding['background'] ?? null)
+            : $this->stringOrNull($rawTheme['background'] ?? null);
+        $themeTextColor = $brandingLocked
+            ? $this->stringOrNull($branding['primary'] ?? null)
+            : $this->stringOrNull($rawTheme['textColor'] ?? null);
+        $themeBodyFont = $brandingLocked
+            ? ($this->stringOrNull($branding['fontFamily'] ?? null) ?? $this->stringOrNull($rawTheme['bodyFont'] ?? null))
+            : $this->stringOrNull($rawTheme['bodyFont'] ?? null);
 
         $slides = [];
         $nodes = [];
@@ -63,7 +71,9 @@ class DeckAssembler
             $slides[] = new Slide(
                 id: $slideId,
                 layout: $layout,
-                background: $this->stringOrNull($rawSlide['background'] ?? null) ?? $themeBackground,
+                background: $brandingLocked
+                    ? $themeBackground
+                    : ($this->stringOrNull($rawSlide['background'] ?? null) ?? $themeBackground),
                 slots: $this->buildSlots($slideNumber, $layout, $rawBlocks, $stepNodeIds, $themeTextColor, $themeBodyFont),
                 config: $themeTextColor !== null ? ['textColor' => $themeTextColor] : null,
                 title: $this->stringOrNull($rawSlide['title'] ?? null),

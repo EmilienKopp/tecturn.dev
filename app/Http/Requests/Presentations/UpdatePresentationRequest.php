@@ -51,6 +51,7 @@ class UpdatePresentationRequest extends FormRequest
             'flow.edges.*.source' => ['required', 'string'],
             'flow.edges.*.target' => ['required', 'string'],
             'flow.edges.*.label' => ['sometimes', 'nullable', 'string'],
+            'source_slide_count' => ['sometimes', 'integer', 'min:1', 'max:2000'],
             'talk_settings' => ['sometimes', 'array'],
             'talk_settings.showReactions' => ['sometimes', 'boolean'],
             'talk_settings.showDock' => ['sometimes', 'boolean'],

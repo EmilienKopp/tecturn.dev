@@ -5,14 +5,16 @@ declare(strict_types=1);
 namespace App\Application\Actions\Beta;
 
 use App\Application\Commands\RequestBetaAccessCommand;
+use App\Application\Concerns\EmitsEvents;
+use App\Application\Events\BetaRequestCreated;
 use App\Domain\Beta\Contracts\BetaRequestRepository;
 use App\Domain\Beta\Entities\BetaRequestEntity;
-use App\Notifications\Beta\BetaRequestReceived;
-use App\Notifications\Beta\BetaRequestSubmitted;
-use Illuminate\Support\Facades\Notification;
+use App\Enums\DomainEventType;
 
 class RequestBetaAccess
 {
+    use EmitsEvents;
+
     public function __construct(
         private readonly BetaRequestRepository $betaRequests,
     ) {}
@@ -23,22 +25,15 @@ class RequestBetaAccess
      */
     public function execute(RequestBetaAccessCommand $command): BetaRequestEntity
     {
-        $request = $this->betaRequests->save(new BetaRequestEntity(
+        $entity = BetaRequestEntity::create(
             name: $command->name,
             email: $command->email,
             message: $command->message,
-        ));
+        );
+        $saved = $this->betaRequests->save($entity);
 
-        $admins = config('admin.emails', []);
+        $this->emit(BetaRequestCreated::class, $entity, DomainEventType::CREATED);
 
-        if ($admins !== []) {
-            Notification::route('mail', $admins)
-                ->notify(new BetaRequestSubmitted($request));
-        }
-
-        Notification::route('mail', $request->email)
-            ->notify(new BetaRequestReceived($request));
-
-        return $request;
+        return $saved;
     }
 }

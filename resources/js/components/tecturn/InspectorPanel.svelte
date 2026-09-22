@@ -2,11 +2,11 @@
     import { page } from '@inertiajs/svelte';
     import Eye from 'lucide-svelte/icons/eye';
     import EyeOff from 'lucide-svelte/icons/eye-off';
+    import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
     import SquarePen from 'lucide-svelte/icons/square-pen';
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import { toast } from 'svelte-sonner';
-    import DeletePresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/DeletePresentationBackgroundController';
-    import UploadPresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationBackgroundController';
+    import PresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/PresentationBackgroundController';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
@@ -106,7 +106,7 @@
 
         try {
             const url = await uploadImage(
-                UploadPresentationBackgroundController({
+                PresentationBackgroundController.store({
                     current_team: currentTeam.slug,
                     presentation: presentationId,
                 }).url,
@@ -134,7 +134,7 @@
         }
 
         await fetch(
-            DeletePresentationBackgroundController({
+            PresentationBackgroundController.destroy({
                 current_team: currentTeam.slug,
                 presentation: presentationId,
             }).url,
@@ -429,6 +429,18 @@
                     dataTest="inspector-bg-color"
                 />
             </div>
+        {/if}
+
+        {#if block.type === 'text' || block.type === 'box'}
+            <Button
+                variant="outline"
+                size="sm"
+                onclick={() => editor.resetBlockStyleToBranding(block.id)}
+                title="Reset this block's color and typography to your branding, and forget the last-used picks for this block kind"
+                data-test="inspector-reset-to-branding"
+            >
+                <RotateCcw class="h-4 w-4" /> Reset to branding
+            </Button>
         {/if}
 
         <Button

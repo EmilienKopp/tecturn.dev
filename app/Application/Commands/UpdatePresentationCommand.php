@@ -17,5 +17,7 @@ readonly class UpdatePresentationCommand
         public ?PresentationContent $content = null,
         public ?TalkSettings $talkSettings = null,
         public ?FlowGraph $flow = null,
+        /** Presenter-declared slide count for external decks; null = no change. */
+        public ?int $sourceSlideCount = null,
     ) {}
 }

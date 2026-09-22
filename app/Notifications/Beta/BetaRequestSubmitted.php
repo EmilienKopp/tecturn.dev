@@ -2,28 +2,20 @@
 
 namespace App\Notifications\Beta;
 
+use App\Application\Contracts\MailNotification;
 use App\Domain\Beta\Entities\BetaRequestEntity;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
-use Illuminate\Notifications\Notification;
 
 /**
  * Alert sent to the admins when a visitor requests private beta access.
  */
-class BetaRequestSubmitted extends Notification implements ShouldQueue
+class BetaRequestSubmitted extends MailNotification implements ShouldQueue
 {
     use Queueable;
 
     public function __construct(public BetaRequestEntity $betaRequest) {}
-
-    /**
-     * @return array<int, string>
-     */
-    public function via(object $notifiable): array
-    {
-        return ['mail'];
-    }
 
     public function toMail(object $notifiable): MailMessage
     {

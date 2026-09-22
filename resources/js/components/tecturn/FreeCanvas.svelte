@@ -7,6 +7,7 @@
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
     import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
+    import { clickOutside } from '@/lib/tecturn/click-outside';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import {
         clampPercent,
@@ -50,6 +51,10 @@
         if (!canvasEl) {
             return;
         }
+
+        // The dblclick's native word selection would otherwise wrap the
+        // popover buttons rendered at that exact spot.
+        window.getSelection()?.removeAllRanges();
 
         const rect = canvasEl.getBoundingClientRect();
         const x = clampPercent(
@@ -199,14 +204,6 @@
     ondblclick={openPopover}
     data-test="free-canvas"
 >
-    {#if blocks.length === 0}
-        <div
-            class="pointer-events-none absolute inset-0 flex items-center justify-center text-sm opacity-40"
-        >
-            Double-click to add a block
-        </div>
-    {/if}
-
     {#each blocks as block (block.id)}
         {@const selected = editor.selectedBlockId === block.id}
         {@const height = block.style.height}
@@ -279,8 +276,9 @@
 
     {#if popoverVisible}
         <div
-            class="absolute z-50 flex gap-1 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
+            class="absolute z-50 flex gap-1 select-none rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
             style="top: {popover.top}px; left: {popover.left}px;"
+            use:clickOutside={() => (popoverVisible = false)}
             onclick={(e) => e.stopPropagation()}
         >
             <button

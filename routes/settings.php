@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\BrandingController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Teams\TeamController;
 use App\Http\Controllers\Teams\TeamInvitationController;
@@ -16,8 +17,10 @@ Route::middleware([
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::patch('settings/branding', [ProfileController::class, 'updateBranding'])->name('branding.update');
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('settings/branding', [BrandingController::class, 'edit'])->name('branding.edit');
+    Route::patch('settings/branding', [BrandingController::class, 'update'])->name('branding.update');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 

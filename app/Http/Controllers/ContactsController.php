@@ -23,6 +23,7 @@ class ContactsController extends Controller
             'results' => $this->contacts->directoryForUser($userId, $search),
             'following' => $this->contacts->followingForUser($userId),
             'followers' => $this->contacts->followersForUser($userId),
+            'followRequests' => $this->contacts->followRequestsForUser($userId),
             'followedTalks' => $this->contacts->talksFromPeopleUserFollows($userId),
         ]);
     }

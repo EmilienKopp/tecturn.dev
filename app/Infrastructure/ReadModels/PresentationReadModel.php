@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ReadModels;
 
+use App\Domain\Presentation\ValueObjects\PresentationSource;
 use App\Domain\Presentation\ValueObjects\TalkSettings;
 use App\Models\Views\PresentationsView;
 
@@ -50,6 +51,7 @@ class PresentationReadModel
      *     content: array<string, mixed>,
      *     talk_settings: array<string, mixed>,
      *     flow: array<string, mixed>|null,
+     *     source: array<string, mixed>,
      *     embed_token: string,
      *     updated_at: string|null,
      *     yoyotranslate: array{
@@ -82,6 +84,7 @@ class PresentationReadModel
             'content' => $presentation->content,
             'talk_settings' => TalkSettings::fromArray($presentation->talk_settings ?? [])->toArray(),
             'flow' => $presentation->flow,
+            'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'embed_token' => $presentation->embed_token,
             'updated_at' => $presentation->updated_at?->toISOString(),
             'yoyotranslate' => [
@@ -97,7 +100,7 @@ class PresentationReadModel
     }
 
     /**
-     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, updated_at: string|null}
+     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, source: array<string, mixed>, updated_at: string|null}
      */
     public function findForEditor(int $presentationId): array
     {
@@ -110,6 +113,7 @@ class PresentationReadModel
             'content' => $presentation->content,
             'talk_settings' => TalkSettings::fromArray($presentation->talk_settings ?? [])->toArray(),
             'flow' => $presentation->flow,
+            'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'updated_at' => $presentation->updated_at?->toISOString(),
         ];
     }

@@ -18,8 +18,10 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import { Button } from '@/components/ui/button';
+    import UserAvatar from '@/components/UserAvatar.svelte';
     import { index as presentationsIndex } from '@/routes/presentations';
     import { show } from '@/routes/rehearsals';
+    import { show as showReview } from '@/routes/reviews';
 
     type RunRow = {
         id: number;
@@ -31,10 +33,24 @@
         slide_timings: { slide: number; seconds: number }[];
     };
 
+    type ReviewRequestRow = {
+        id: number;
+        practice_run_id: number;
+        presentation_name: string;
+        requester_name: string;
+        requester_avatar: string | null;
+        status: string;
+        rehearsed_at: string;
+        duration_seconds: number;
+        requested_at: string | null;
+    };
+
     let {
         runs = [],
+        reviewRequests = [],
     }: {
         runs?: RunRow[];
+        reviewRequests?: ReviewRequestRow[];
     } = $props();
 
     const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
@@ -82,7 +98,7 @@
     };
 
     const openRun = (id: number) =>
-        router.visit(show({ current_team: teamSlug, practice_run: id }).url);
+        router.visit(show({ current_team: teamSlug, rehearsal: id }).url);
 </script>
 
 <AppHead title="Rehearsals" />
@@ -91,8 +107,70 @@
     <Heading
         variant="small"
         title="Rehearsals"
-        description="Your practice runs, each saved with the deck as it was that day"
+        description="Your rehearsals, each saved with the deck as it was that day"
     />
+
+    {#if reviewRequests.length > 0}
+        <section class="flex flex-col gap-3">
+            <h2 class="text-sm font-semibold text-foreground">
+                Reviews requested of me
+            </h2>
+            <ul class="flex flex-col gap-2">
+                {#each reviewRequests as request (request.id)}
+                    <li
+                        class="rounded-xl border border-border bg-card p-4"
+                        data-test="review-request-row"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-3">
+                                <UserAvatar
+                                    name={request.requester_name}
+                                    avatar={request.requester_avatar}
+                                    class="h-9 w-9 shrink-0"
+                                />
+                                <div class="min-w-0">
+                                    <p
+                                        class="truncate font-display font-semibold text-foreground"
+                                    >
+                                        {request.presentation_name}
+                                    </p>
+                                    <p
+                                        class="mt-0.5 text-xs text-muted-foreground"
+                                    >
+                                        {request.requester_name} · rehearsed {formatWhen(
+                                            request.rehearsed_at,
+                                        )}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex shrink-0 items-center gap-3">
+                                <span
+                                    class="rounded-full px-2.5 py-0.5 text-xs font-semibold {request.status ===
+                                    'completed'
+                                        ? 'bg-emerald-500/15 text-emerald-500'
+                                        : 'bg-amber-500/15 text-amber-500'}"
+                                >
+                                    {request.status === 'completed'
+                                        ? 'Completed'
+                                        : 'Pending'}
+                                </span>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onclick={() =>
+                                        router.visit(
+                                            showReview(request.id).url,
+                                        )}
+                                >
+                                    Open review
+                                </Button>
+                            </div>
+                        </div>
+                    </li>
+                {/each}
+            </ul>
+        </section>
+    {/if}
 
     {#if runs.length > 0}
         <ul class="flex flex-col gap-2">
@@ -137,7 +215,7 @@
         >
             <Timer class="h-6 w-6 text-muted-foreground" />
             <p class="text-sm text-muted-foreground">
-                No rehearsals yet. Open a deck and pick "Practice" from the
+                No rehearsals yet. Open a deck and pick "Rehearse" from the
                 Present menu to time a run-through.
             </p>
             <Button

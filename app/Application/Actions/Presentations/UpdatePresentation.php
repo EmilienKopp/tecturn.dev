@@ -35,6 +35,10 @@ class UpdatePresentation
             $presentation->changeTalkSettings($command->talkSettings);
         }
 
+        if ($command->sourceSlideCount !== null) {
+            $presentation->setSourceSlideCount($command->sourceSlideCount);
+        }
+
         // After replaceContent so slide references validate against the new slides.
         if ($command->flow !== null) {
             $presentation->replaceFlow($command->flow);

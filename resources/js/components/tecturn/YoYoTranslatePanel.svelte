@@ -363,7 +363,7 @@
 {:else}
     <!-- Link an event created in YoYoTranslate's own UI -->
     <div
-        class="fixed bottom-4 right-4 z-50 w-80 rounded-xl border border-white/10 bg-black/70 p-4 text-white shadow-2xl backdrop-blur-md"
+        class="fixed bottom-4 right-4 z-50 w-66 rounded-xl border border-white/10 bg-black/70 p-4 text-white shadow-2xl backdrop-blur-md"
         data-test="yoyotranslate-panel"
     >
         <div class="mb-3 flex items-center justify-between">

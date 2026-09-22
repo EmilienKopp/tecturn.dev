@@ -48,7 +48,12 @@ readonly class PresentationContent
         );
     }
 
-    public static function empty(): self
+    /**
+     * A fresh deck with a single blank slide. The background is passed in
+     * (typically the creating user's branding background) because the domain
+     * has no access to auth state.
+     */
+    public static function empty(?string $slideBackground = null): self
     {
         return new self(
             version: self::VERSION,
@@ -56,7 +61,7 @@ readonly class PresentationContent
                 new Slide(
                     id: 'slide-1',
                     layout: SlideLayout::Free,
-                    background: null,
+                    background: $slideBackground,
                     slots: [],
                 ),
             ],

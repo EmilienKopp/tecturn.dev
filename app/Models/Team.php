@@ -106,13 +106,13 @@ class Team extends Model
     }
 
     /**
-     * Get all practice runs (rehearsals) recorded by this team.
+     * Get all rehearsals (rehearsals) recorded by this team.
      *
-     * @return HasMany<PracticeRunModel, $this>
+     * @return HasMany<RehearsalModel, $this>
      */
-    public function practiceRuns(): HasMany
+    public function rehearsals(): HasMany
     {
-        return $this->hasMany(PracticeRunModel::class);
+        return $this->hasMany(RehearsalModel::class);
     }
 
     /**

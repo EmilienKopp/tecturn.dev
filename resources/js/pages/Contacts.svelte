@@ -19,11 +19,20 @@
     import Heading from '@/components/Heading.svelte';
     import { Badge } from '@/components/ui/badge';
     import { Button } from '@/components/ui/button';
+    import {
+        Dialog,
+        DialogContent,
+        DialogDescription,
+        DialogFooter,
+        DialogTitle,
+    } from '@/components/ui/dialog';
     import { Input } from '@/components/ui/input';
     import UserAvatar from '@/components/UserAvatar.svelte';
     import { index as contactsIndex } from '@/routes/contacts';
     import {
+        accept as acceptFollowRequest,
         destroy as unfollowContact,
+        reject as rejectFollowRequest,
         store as followContact,
     } from '@/routes/contacts/follow';
 
@@ -39,7 +48,7 @@
         total_reactions: number;
         followers_count: number;
         following_count: number;
-        is_following: boolean;
+        follow_status: 'none' | 'pending' | 'accepted';
     };
 
     type RelationshipContact = {
@@ -50,6 +59,16 @@
         social_x_handle: string | null;
         social_github_handle: string | null;
         followed_at: string | null;
+    };
+
+    type FollowRequest = {
+        id: number;
+        name: string;
+        avatar: string;
+        handle: string | null;
+        social_x_handle: string | null;
+        social_github_handle: string | null;
+        requested_at: string | null;
     };
 
     type FollowedTalk = {
@@ -74,12 +93,14 @@
         results = [],
         following = [],
         followers = [],
+        followRequests = [],
         followedTalks = [],
     }: {
         search?: string;
         results?: Contact[];
         following?: RelationshipContact[];
         followers?: RelationshipContact[];
+        followRequests?: FollowRequest[];
         followedTalks?: FollowedTalk[];
     } = $props();
 
@@ -95,10 +116,61 @@
         );
     };
 
-    const toggleFollow = (contact: Contact, isFollowing: boolean) => {
-        const route = isFollowing
-            ? unfollowContact(contact.id)
-            : followContact(contact.id);
+    let unfollowDialogOpen = $state(false);
+    let unfollowTarget = $state<Contact | null>(null);
+
+    const toggleFollow = (contact: Contact) => {
+        // Unfollowing an established follow asks for confirmation; sending
+        // or cancelling a request happens immediately.
+        if (contact.follow_status === 'accepted') {
+            unfollowTarget = contact;
+            unfollowDialogOpen = true;
+
+            return;
+        }
+
+        const route =
+            contact.follow_status === 'none'
+                ? followContact(contact.id)
+                : unfollowContact(contact.id);
+
+        router.visit(route.url, {
+            method: route.method,
+            preserveScroll: true,
+            preserveState: true,
+        });
+    };
+
+    const confirmUnfollow = () => {
+        if (unfollowTarget === null) {
+            return;
+        }
+
+        const route = unfollowContact(unfollowTarget.id);
+
+        router.visit(route.url, {
+            method: route.method,
+            preserveScroll: true,
+            preserveState: true,
+            onFinish: () => {
+                unfollowDialogOpen = false;
+                unfollowTarget = null;
+            },
+        });
+    };
+
+    const followLabel = (contact: Contact): string => {
+        if (contact.follow_status === 'accepted') {
+            return 'Following';
+        }
+
+        return contact.follow_status === 'pending' ? 'Requested' : 'Follow';
+    };
+
+    const respondToRequest = (requesterId: number, accept: boolean) => {
+        const route = accept
+            ? acceptFollowRequest(requesterId)
+            : rejectFollowRequest(requesterId);
 
         router.visit(route.url, {
             method: route.method,
@@ -221,19 +293,14 @@
                                 {#if contact.id !== currentUserId}
                                     <Button
                                         size="sm"
-                                        variant={contact.is_following
-                                            ? 'outline'
-                                            : 'default'}
-                                        onclick={() =>
-                                            toggleFollow(
-                                                contact,
-                                                contact.is_following,
-                                            )}
+                                        variant={contact.follow_status ===
+                                        'none'
+                                            ? 'default'
+                                            : 'outline'}
+                                        onclick={() => toggleFollow(contact)}
                                         data-test="contact-follow-button"
                                     >
-                                        {contact.is_following
-                                            ? 'Following'
-                                            : 'Follow'}
+                                        {followLabel(contact)}
                                     </Button>
                                 {/if}
                             </div>
@@ -390,6 +457,73 @@
         </section>
 
         <aside class="flex flex-col gap-6">
+            {#if followRequests.length > 0}
+                <section
+                    class="flex flex-col gap-3 rounded-xl border border-amber-500/40 bg-card p-5"
+                >
+                    <div class="flex items-center justify-between gap-3">
+                        <h2 class="text-sm font-semibold text-foreground">
+                            Follow requests
+                        </h2>
+                        <Badge variant="secondary">
+                            {followRequests.length}
+                        </Badge>
+                    </div>
+
+                    <ul class="flex flex-col gap-3">
+                        {#each followRequests as requester (requester.id)}
+                            <li
+                                class="flex items-center gap-3"
+                                data-test="follow-request-row"
+                            >
+                                <UserAvatar
+                                    name={requester.name}
+                                    avatar={requester.avatar}
+                                    class="h-10 w-10"
+                                />
+                                <div class="min-w-0 flex-1">
+                                    <p
+                                        class="truncate text-sm font-medium text-foreground"
+                                    >
+                                        {requester.name}
+                                    </p>
+                                    <p
+                                        class="truncate text-xs text-muted-foreground"
+                                    >
+                                        {handleLabel(requester)}
+                                    </p>
+                                </div>
+                                <div class="flex shrink-0 gap-1.5">
+                                    <Button
+                                        size="sm"
+                                        onclick={() =>
+                                            respondToRequest(
+                                                requester.id,
+                                                true,
+                                            )}
+                                        data-test="follow-request-accept"
+                                    >
+                                        Accept
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onclick={() =>
+                                            respondToRequest(
+                                                requester.id,
+                                                false,
+                                            )}
+                                        data-test="follow-request-reject"
+                                    >
+                                        Decline
+                                    </Button>
+                                </div>
+                            </li>
+                        {/each}
+                    </ul>
+                </section>
+            {/if}
+
             <section
                 class="flex flex-col gap-3 rounded-xl border border-border bg-card p-5"
             >
@@ -480,3 +614,30 @@
         </aside>
     </div>
 </div>
+
+<Dialog bind:open={unfollowDialogOpen}>
+    <DialogContent>
+        <div class="space-y-3">
+            <DialogTitle>Unfollow {unfollowTarget?.name}</DialogTitle>
+            <DialogDescription>
+                You'll stop seeing their talks, and you'll need to send a new
+                follow request to follow them again.
+            </DialogDescription>
+        </div>
+        <DialogFooter>
+            <Button
+                variant="outline"
+                onclick={() => (unfollowDialogOpen = false)}
+            >
+                Cancel
+            </Button>
+            <Button
+                variant="destructive"
+                onclick={confirmUnfollow}
+                data-test="contact-unfollow-confirm"
+            >
+                Unfollow
+            </Button>
+        </DialogFooter>
+    </DialogContent>
+</Dialog>

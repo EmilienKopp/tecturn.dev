@@ -2,30 +2,33 @@
     import { router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
     import AppHead from '@/components/AppHead.svelte';
+    import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
-    import PracticeDock from '@/components/tecturn/PracticeDock.svelte';
-    import type { PracticeRunPayload } from '@/components/tecturn/PracticeDock.svelte';
     import Presenter from '@/components/tecturn/Presenter.svelte';
     import PresenterDock from '@/components/tecturn/PresenterDock.svelte';
     import PresentFooter from '@/components/tecturn/PresentFooter.svelte';
+    import type { RehearsalPayload } from '@/components/tecturn/RehearsalDock.svelte';
+    import RehearsalDock from '@/components/tecturn/RehearsalDock.svelte';
     import YoYoTranslatePanel from '@/components/tecturn/YoYoTranslatePanel.svelte';
     import { getEcho, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
     import type {
         FlowGraph,
         PresentationContent,
+        PresentationSource,
         TalkSettings,
         YoYoTranslateInfo,
     } from '@/types/generated';
 
     let {
         presentation,
+        sourcePdfUrl = null,
         viewerUrl,
         sessionRoutes,
         translationRoutes,
         testMode = false,
-        practiceMode = false,
-        practiceRoutes,
+        rehearsalMode = false,
+        rehearsalRoutes,
     }: {
         presentation: {
             id: number;
@@ -33,39 +36,50 @@
             content: PresentationContent;
             talk_settings: TalkSettings;
             flow: FlowGraph | null;
+            source: PresentationSource;
             embed_token: string;
             updated_at: string | null;
             yoyotranslate: YoYoTranslateInfo;
         };
+        sourcePdfUrl?: string | null;
         viewerUrl: string;
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
         testMode?: boolean;
-        practiceMode?: boolean;
-        practiceRoutes?: { store: string };
+        rehearsalMode?: boolean;
+        rehearsalRoutes?: { store: string };
     } = $props();
 
     // A finished rehearsal posts its timings; the backend snapshots the deck
     // and redirects to the run's replay page.
-    let savingPracticeRun = $state(false);
+    let savingRehearsal = $state(false);
 
-    const savePracticeRun = (run: PracticeRunPayload): void => {
-        if (!practiceRoutes) {
+    const saveRehearsal = (run: RehearsalPayload): void => {
+        if (!rehearsalRoutes) {
             return;
         }
 
-        savingPracticeRun = true;
-        router.post(practiceRoutes.store, run, {
+        savingRehearsal = true;
+        router.post(rehearsalRoutes.store, run, {
             onFinish: () => {
-                savingPracticeRun = false;
+                savingRehearsal = false;
             },
         });
     };
 
     // Current slide + shown-slide total, reported by the Presenter off Reveal,
-    // so the dock can pace each slide against the talk target.
+    // so the dock can pace each slide against the talk target. The step index
+    // (shown-fragment count) feeds the rehearsal dock's replay timeline.
     let currentSlide = $state(0);
-    let slideCount = $state(presentation.content.slides.length);
+    let currentStep = $state(0);
+    // External decks carry a placeholder 1-slide content, so they start at 0 (no
+    // counter) until the presenter reports a real total — a PDF's page count, or
+    // a rehearsal's declared slide count. Editor decks count their own slides.
+    let slideCount = $state(
+        presentation.source.type === 'editor'
+            ? presentation.content.slides.length
+            : 0,
+    );
 
     // Session-only override: starts from the saved setting, toggled from the
     // dock without persisting.
@@ -129,11 +143,11 @@
 
     // A live session opens while the presenter is on this page and closes when
     // they leave, so reactions and viewers are attributed to a real talk. A
-    // test run or practice run skips this entirely: no session means the
+    // test run or rehearsal skips this entirely: no session means the
     // backend records no analytics. Slides, presence and instant reactions
     // still work.
     onMount(() => {
-        if (testMode || practiceMode) {
+        if (testMode || rehearsalMode) {
             return;
         }
 
@@ -166,28 +180,45 @@
             <div
                 style="width: min(100cqw, calc(100cqh * 16 / 9)); aspect-ratio: 16 / 9;"
             >
-                <Presenter
-                    content={presentation.content}
-                    flow={presentation.flow}
-                    onSlideChange={(current, total) => {
-                        currentSlide = current;
-                        slideCount = total;
-                    }}
-                />
+                {#if presentation.source.type === 'editor'}
+                    <Presenter
+                        content={presentation.content}
+                        flow={presentation.flow}
+                        onSlideChange={(current, total) => {
+                            currentSlide = current;
+                            slideCount = total;
+                        }}
+                        onStepChange={(_slide, step) => {
+                            currentStep = step;
+                        }}
+                    />
+                {:else}
+                    <ExternalPresenter
+                        source={presentation.source}
+                        {sourcePdfUrl}
+                        recordNavigation={rehearsalMode}
+                        onPageChange={(current, total) => {
+                            currentSlide = current;
+                            slideCount = total;
+                        }}
+                    />
+                {/if}
             </div>
 
             <FloatingReactions
                 bind:this={floatingReactions}
                 enabled={showReactions}
             />
-
-            {#if presentation.talk_settings.footer.enabled && !presentation.talk_settings.footer.showInDock}
-                <PresentFooter
-                    footer={presentation.talk_settings.footer}
-                    variant="overlay"
-                />
-            {/if}
         </div>
+
+        <!-- The footer is its own row beneath the slide area so it shrinks the
+             slide instead of overlapping it. -->
+        {#if presentation.talk_settings.footer.enabled && !presentation.talk_settings.footer.showInDock}
+            <PresentFooter
+                footer={presentation.talk_settings.footer}
+                variant="overlay"
+            />
+        {/if}
 
         {#if presentation.talk_settings.showTranslation}
             <YoYoTranslatePanel
@@ -197,15 +228,16 @@
         {/if}
     </div>
 
-    <!-- Dock column. Practice mode swaps the live dock for the rehearsal
+    <!-- Dock column. Rehearsal mode swaps the live dock for the rehearsal
          timer with its start/pause/stop controls, always visible. -->
-    {#if practiceMode}
-        <PracticeDock
+    {#if rehearsalMode}
+        <RehearsalDock
             talkSettings={presentation.talk_settings}
             {slideCount}
             {currentSlide}
-            saving={savingPracticeRun}
-            onFinish={savePracticeRun}
+            {currentStep}
+            saving={savingRehearsal}
+            onFinish={saveRehearsal}
         />
     {:else if presentation.talk_settings.showDock}
         <PresenterDock

@@ -9,6 +9,7 @@ use App\Domain\Presentation\Exceptions\InvalidFlowGraph;
 use App\Domain\Presentation\Exceptions\InvalidPresentationContent;
 use App\Domain\Presentation\ValueObjects\FlowGraph;
 use App\Domain\Presentation\ValueObjects\PresentationContent;
+use App\Domain\Presentation\ValueObjects\PresentationSource;
 use App\Domain\Presentation\ValueObjects\Slide;
 use App\Domain\Presentation\ValueObjects\TalkSettings;
 use DateTimeInterface;
@@ -22,6 +23,7 @@ class PresentationEntity extends BaseEntity
         public bool $isPrivate = false,
         public TalkSettings $talkSettings = new TalkSettings,
         public ?FlowGraph $flow = null,
+        public PresentationSource $source = new PresentationSource,
         public ?int $id = null,
         public ?DateTimeInterface $created_at = null,
         public ?DateTimeInterface $updated_at = null,
@@ -72,6 +74,16 @@ class PresentationEntity extends BaseEntity
         $this->talkSettings = $talkSettings;
     }
 
+    /** Set the presenter-declared slide count for an external deck. */
+    public function setSourceSlideCount(?int $slideCount): void
+    {
+        $this->source = new PresentationSource(
+            type: $this->source->type,
+            externalUrl: $this->source->externalUrl,
+            slideCount: $slideCount,
+        );
+    }
+
     /**
      * Cross-aggregate invariants live here — the flow VO cannot see the
      * slides, so slide references are validated against the current content.
@@ -111,6 +123,7 @@ class PresentationEntity extends BaseEntity
             'content' => $this->content->toArray(),
             'talk_settings' => $this->talkSettings->toArray(),
             'flow' => $this->flow?->toArray(),
+            'source' => $this->source->toArray(),
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
             'yoyotranslate_session_id' => $this->yoyotranslateSessionId,

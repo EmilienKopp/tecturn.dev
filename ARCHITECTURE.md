@@ -89,14 +89,53 @@ migrations. Never mix view DDL into table migration files.
 - Controllers must not know about domain entities directly — they pass validated scalars or DTOs
   to Actions and receive whatever the Action or ReadModel returns.
 
+**Controller shape:**
+
+- **CRUD operations are grouped into resource controllers** using the standard resource method
+  names (`index`, `show`, `create`, `store`, `edit`, `update`, `destroy`). One controller per
+  resource: `PresentationController`, `RehearsalController`, `FollowController`.
+- **Non-CRUD operations stay as single-action invokable controllers** — operations that don't
+  map to a resource verb (`GenerateDeckController`, `EndSessionController`,
+  `ApproveBetaRequestController`) keep their own `VerbNounController` with `__invoke()`.
+- Do not force a non-CRUD operation into a resource method name, and do not add extra
+  custom methods to a resource controller — split it out as an invokable instead.
+
 **Injection pattern by operation type:**
 
 - Mutation → inject Action(s)
 - Read → inject ReadModel(s)
-- Mixed page (reads + a form) → inject both
+- Mixed resource controller (reads + mutations) → inject both
 
 ```php
-// Write operation
+// Resource controller — CRUD methods grouped per resource
+class DailyLogController extends Controller
+{
+    public function __construct(
+        private readonly DailyLogReadModel $readModel,
+        private readonly CreateDailyLog $createDailyLog,
+    ) {}
+
+    public function index(): Response
+    {
+        return Inertia::render('daily-logs/Index', [
+            'logs' => $this->readModel->forDashboard(Auth::id(), today()),
+        ]);
+    }
+
+    public function store(CreateDailyLogRequest $request): RedirectResponse
+    {
+        $this->createDailyLog->execute(
+            new CreateDailyLogCommand(
+                userId: Auth::id(),
+                date: $request->date,
+            )
+        );
+
+        return redirect()->route('dashboard');
+    }
+}
+
+// Non-CRUD operation — stays a single-action invokable controller
 class StopTimerController extends Controller
 {
     public function __construct(private readonly StopTimer $stopTimer) {}
@@ -112,19 +151,6 @@ class StopTimerController extends Controller
         );
 
         return redirect()->route('dashboard');
-    }
-}
-
-// Read operation — no Action involved
-class DashboardController extends Controller
-{
-    public function __construct(private readonly DailyLogReadModel $readModel) {}
-
-    public function __invoke(): Response
-    {
-        return Inertia::render('dashboard', [
-            'logs' => $this->readModel->forDashboard(Auth::id(), today()),
-        ]);
     }
 }
 ```
@@ -505,7 +531,8 @@ Only use `fetch` when:
 | Eloquent Models (tables)     | `NounModel`                                  | `DailyLogModel`, `ClockEntryModel`                    |
 | Eloquent Models (views)      | `NounSummaryModel` / `NounViewModel`         | `DailyLogSummaryModel`, `ProjectSummaryModel`         |
 | ReadModels                   | `NounReadModel`                              | `DailyLogReadModel`, `ProjectReadModel`               |
-| Controllers                  | `VerbNounController`                         | `StopTimerController`, `StartTimerController`         |
+| Controllers (CRUD)           | `NounController` (resource methods)          | `PresentationController`, `RehearsalController`     |
+| Controllers (non-CRUD)       | `VerbNounController` (invokable)             | `StopTimerController`, `GenerateDeckController`       |
 | Form Requests                | `VerbNounRequest`                            | `StopTimerRequest`, `CreateProjectRequest`            |
 | Svelte Pages                 | `kebab-case.svelte` in `resources/js/pages/` | `dashboard.svelte`, `daily-log.svelte`                |
 | Svelte Components            | `PascalCase.svelte`                          | `ClockEntry.svelte`, `ProjectSelector.svelte`         |
@@ -555,7 +582,9 @@ Discovery is not automatic — add directories in `config/typegen.php`.
 7. **Domain event** — if the operation has side effects, create an event in
    `app/Domain/{Domain}/Events/` and register listeners in `EventServiceProvider`.
 8. **Form Request** — create a `FormRequest` for input validation.
-9. **Controller** — thin controller that calls the Action and returns Inertia response.
+9. **Controller** — thin controller that calls the Action and returns an Inertia response.
+   CRUD operation → add the resource method to the `NounController`; non-CRUD → create an
+   invokable `VerbNounController`.
 10. **Route** — register in `routes/web.php`.
 11. **Frontend** — build or update the Svelte page/component.
 12. **Tests** — write a Pest feature test covering the happy path and key edge cases.
@@ -566,7 +595,8 @@ Discovery is not automatic — add directories in `config/typegen.php`.
 2. **View-backed model** — create a `ReadOnlyModel` in `app/Models/Views/`.
 3. **ReadModel** — add a method to the relevant `NounReadModel` in `app/Infrastructure/ReadModels/`,
    or create one if none exists for this aggregate area.
-4. **Controller** — inject the ReadModel, call the method, pass result to Inertia.
+4. **Controller** — inject the ReadModel, call the method, pass result to Inertia
+   (resource method on the `NounController` for CRUD reads like `index`/`show`).
 5. **Route** — register in `routes/web.php`.
 6. **Frontend** — build or update the Svelte page/component.
 7. **Tests** — write a Pest feature test against the view.

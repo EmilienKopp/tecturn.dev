@@ -1,4 +1,9 @@
-/** The six named branding colors, reused as shortcuts beside every color picker. */
+/**
+ * The user's branding: six named colors plus default typography. The editor's
+ * single source of defaults — `background` (hex or linear-gradient) is the
+ * default slide background, `primary` the default text color, and the
+ * typography slots seed new text blocks. Mirrors App\Support\Branding.
+ */
 export type BrandingColors = {
     background: string;
     primary: string;
@@ -6,6 +11,9 @@ export type BrandingColors = {
     accent: string;
     success: string;
     danger: string;
+    fontFamily: string | null;
+    fontSize: string | null;
+    fontWeight: string | null;
 };
 
 export type User = {

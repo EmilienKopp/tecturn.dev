@@ -31,11 +31,17 @@
     const richtextBlock = $derived(
         isRichText ? (slide.slots['main']?.[0] ?? null) : null,
     );
+
+    // The add-block hint lives under the stage, in chrome colors, because
+    // inside the canvas it can vanish against the slide's own background.
+    const slideIsEmpty = $derived(
+        Object.values(slide.slots).every((blocks) => blocks.length === 0),
+    );
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div
-    class="flex flex-1 items-center justify-center bg-muted/40 p-8 {isRichText
+    class="flex flex-1 flex-col items-center justify-center bg-muted/40 p-8 {isRichText
         ? 'overflow-visible'
         : 'overflow-hidden'}"
     onclick={() => (editor.selectedBlockId = null)}
@@ -84,6 +90,12 @@
             </div>
         {/if}
     </div>
+
+    {#if !isRichText && slideIsEmpty}
+        <p class="mt-3 text-xs text-muted-foreground">
+            Double-click the canvas to add a block
+        </p>
+    {/if}
 </div>
 
 <InlineFormatToolbar />

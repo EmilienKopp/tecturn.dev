@@ -15,7 +15,6 @@
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
-    import Sliders from 'lucide-svelte/icons/sliders';
     import Timer from 'lucide-svelte/icons/timer';
     import Workflow from 'lucide-svelte/icons/workflow';
     import { toast } from 'svelte-sonner';
@@ -31,19 +30,19 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
-    import SlideDefaultsModal from './SlideDefaultsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
-    import { present, update } from '@/routes/presentations';
 
     let {
         editor,
         presentationId,
         talkSettings,
         isPrivate,
+        external = false,
         name = $bindable(),
         view = $bindable(),
         onExport,
@@ -56,6 +55,9 @@
         presentationId: number;
         talkSettings: TalkSettings;
         isPrivate: boolean;
+        // External decks bring their own slides (PDF / Google Slides), so the
+        // view toggle, auto-save and export make no sense for them.
+        external?: boolean;
         name: string;
         view: 'slides' | 'flow';
         onExport: () => void;
@@ -76,7 +78,6 @@
     let durationMinutes = $state<number | null>(talkSettings.durationMinutes);
     let timerMode = $state(talkSettings.timerMode);
     let talkLengthModalOpen = $state(false);
-    let slideDefaultsModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
 
@@ -249,10 +250,10 @@
     // analytics session so a rehearsal never pollutes the numbers.
     const testRunUrl = $derived(presentUrl ? `${presentUrl}?test=1` : null);
 
-    // Practice mode: same screen again, but with a start/stop rehearsal timer
+    // Rehearsal mode: same screen again, but with a start/stop rehearsal timer
     // whose runs are saved with a snapshot of the deck.
-    const practiceRunUrl = $derived(
-        presentUrl ? `${presentUrl}?practice=1` : null,
+    const rehearsalUrl = $derived(
+        presentUrl ? `${presentUrl}?rehearsal=1` : null,
     );
 
     const save = async () => {
@@ -303,45 +304,47 @@
         data-test="editor-presentation-name"
     />
 
-    <div class="flex items-center rounded-md border p-0.5">
-        <Button
-            variant={view === 'slides' ? 'secondary' : 'ghost'}
-            size="sm"
-            onclick={() => (view = 'slides')}
-            aria-pressed={view === 'slides'}
-            data-test="editor-view-slides"
-        >
-            <LayoutPanelLeft class="h-4 w-4" /> Slides
-        </Button>
-        <Button
-            variant={view === 'flow' ? 'secondary' : 'ghost'}
-            size="sm"
-            onclick={() => {
-                editor.syncSlideNodes();
-                view = 'flow';
-            }}
-            aria-pressed={view === 'flow'}
-            data-test="editor-view-flow"
-        >
-            <Workflow class="h-4 w-4" /> Flow
-        </Button>
-    </div>
+    {#if !external}
+        <div class="flex items-center rounded-md border p-0.5">
+            <Button
+                variant={view === 'slides' ? 'secondary' : 'ghost'}
+                size="sm"
+                onclick={() => (view = 'slides')}
+                aria-pressed={view === 'slides'}
+                data-test="editor-view-slides"
+            >
+                <LayoutPanelLeft class="h-4 w-4" /> Slides
+            </Button>
+            <Button
+                variant={view === 'flow' ? 'secondary' : 'ghost'}
+                size="sm"
+                onclick={() => {
+                    editor.syncSlideNodes();
+                    view = 'flow';
+                }}
+                aria-pressed={view === 'flow'}
+                data-test="editor-view-flow"
+            >
+                <Workflow class="h-4 w-4" /> Flow
+            </Button>
+        </div>
 
-    <div
-        class="text-sm flex items-center gap-1 justify-center"
-        title="Toggle auto save (every {AUTO_SAVE_INTERVAL.seconds()}s)"
-        class:text-muted-foreground={!autoSave}
-    >
-        <Checkbox
-            id="auto-save-toggle"
-            size="sm"
-            class="text-muted-foreground"
-            data-test="editor-toggle-auto-save"
-            onclick={toggleAutoSave}
-            checked={autoSave}
-        />
-        <Label for="auto-save-toggle">Auto Save</Label>
-    </div>
+        <div
+            class="text-sm flex items-center gap-1 justify-center"
+            title="Toggle auto save (every {AUTO_SAVE_INTERVAL.seconds()}s)"
+            class:text-muted-foreground={!autoSave}
+        >
+            <Checkbox
+                id="auto-save-toggle"
+                size="sm"
+                class="text-muted-foreground"
+                data-test="editor-toggle-auto-save"
+                onclick={toggleAutoSave}
+                checked={autoSave}
+            />
+            <Label for="auto-save-toggle">Auto Save</Label>
+        </div>
+    {/if}
 
     {#snippet toggleRow(
         label: string,
@@ -402,42 +405,42 @@
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
                                 href={presentUrl}
                                 target="_blank"
                                 rel="noopener"
                                 data-test="editor-present-link"
                             >
-                                <Play class="h-4 w-4" /> Go Live
+                                <Play class="h-4 w-4" />Go Live
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
                                 href={testRunUrl}
                                 target="_blank"
                                 rel="noopener"
                                 data-test="editor-test-run-link"
                             >
-                                <FlaskConical class="h-4 w-4" /> Test run
+                                <FlaskConical class="h-4 w-4" />Test run
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
                     <DropdownMenuItem asChild>
                         {#snippet children(props)}
                             <a
-                                {...props}
+                                class="{props.class} gap-2"
                                 onclick={props.onClick}
-                                href={practiceRunUrl}
+                                href={rehearsalUrl}
                                 target="_blank"
                                 rel="noopener"
-                                data-test="editor-practice-link"
+                                data-test="editor-rehearse-link"
                             >
-                                <Timer class="h-4 w-4" /> Practice
+                                <Timer class="h-4 w-4" />Rehearse
                             </a>
                         {/snippet}
                     </DropdownMenuItem>
@@ -522,20 +525,11 @@
                         {footer.enabled ? 'On' : 'Off'}
                     </span>
                 </button>
-                <button
-                    type="button"
-                    role="menuitem"
-                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
-                    onclick={() => (slideDefaultsModalOpen = true)}
-                    data-test="editor-slide-defaults-menu-item"
-                >
-                    <Sliders class="h-4 w-4" />
-                    Slide Defaults…
-                </button>
             </DropdownMenuContent>
         </DropdownMenu>
 
-        <DropdownMenu>
+        {#if !external}
+            <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 {#snippet children(props)}
                     <Button
@@ -615,7 +609,8 @@
                     {/snippet}
                 </DropdownMenuItem>
             </DropdownMenuContent>
-        </DropdownMenu>
+            </DropdownMenu>
+        {/if}
 
         <Button
             size="sm"
@@ -645,5 +640,3 @@
     bind:open={talkLengthModalOpen}
     onSave={saveTalkLength}
 />
-
-<SlideDefaultsModal bind:open={slideDefaultsModalOpen} />

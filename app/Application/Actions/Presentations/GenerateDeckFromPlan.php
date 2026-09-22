@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Application\Actions\Presentations;
 
-use App\Ai\Agents\DeckArchitect;
+use App\Ai\Agents\Deckster;
 use App\Ai\DeckAssembler;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Domain\Presentation\Contracts\PresentationRepository;
@@ -19,9 +19,9 @@ class GenerateDeckFromPlan
 
     public function execute(GenerateDeckFromPlanCommand $command): PresentationEntity
     {
-        $structured = (new DeckArchitect)->prompt($command->plan)->toArray();
+        $structured = (new Deckster)->prompt($command->plan)->toArray();
 
-        $deck = $this->assembler->assemble($structured);
+        $deck = $this->assembler->assemble($structured, $command->branding);
 
         $title = $structured['title'] ?? null;
         $name = $command->name !== ''
@@ -35,6 +35,9 @@ class GenerateDeckFromPlan
             flow: $deck['flow'],
         );
 
-        return $this->presentations->save($presentation);
+        $saved = $this->presentations->save($presentation);
+        $saved->onCreated();
+
+        return $saved;
     }
 }
