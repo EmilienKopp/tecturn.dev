@@ -57,6 +57,10 @@ class AppServiceProvider extends ServiceProvider
     {
         Feature::define('registration', fn (): string => config('features.registration'));
 
+        // People discovery is a global toggle seeded from config; it stays off
+        // until stricter per-user discoverability settings ship.
+        Feature::define('discovery', fn (): bool => (bool) config('features.discovery'));
+
         // Team-scoped flags default on, so existing teams keep their capabilities
         // until an admin explicitly turns one off for a given team.
         Feature::define('live_translation', fn (Team $team): bool => true);

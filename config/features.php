@@ -19,4 +19,17 @@ return [
 
     'registration' => env('REGISTRATION_MODE', RegistrationMode::Invitation->value),
 
+    /*
+    |--------------------------------------------------------------------------
+    | People Discovery
+    |--------------------------------------------------------------------------
+    |
+    | Controls whether the contacts directory can surface and search other
+    | people. Off until per-user discoverable/public/private settings exist,
+    | so nobody is exposed without opting in. Admins can toggle it at runtime.
+    |
+    */
+
+    'discovery' => env('FEATURE_DISCOVERY', false),
+
 ];

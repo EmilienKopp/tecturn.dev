@@ -57,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             // Global feature flags, consumed on the client via useFeatures().
             'features' => [
                 'registration' => Features::registration()->value,
+                'discovery' => Features::discovery(),
             ],
         ];
     }

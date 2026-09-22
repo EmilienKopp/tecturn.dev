@@ -4,6 +4,7 @@ export type RegistrationMode = 'open' | 'invitation' | 'closed';
 
 export type Features = {
     registration: RegistrationMode;
+    discovery: boolean;
 };
 
 export type FeaturesState = {
@@ -13,10 +14,13 @@ export type FeaturesState = {
     readonly canSelfRegister: boolean;
     /** Visitors can request access to the private beta. */
     readonly canRequestBeta: boolean;
+    /** The contacts directory may surface and search other people. */
+    readonly canDiscoverPeople: boolean;
 };
 
 const DEFAULT_FEATURES: Features = {
     registration: 'closed',
+    discovery: false,
 };
 
 /**
@@ -43,6 +47,9 @@ export function useFeatures(): FeaturesState {
         },
         get canRequestBeta() {
             return all.registration === 'invitation';
+        },
+        get canDiscoverPeople() {
+            return all.discovery;
         },
     };
 }

@@ -28,6 +28,7 @@
     } from '@/components/ui/dialog';
     import { Input } from '@/components/ui/input';
     import UserAvatar from '@/components/UserAvatar.svelte';
+    import { useFeatures } from '@/lib/features.svelte';
     import { index as contactsIndex } from '@/routes/contacts';
     import {
         accept as acceptFollowRequest,
@@ -35,6 +36,8 @@
         reject as rejectFollowRequest,
         store as followContact,
     } from '@/routes/contacts/follow';
+
+    const features = useFeatures();
 
     type Contact = {
         id: number;
@@ -223,150 +226,178 @@
         <Heading
             variant="small"
             title="Contacts"
-            description="Find people by handle, follow them, and keep up with their public talks."
+            description={features.canDiscoverPeople
+                ? 'Find people by handle, follow them, and keep up with their public talks.'
+                : 'Keep up with the public talks from people you follow.'}
         />
 
-        <form
-            class="flex w-full max-w-md items-center gap-2"
-            onsubmit={submitSearch}
-        >
-            <div class="relative flex-1">
-                <Search
-                    class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                />
-                <Input
-                    bind:value={searchTerm}
-                    class="pl-9"
-                    placeholder="Search by name, @handle, GitHub, or X"
-                    data-test="contacts-search-input"
-                />
-            </div>
-            <Button
-                type="submit"
-                variant="outline"
-                data-test="contacts-search-button"
+        {#if features.canDiscoverPeople}
+            <form
+                class="flex w-full max-w-md items-center gap-2"
+                onsubmit={submitSearch}
             >
-                Search
-            </Button>
-        </form>
+                <div class="relative flex-1">
+                    <Search
+                        class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    />
+                    <Input
+                        bind:value={searchTerm}
+                        class="pl-9"
+                        placeholder="Search by name, @handle, GitHub, or X"
+                        data-test="contacts-search-input"
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    variant="outline"
+                    data-test="contacts-search-button"
+                >
+                    Search
+                </Button>
+            </form>
+        {/if}
     </div>
 
     <div class="grid gap-8 xl:grid-cols-[1.7fr_1fr]">
         <section class="flex flex-col gap-4">
-            <div class="flex items-center justify-between gap-3">
-                <h2 class="text-sm font-semibold text-foreground">
-                    {search.trim() === ''
-                        ? 'Discover people'
-                        : 'Search results'}
-                </h2>
-                <Badge variant="secondary">{results.length}</Badge>
-            </div>
+            {#if features.canDiscoverPeople}
+                <div class="flex items-center justify-between gap-3">
+                    <h2 class="text-sm font-semibold text-foreground">
+                        {search.trim() === ''
+                            ? 'Discover people'
+                            : 'Search results'}
+                    </h2>
+                    <Badge variant="secondary">{results.length}</Badge>
+                </div>
 
-            {#if results.length > 0}
-                <div class="grid gap-4 md:grid-cols-2">
-                    {#each results as contact (contact.id)}
-                        <article
-                            class="flex flex-col gap-4 rounded-xl border border-border bg-card p-5"
-                            data-test="contact-card"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <div class="flex min-w-0 items-center gap-3">
-                                    <UserAvatar
-                                        name={contact.name}
-                                        avatar={contact.avatar}
-                                        class="h-12 w-12 shrink-0"
-                                    />
-                                    <div class="min-w-0">
-                                        <p
-                                            class="truncate font-medium text-foreground"
+                {#if results.length > 0}
+                    <div class="grid gap-4 md:grid-cols-2">
+                        {#each results as contact (contact.id)}
+                            <article
+                                class="flex flex-col gap-4 rounded-xl border border-border bg-card p-5"
+                                data-test="contact-card"
+                            >
+                                <div
+                                    class="flex items-start justify-between gap-3"
+                                >
+                                    <div
+                                        class="flex min-w-0 items-center gap-3"
+                                    >
+                                        <UserAvatar
+                                            name={contact.name}
+                                            avatar={contact.avatar}
+                                            class="h-12 w-12 shrink-0"
+                                        />
+                                        <div class="min-w-0">
+                                            <p
+                                                class="truncate font-medium text-foreground"
+                                            >
+                                                {contact.name}
+                                            </p>
+                                            <p
+                                                class="truncate text-sm text-muted-foreground"
+                                            >
+                                                {handleLabel(contact)}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {#if contact.id !== currentUserId}
+                                        <Button
+                                            size="sm"
+                                            variant={contact.follow_status ===
+                                            'none'
+                                                ? 'default'
+                                                : 'outline'}
+                                            onclick={() =>
+                                                toggleFollow(contact)}
+                                            data-test="contact-follow-button"
                                         >
-                                            {contact.name}
+                                            {followLabel(contact)}
+                                        </Button>
+                                    {/if}
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2 text-sm">
+                                    <div
+                                        class="rounded-lg bg-accent/40 px-3 py-2"
+                                    >
+                                        <p
+                                            class="font-mono text-lg text-foreground"
+                                        >
+                                            {contact.talks_count}
                                         </p>
                                         <p
-                                            class="truncate text-sm text-muted-foreground"
+                                            class="text-xs text-muted-foreground"
                                         >
-                                            {handleLabel(contact)}
+                                            Talks
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="rounded-lg bg-accent/40 px-3 py-2"
+                                    >
+                                        <p
+                                            class="font-mono text-lg text-foreground"
+                                        >
+                                            {contact.total_viewers}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            People reached
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="rounded-lg bg-accent/40 px-3 py-2"
+                                    >
+                                        <p
+                                            class="font-mono text-lg text-foreground"
+                                        >
+                                            {contact.total_reactions}
+                                        </p>
+                                        <p
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            Reactions
                                         </p>
                                     </div>
                                 </div>
 
-                                {#if contact.id !== currentUserId}
-                                    <Button
-                                        size="sm"
-                                        variant={contact.follow_status ===
-                                        'none'
-                                            ? 'default'
-                                            : 'outline'}
-                                        onclick={() => toggleFollow(contact)}
-                                        data-test="contact-follow-button"
+                                <div
+                                    class="flex flex-wrap gap-2 text-xs text-muted-foreground"
+                                >
+                                    <span
+                                        >{contact.followers_count} followers</span
                                     >
-                                        {followLabel(contact)}
-                                    </Button>
-                                {/if}
-                            </div>
-
-                            <div class="grid grid-cols-3 gap-2 text-sm">
-                                <div class="rounded-lg bg-accent/40 px-3 py-2">
-                                    <p
-                                        class="font-mono text-lg text-foreground"
-                                    >
-                                        {contact.talks_count}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        Talks
-                                    </p>
-                                </div>
-                                <div class="rounded-lg bg-accent/40 px-3 py-2">
-                                    <p
-                                        class="font-mono text-lg text-foreground"
-                                    >
-                                        {contact.total_viewers}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        People reached
-                                    </p>
-                                </div>
-                                <div class="rounded-lg bg-accent/40 px-3 py-2">
-                                    <p
-                                        class="font-mono text-lg text-foreground"
-                                    >
-                                        {contact.total_reactions}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        Reactions
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="flex flex-wrap gap-2 text-xs text-muted-foreground"
-                            >
-                                <span>{contact.followers_count} followers</span>
-                                <span>•</span>
-                                <span>{contact.following_count} following</span>
-                                {#if contact.social_x_handle}
-                                    <span>•</span>
-                                    <span>X @{contact.social_x_handle}</span>
-                                {/if}
-                                {#if contact.social_github_handle}
                                     <span>•</span>
                                     <span
-                                        >GitHub @{contact.social_github_handle}</span
+                                        >{contact.following_count} following</span
                                     >
-                                {/if}
-                            </div>
-                        </article>
-                    {/each}
-                </div>
-            {:else}
-                <div
-                    class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card px-6 py-14 text-center"
-                >
-                    <Users class="h-6 w-6 text-muted-foreground" />
-                    <p class="text-sm text-muted-foreground">
-                        No people matched that search yet.
-                    </p>
-                </div>
+                                    {#if contact.social_x_handle}
+                                        <span>•</span>
+                                        <span>X @{contact.social_x_handle}</span
+                                        >
+                                    {/if}
+                                    {#if contact.social_github_handle}
+                                        <span>•</span>
+                                        <span
+                                            >GitHub @{contact.social_github_handle}</span
+                                        >
+                                    {/if}
+                                </div>
+                            </article>
+                        {/each}
+                    </div>
+                {:else}
+                    <div
+                        class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card px-6 py-14 text-center"
+                    >
+                        <Users class="h-6 w-6 text-muted-foreground" />
+                        <p class="text-sm text-muted-foreground">
+                            No people matched that search yet.
+                        </p>
+                    </div>
+                {/if}
             {/if}
 
             <div class="flex flex-col gap-4">

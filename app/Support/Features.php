@@ -31,6 +31,14 @@ class Features
     }
 
     /**
+     * Whether the contacts directory may surface and search other people.
+     */
+    public static function discovery(): bool
+    {
+        return Feature::for(self::GLOBAL_SCOPE)->active('discovery');
+    }
+
+    /**
      * Whether the given team-scoped flag is enabled for the team.
      */
     public static function teamHas(Team $team, string $flag): bool

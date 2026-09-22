@@ -4,10 +4,19 @@ use App\Models\PresentationModel;
 use App\Models\PresentationSessionModel;
 use App\Models\RehearsalModel;
 use App\Models\User;
+use App\Support\Features;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
+use Laravel\Pennant\Feature;
+
+function enableDiscovery(): void
+{
+    Feature::for(Features::GLOBAL_SCOPE)->activate('discovery');
+}
 
 test('contacts can be searched by public and social handles without exposing email addresses', function () {
+    enableDiscovery();
+
     $viewer = User::factory()->create(['handle' => 'viewer']);
     $speaker = User::factory()->create([
         'name' => 'Taylor Speaker',
@@ -35,6 +44,8 @@ test('contacts can be searched by public and social handles without exposing ema
 });
 
 test('discover section excludes people without any public handle', function () {
+    enableDiscovery();
+
     $viewer = User::factory()->create(['handle' => 'viewer']);
 
     User::factory()->create([
@@ -63,7 +74,27 @@ test('discover section excludes people without any public handle', function () {
     );
 });
 
+test('the directory surfaces nobody when discovery is off, even with a search', function () {
+    Feature::for(Features::GLOBAL_SCOPE)->deactivate('discovery');
+
+    $viewer = User::factory()->create(['handle' => 'viewer']);
+    User::factory()->create(['name' => 'Taylor Speaker', 'handle' => 'taylor']);
+
+    $response = $this
+        ->actingAs($viewer)
+        ->get(route('contacts.index', ['search' => 'taylor']));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Contacts')
+        ->where('search', '')
+        ->has('results', 0),
+    );
+});
+
 test('following someone shows their public talks and stats but hides private talks', function () {
+    enableDiscovery();
+
     $viewer = User::factory()->create(['handle' => 'viewer']);
     $speaker = User::factory()->create([
         'name' => 'Taylor Speaker',
@@ -148,6 +179,8 @@ test('contacts can be unfollowed', function () {
 });
 
 test('following starts as a pending request that does not grant follower status', function () {
+    enableDiscovery();
+
     $viewer = User::factory()->create(['handle' => 'viewer']);
     $speaker = User::factory()->create(['handle' => 'speaker']);
 
