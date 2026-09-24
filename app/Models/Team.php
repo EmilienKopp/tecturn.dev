@@ -98,21 +98,21 @@ class Team extends Model
     /**
      * Get all presentations belonging to this team.
      *
-     * @return HasMany<PresentationModel, $this>
+     * @return HasMany<Presentation, $this>
      */
     public function presentations(): HasMany
     {
-        return $this->hasMany(PresentationModel::class);
+        return $this->hasMany(Presentation::class);
     }
 
     /**
      * Get all rehearsals (rehearsals) recorded by this team.
      *
-     * @return HasMany<RehearsalModel, $this>
+     * @return HasMany<Rehearsal, $this>
      */
     public function rehearsals(): HasMany
     {
-        return $this->hasMany(RehearsalModel::class);
+        return $this->hasMany(Rehearsal::class);
     }
 
     /**

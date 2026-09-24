@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
+use App\Models\RehearsalReview;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -19,12 +19,12 @@ function follow(User $follower, User $followed): void
     ]);
 }
 
-/** @return array{User, RehearsalModel} */
+/** @return array{User, Rehearsal} */
 function runForUser(): array
 {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $user->currentTeam->id]);
-    $run = RehearsalModel::factory()->withStepEvents()->create([
+    $presentation = Presentation::factory()->withSlides(2)->create(['team_id' => $user->currentTeam->id]);
+    $run = Rehearsal::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
         'content' => $presentation->content,
@@ -43,7 +43,7 @@ test('a review can be requested from a follower', function () {
         'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $reviewer->id])->assertRedirect();
 
-    $review = RehearsalReviewModel::sole();
+    $review = RehearsalReview::sole();
 
     expect($review->practice_run_id)->toBe($run->id)
         ->and($review->requester_user_id)->toBe($requester->id)
@@ -63,14 +63,14 @@ test('a review cannot be requested from someone who does not follow the requeste
         'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $stranger->id])->assertSessionHasErrors('reviewer_user_id');
 
-    expect(RehearsalReviewModel::count())->toBe(0);
+    expect(RehearsalReview::count())->toBe(0);
 });
 
 test('the same person cannot be asked twice for one run', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
     follow($reviewer, $requester);
-    RehearsalReviewModel::factory()->create([
+    RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -81,13 +81,13 @@ test('the same person cannot be asked twice for one run', function () {
         'rehearsal' => $run->id,
     ]), ['reviewer_user_id' => $reviewer->id])->assertSessionHasErrors('reviewer_user_id');
 
-    expect(RehearsalReviewModel::count())->toBe(1);
+    expect(RehearsalReview::count())->toBe(1);
 });
 
 test('the reviewer sees the review page with the frozen snapshot', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -108,7 +108,7 @@ test('the reviewer sees the review page with the frozen snapshot', function () {
 
 test('only the assigned reviewer can open the review page', function () {
     [$requester, $run] = runForUser();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
     ]);
@@ -121,7 +121,7 @@ test('only the assigned reviewer can open the review page', function () {
 test('the reviewer can comment on a slide', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -140,7 +140,7 @@ test('the reviewer can comment on a slide', function () {
 
 test('nobody but the reviewer can comment', function () {
     [$requester, $run] = runForUser();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
     ]);
@@ -154,7 +154,7 @@ test('nobody but the reviewer can comment', function () {
 test('a completed review no longer accepts comments', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->completed()->create([
+    $review = RehearsalReview::factory()->completed()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -171,7 +171,7 @@ test('a completed review no longer accepts comments', function () {
 test('the reviewer can mark the review complete', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -185,7 +185,7 @@ test('the reviewer can mark the review complete', function () {
 test('the requester sees reviews and comments on the rehearsal replay page', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create(['name' => 'Aiko Reviewer']);
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -212,7 +212,7 @@ test('the requester sees reviews and comments on the rehearsal replay page', fun
 test('the rehearsals index lists reviews requested of the signed-in user', function () {
     [$requester, $run] = runForUser();
     $reviewer = User::factory()->create();
-    RehearsalReviewModel::factory()->create([
+    RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,

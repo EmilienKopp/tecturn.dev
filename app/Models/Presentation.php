@@ -8,7 +8,7 @@ use App\Domain\Presentation\ValueObjects\PresentationContent;
 use App\Domain\Presentation\ValueObjects\PresentationSource;
 use App\Domain\Presentation\ValueObjects\TalkSettings;
 use App\Policies\PresentationPolicy;
-use Database\Factories\PresentationModelFactory;
+use Database\Factories\PresentationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -39,9 +39,9 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 #[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
 #[UsePolicy(PresentationPolicy::class)]
-class PresentationModel extends Model implements HasMedia
+class Presentation extends Model implements HasMedia
 {
-    /** @use HasFactory<PresentationModelFactory> */
+    /** @use HasFactory<PresentationFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -122,11 +122,6 @@ class PresentationModel extends Model implements HasMedia
             yoyotranslateSessionStartedAt: $this->yoyotranslate_session_started_at?->toDateTimeImmutable(),
             yoyotranslateLanguages: $this->yoyotranslate_languages ?? [],
         );
-    }
-
-    protected static function newFactory(): PresentationModelFactory
-    {
-        return PresentationModelFactory::new();
     }
 
     /**

@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Reviews;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\ReadModels\RehearsalReviewReadModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\RehearsalReview;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -15,7 +15,7 @@ class ShowReceivedReviewController extends Controller
 {
     public function __construct(private readonly RehearsalReviewReadModel $reviews) {}
 
-    public function __invoke(RehearsalReviewModel $rehearsal_review): Response
+    public function __invoke(RehearsalReview $rehearsal_review): Response
     {
         Gate::authorize('viewReceived', $rehearsal_review);
 

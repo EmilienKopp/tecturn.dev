@@ -43,13 +43,13 @@ Not every Laravel concern requires a wrapper or interface. Apply this test befor
 - The implementation is stable and will never be swapped independently of the framework
 - Laravel already behaves identically in tests
 
-| Concern                              | Wrap?  | Why                                              |
-|--------------------------------------|--------|--------------------------------------------------|
-| Eloquent queries (write side)        | ✓ Yes  | Repository pattern — the whole point             |
-| Mail / Queue dispatch                | ✓ Yes  | Swappable driver, fakeable in tests              |
-| `Collection` / `LengthAwarePaginator`| ✗ No   | Framework primitive, stable, testable as-is      |
-| `Context` API                        | ✗ No   | No production vs. test behaviour difference      |
-| Logging                              | ✗ No   | Laravel-injected, no custom seam needed          |
+| Concern                               | Wrap? | Why                                         |
+| ------------------------------------- | ----- | ------------------------------------------- |
+| Eloquent queries (write side)         | ✓ Yes | Repository pattern — the whole point        |
+| Mail / Queue dispatch                 | ✓ Yes | Swappable driver, fakeable in tests         |
+| `Collection` / `LengthAwarePaginator` | ✗ No  | Framework primitive, stable, testable as-is |
+| `Context` API                         | ✗ No  | No production vs. test behaviour difference |
+| Logging                               | ✗ No  | Laravel-injected, no custom seam needed     |
 
 **`Collection`, and `LengthAwarePaginator` are treated as pure for this project.**
 They may appear in repository interfaces and return types. This is a deliberate tradeoff
@@ -379,7 +379,7 @@ interface DailyLogRepository
 }
 
 // Eloquent Model with HasDomainEntity trait
-class DailyLogModel extends Model
+class DailyLog extends Model
 {
     use HasDomainEntity;
 
@@ -401,12 +401,12 @@ class EloquentDailyLogRepository implements DailyLogRepository
 {
     public function findById(int $id): DailyLogEntity
     {
-        return DailyLogModel::with('clockEntries')->findOrFail($id)->toEntity();
+        return DailyLog::with('clockEntries')->findOrFail($id)->toEntity();
     }
 
     public function save(DailyLogEntity $log): void
     {
-        DailyLogModel::updateOrCreate(
+        DailyLog::updateOrCreate(
             ['id' => $log->id],
             $log->toArray(),
         );
@@ -466,7 +466,7 @@ class DailyLogReadModel
 {
     public function forDashboard(int $userId): array
     {
-        return DailyLogModel::where('user_id', $userId)->get()->toArray(); // ← table, not view
+        return DailyLogSummary::where('user_id', $userId)->get()->toArray(); // ← view, not table
     }
 }
 
@@ -486,9 +486,6 @@ class DailyLogReadModel
 - Models are a **persistence detail only** — they are not passed across layers.
 - Keep models lean: relationships, casts, fillable, `HasDomainEntity` trait. No business logic.
 - The domain and application layers must never import a Model class.
-- Model names use the `Model` suffix: `DailyLogModel`, `ProjectModel`, `ClockEntryModel`.
-- View-backed models extend `ReadOnlyModel` and live in `app/Models/Views/`:
-  `DailyLogSummaryModel`, `ProjectSummaryModel`.
 
 ---
 
@@ -519,23 +516,23 @@ Only use `fetch` when:
 
 ## Naming Conventions
 
-| Layer                        | Convention                                   | Examples                                              |
-| ---------------------------- | -------------------------------------------- | ----------------------------------------------------- |
-| Actions                      | `VerbNoun`                                   | `StopTimer`, `CreateDailyLog`, `ApplyRate`            |
-| Commands                     | `VerbNounCommand`                            | `StopTimerCommand`, `CreateDailyLogCommand`           |
-| Entities                     | `NounEntity`                                 | `DailyLogEntity`, `ProjectEntity`, `ClockEntryEntity` |
-| Value Objects                | `Noun`                                       | `Duration`, `Money`, `Timezone`                       |
-| Domain Events                | `NounVerbed` (past tense)                    | `ClockEntryCreated`, `TimerStopped`                   |
-| Repository Interfaces        | `NounRepository`                             | `DailyLogRepository`, `ProjectRepository`             |
-| Repository Implementations   | `Eloquent{Noun}Repository`                   | `EloquentDailyLogRepository`                          |
-| Eloquent Models (tables)     | `NounModel`                                  | `DailyLogModel`, `ClockEntryModel`                    |
-| Eloquent Models (views)      | `NounSummaryModel` / `NounViewModel`         | `DailyLogSummaryModel`, `ProjectSummaryModel`         |
-| ReadModels                   | `NounReadModel`                              | `DailyLogReadModel`, `ProjectReadModel`               |
-| Controllers (CRUD)           | `NounController` (resource methods)          | `PresentationController`, `RehearsalController`     |
-| Controllers (non-CRUD)       | `VerbNounController` (invokable)             | `StopTimerController`, `GenerateDeckController`       |
-| Form Requests                | `VerbNounRequest`                            | `StopTimerRequest`, `CreateProjectRequest`            |
-| Svelte Pages                 | `kebab-case.svelte` in `resources/js/pages/` | `dashboard.svelte`, `daily-log.svelte`                |
-| Svelte Components            | `PascalCase.svelte`                          | `ClockEntry.svelte`, `ProjectSelector.svelte`         |
+| Layer                      | Convention                                   | Examples                                              |
+| -------------------------- | -------------------------------------------- | ----------------------------------------------------- |
+| Actions                    | `VerbNoun`                                   | `StopTimer`, `CreateDailyLog`, `ApplyRate`            |
+| Commands                   | `VerbNounCommand`                            | `StopTimerCommand`, `CreateDailyLogCommand`           |
+| Entities                   | `NounEntity`                                 | `DailyLogEntity`, `ProjectEntity`, `ClockEntryEntity` |
+| Value Objects              | `Noun`                                       | `Duration`, `Money`, `Timezone`                       |
+| Domain Events              | `NounVerbed` (past tense)                    | `ClockEntryCreated`, `TimerStopped`                   |
+| Repository Interfaces      | `NounRepository`                             | `DailyLogRepository`, `ProjectRepository`             |
+| Repository Implementations | `Eloquent{Noun}Repository`                   | `EloquentDailyLogRepository`                          |
+| Eloquent Models (tables)   | `Noun` (no suffix)                           | `Presentation`, `Rehearsal`, `ReviewComment`          |
+| Eloquent Models (views)    | `NounSummary` / `NounView`                   | `DailyLogSummary`, `ProjectSummary`                   |
+| ReadModels                 | `NounReadModel`                              | `DailyLogReadModel`, `ProjectReadModel`               |
+| Controllers (CRUD)         | `NounController` (resource methods)          | `PresentationController`, `RehearsalController`       |
+| Controllers (non-CRUD)     | `VerbNounController` (invokable)             | `StopTimerController`, `GenerateDeckController`       |
+| Form Requests              | `VerbNounRequest`                            | `StopTimerRequest`, `CreateProjectRequest`            |
+| Svelte Pages               | `kebab-case.svelte` in `resources/js/pages/` | `dashboard.svelte`, `daily-log.svelte`                |
+| Svelte Components          | `PascalCase.svelte`                          | `ClockEntry.svelte`, `ProjectSelector.svelte`         |
 
 ### Entity Property Casing
 

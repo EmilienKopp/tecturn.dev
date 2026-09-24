@@ -3,16 +3,16 @@
 namespace Database\Factories;
 
 use App\Domain\Presentation\ValueObjects\PresentationContent;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<PresentationModel>
+ * @extends Factory<Presentation>
  */
-class PresentationModelFactory extends Factory
+class PresentationFactory extends Factory
 {
-    protected $model = PresentationModel::class;
+    protected $model = Presentation::class;
 
     /**
      * @return array<string, mixed>

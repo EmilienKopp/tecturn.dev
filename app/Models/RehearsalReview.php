@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Domain\Presentation\Entities\RehearsalReviewEntity;
 use App\Domain\Presentation\Entities\ReviewCommentEntity;
 use App\Policies\RehearsalReviewPolicy;
-use Database\Factories\RehearsalReviewModelFactory;
+use Database\Factories\RehearsalReviewFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\UsePolicy;
 use Illuminate\Database\Eloquent\Collection;
@@ -23,32 +23,32 @@ use Illuminate\Support\Carbon;
  * @property string $status
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read RehearsalModel $rehearsal
- * @property-read Collection<int, ReviewCommentModel> $comments
+ * @property-read Rehearsal $rehearsal
+ * @property-read Collection<int, ReviewComment> $comments
  */
 #[Fillable(['practice_run_id', 'requester_user_id', 'reviewer_user_id', 'status'])]
 #[UsePolicy(RehearsalReviewPolicy::class)]
-class RehearsalReviewModel extends Model
+class RehearsalReview extends Model
 {
-    /** @use HasFactory<RehearsalReviewModelFactory> */
+    /** @use HasFactory<RehearsalReviewFactory> */
     use HasFactory;
 
     protected $table = 'rehearsal_reviews';
 
     /**
-     * @return BelongsTo<RehearsalModel, $this>
+     * @return BelongsTo<Rehearsal, $this>
      */
     public function rehearsal(): BelongsTo
     {
-        return $this->belongsTo(RehearsalModel::class, 'practice_run_id');
+        return $this->belongsTo(Rehearsal::class, 'practice_run_id');
     }
 
     /**
-     * @return HasMany<ReviewCommentModel, $this>
+     * @return HasMany<ReviewComment, $this>
      */
     public function comments(): HasMany
     {
-        return $this->hasMany(ReviewCommentModel::class, 'rehearsal_review_id');
+        return $this->hasMany(ReviewComment::class, 'rehearsal_review_id');
     }
 
     public function toEntity(): RehearsalReviewEntity
@@ -59,14 +59,9 @@ class RehearsalReviewModel extends Model
             reviewer_user_id: $this->reviewer_user_id,
             status: $this->status,
             comments: $this->comments
-                ->map(fn (ReviewCommentModel $comment): ReviewCommentEntity => $comment->toEntity())
+                ->map(fn (ReviewComment $comment): ReviewCommentEntity => $comment->toEntity())
                 ->all(),
             id: $this->id,
         );
-    }
-
-    protected static function newFactory(): RehearsalReviewModelFactory
-    {
-        return RehearsalReviewModelFactory::new();
     }
 }

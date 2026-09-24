@@ -2,17 +2,17 @@
 
 namespace Database\Factories;
 
-use App\Models\PresentationModel;
-use App\Models\PresentationSessionModel;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * @extends Factory<PresentationSessionModel>
+ * @extends Factory<PresentationSession>
  */
-class PresentationSessionModelFactory extends Factory
+class PresentationSessionFactory extends Factory
 {
-    protected $model = PresentationSessionModel::class;
+    protected $model = PresentationSession::class;
 
     /**
      * @return array<string, mixed>
@@ -20,8 +20,8 @@ class PresentationSessionModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'presentation_id' => PresentationModel::factory(),
-            'team_id' => fn (array $attributes) => PresentationModel::findOrFail($attributes['presentation_id'])->team_id,
+            'presentation_id' => Presentation::factory(),
+            'team_id' => fn (array $attributes) => Presentation::findOrFail($attributes['presentation_id'])->team_id,
             'started_at' => Carbon::now()->subMinutes(30),
             'ended_at' => null,
             'last_seen_at' => Carbon::now()->subMinutes(30),

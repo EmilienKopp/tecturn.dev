@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Presentation\Entities\RehearsalEntity;
-use Database\Factories\RehearsalModelFactory;
+use Database\Factories\RehearsalFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -26,12 +26,12 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property array<string, mixed>|null $flow
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read PresentationModel $presentation
+ * @property-read Presentation $presentation
  */
 #[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'slide_timings', 'step_events', 'content', 'flow'])]
-class RehearsalModel extends Model implements HasMedia
+class Rehearsal extends Model implements HasMedia
 {
-    /** @use HasFactory<RehearsalModelFactory> */
+    /** @use HasFactory<RehearsalFactory> */
     use HasFactory;
 
     use InteractsWithMedia;
@@ -48,19 +48,19 @@ class RehearsalModel extends Model implements HasMedia
     }
 
     /**
-     * @return BelongsTo<PresentationModel, $this>
+     * @return BelongsTo<Presentation, $this>
      */
     public function presentation(): BelongsTo
     {
-        return $this->belongsTo(PresentationModel::class, 'presentation_id');
+        return $this->belongsTo(Presentation::class, 'presentation_id');
     }
 
     /**
-     * @return HasMany<RehearsalReviewModel, $this>
+     * @return HasMany<RehearsalReview, $this>
      */
     public function reviews(): HasMany
     {
-        return $this->hasMany(RehearsalReviewModel::class, 'practice_run_id');
+        return $this->hasMany(RehearsalReview::class, 'practice_run_id');
     }
 
     public function toEntity(): RehearsalEntity
@@ -77,11 +77,6 @@ class RehearsalModel extends Model implements HasMedia
             step_events: $this->step_events,
             id: $this->id,
         );
-    }
-
-    protected static function newFactory(): RehearsalModelFactory
-    {
-        return RehearsalModelFactory::new();
     }
 
     /**

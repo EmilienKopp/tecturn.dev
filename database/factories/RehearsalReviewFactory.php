@@ -3,17 +3,17 @@
 namespace Database\Factories;
 
 use App\Domain\Presentation\Entities\RehearsalReviewEntity;
-use App\Models\RehearsalModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\Rehearsal;
+use App\Models\RehearsalReview;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<RehearsalReviewModel>
+ * @extends Factory<RehearsalReview>
  */
-class RehearsalReviewModelFactory extends Factory
+class RehearsalReviewFactory extends Factory
 {
-    protected $model = RehearsalReviewModel::class;
+    protected $model = RehearsalReview::class;
 
     /**
      * @return array<string, mixed>
@@ -21,7 +21,7 @@ class RehearsalReviewModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'practice_run_id' => RehearsalModel::factory(),
+            'practice_run_id' => Rehearsal::factory(),
             'requester_user_id' => User::factory(),
             'reviewer_user_id' => User::factory(),
             'status' => RehearsalReviewEntity::STATUS_PENDING,

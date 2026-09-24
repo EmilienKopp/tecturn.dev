@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
+use App\Models\RehearsalReview;
 use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 
-/** @return array{User, RehearsalModel} */
+/** @return array{User, Rehearsal} */
 function runWithRecording(): array
 {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
-    $run = RehearsalModel::factory()->create([
+    $presentation = Presentation::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+    $run = Rehearsal::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
     ]);
@@ -24,7 +24,7 @@ function runWithRecording(): array
     file_put_contents($path, hex2bin('1a45dfa39f4286810142f7810142f2810442f381084282847765626d').str_repeat("\x00", 128));
     $run->addMedia($path)
         ->usingFileName('rehearsal.webm')
-        ->toMediaCollection(RehearsalModel::RECORDING_COLLECTION);
+        ->toMediaCollection(Rehearsal::RECORDING_COLLECTION);
 
     return [$user, $run];
 }
@@ -38,7 +38,7 @@ test('a team member can stream the rehearsal recording', function () {
 test('an assigned reviewer can stream the recording', function () {
     [$owner, $run] = runWithRecording();
     $reviewer = User::factory()->create();
-    RehearsalReviewModel::factory()->create([
+    RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $owner->id,
         'reviewer_user_id' => $reviewer->id,
@@ -56,8 +56,8 @@ test('a stranger cannot stream the recording', function () {
 
 test('a run without a recording returns 404', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
-    $run = RehearsalModel::factory()->create([
+    $presentation = Presentation::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+    $run = Rehearsal::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
     ]);

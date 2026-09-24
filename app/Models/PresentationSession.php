@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Presentation\Entities\PresentationSessionEntity;
-use Database\Factories\PresentationSessionModelFactory;
+use Database\Factories\PresentationSessionFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -23,22 +23,22 @@ use Illuminate\Support\Carbon;
  * @property int $viewer_count
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
- * @property-read PresentationModel $presentation
+ * @property-read Presentation $presentation
  */
 #[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count'])]
-class PresentationSessionModel extends Model
+class PresentationSession extends Model
 {
-    /** @use HasFactory<PresentationSessionModelFactory> */
+    /** @use HasFactory<PresentationSessionFactory> */
     use HasFactory;
 
     protected $table = 'presentation_sessions';
 
     /**
-     * @return BelongsTo<PresentationModel, $this>
+     * @return BelongsTo<Presentation, $this>
      */
     public function presentation(): BelongsTo
     {
-        return $this->belongsTo(PresentationModel::class, 'presentation_id');
+        return $this->belongsTo(Presentation::class, 'presentation_id');
     }
 
     public function toEntity(): PresentationSessionEntity
@@ -55,11 +55,6 @@ class PresentationSessionModel extends Model
             viewer_count: $this->viewer_count,
             id: $this->id,
         );
-    }
-
-    protected static function newFactory(): PresentationSessionModelFactory
-    {
-        return PresentationSessionModelFactory::new();
     }
 
     /**

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Facades\File;
 
@@ -11,7 +11,7 @@ beforeEach(function () {
 });
 
 test('a guest can load the embed script and it is generated on first access', function () {
-    $presentation = PresentationModel::factory()->withSlides(1)->create();
+    $presentation = Presentation::factory()->withSlides(1)->create();
 
     $response = $this->get(route('presentations.embed', ['presentation' => $presentation->embed_token]));
 
@@ -24,7 +24,7 @@ test('a guest can load the embed script and it is generated on first access', fu
 });
 
 test('subsequent requests are served from the cached file', function () {
-    $presentation = PresentationModel::factory()->withSlides(1)->create();
+    $presentation = Presentation::factory()->withSlides(1)->create();
 
     $this->get(route('presentations.embed', ['presentation' => $presentation->embed_token]))->assertOk();
 
@@ -38,7 +38,7 @@ test('subsequent requests are served from the cached file', function () {
 
 test('saving content regenerates an existing embed file', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
     $path = storage_path("app/embeds/{$presentation->embed_token}.js");
 
     $this->get(route('presentations.embed', ['presentation' => $presentation->embed_token]))->assertOk();
@@ -81,7 +81,7 @@ test('saving content regenerates an existing embed file', function () {
 
 test('saving content does not create an embed file that was never requested', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->withSlides(1)->create(['team_id' => $user->currentTeam->id]);
 
     $this
         ->actingAs($user)
@@ -99,7 +99,7 @@ test('an unknown embed token returns 404', function () {
 });
 
 test('every presentation gets an embed token on creation', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     expect($presentation->embed_token)->toBeString()->toHaveLength(32);
 });

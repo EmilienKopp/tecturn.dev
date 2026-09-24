@@ -6,7 +6,7 @@ use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\GenerateDeckRequest;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Presentation\GeneratingDeckTally;
 use Illuminate\Http\RedirectResponse;
@@ -17,7 +17,7 @@ class GenerateDeckController extends Controller
 {
     public function __invoke(GenerateDeckRequest $request, Team $current_team, GeneratingDeckTally $tally): RedirectResponse
     {
-        Gate::authorize('create', [PresentationModel::class, $current_team]);
+        Gate::authorize('create', [Presentation::class, $current_team]);
 
         GenerateDeckJob::dispatch(
             new GenerateDeckFromPlanCommand(

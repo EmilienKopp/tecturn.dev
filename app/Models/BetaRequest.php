@@ -4,7 +4,7 @@ namespace App\Models;
 
 use App\Domain\Beta\Entities\BetaRequestEntity;
 use App\Enums\BetaRequestStatus;
-use Database\Factories\BetaRequestModelFactory;
+use Database\Factories\BetaRequestFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -21,9 +21,9 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'email', 'email_hash', 'message', 'status'])]
-class BetaRequestModel extends Model
+class BetaRequest extends Model
 {
-    /** @use HasFactory<BetaRequestModelFactory> */
+    /** @use HasFactory<BetaRequestFactory> */
     use HasFactory;
 
     protected $table = 'beta_requests';
@@ -35,11 +35,6 @@ class BetaRequestModel extends Model
             email: $this->email,
             message: $this->message,
         );
-    }
-
-    protected static function newFactory(): BetaRequestModelFactory
-    {
-        return BetaRequestModelFactory::new();
     }
 
     /**

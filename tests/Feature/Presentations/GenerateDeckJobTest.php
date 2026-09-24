@@ -8,7 +8,7 @@ use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Application\Events\DeckGenerated;
 use App\Application\Events\DeckGenerationFailed;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use App\Presentation\GeneratingDeckTally;
 use Illuminate\Support\Facades\Event;
@@ -61,7 +61,7 @@ test('the job builds the deck and broadcasts a ready event to the user', functio
 
     runDeckJob($user);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
     expect($presentation->team_id)->toBe($team->id)
         ->and($presentation->name)->toBe('Intro to Widgets')
         // The skeleton is cleared once the deck exists.
@@ -88,7 +88,7 @@ test('an explicit name overrides the generated title', function () {
 
     runDeckJob($user, name: 'Custom name');
 
-    expect(PresentationModel::query()->firstOrFail()->name)->toBe('Custom name');
+    expect(Presentation::query()->firstOrFail()->name)->toBe('Custom name');
 });
 
 test('a failing build broadcasts a failure event and persists nothing', function () {
@@ -116,7 +116,7 @@ test('a failing build broadcasts a failure event and persists nothing', function
         $job->failed(new RuntimeException('provider exploded'));
     }
 
-    expect(PresentationModel::query()->count())->toBe(0)
+    expect(Presentation::query()->count())->toBe(0)
         // The skeleton is cleared even when the build fails.
         ->and($tally->count($team->id))->toBe(0);
 

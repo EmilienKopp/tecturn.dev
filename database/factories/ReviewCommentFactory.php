@@ -2,16 +2,16 @@
 
 namespace Database\Factories;
 
-use App\Models\RehearsalReviewModel;
-use App\Models\ReviewCommentModel;
+use App\Models\RehearsalReview;
+use App\Models\ReviewComment;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /**
- * @extends Factory<ReviewCommentModel>
+ * @extends Factory<ReviewComment>
  */
-class ReviewCommentModelFactory extends Factory
+class ReviewCommentFactory extends Factory
 {
-    protected $model = ReviewCommentModel::class;
+    protected $model = ReviewComment::class;
 
     /**
      * @return array<string, mixed>
@@ -19,7 +19,7 @@ class ReviewCommentModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'rehearsal_review_id' => RehearsalReviewModel::factory(),
+            'rehearsal_review_id' => RehearsalReview::factory(),
             'slide_number' => $this->faker->numberBetween(0, 5),
             'message' => $this->faker->sentence(),
         ];

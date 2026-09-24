@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 
 test('a presentation can be exported as svelte source', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Launch Deck',
     ]);
@@ -31,7 +31,7 @@ test('a presentation can be exported as svelte source', function () {
 
 test('a free-layout slide exports absolutely positioned blocks', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Free Deck',
         'content' => [
@@ -79,7 +79,7 @@ test('a free-layout slide exports absolutely positioned blocks', function () {
 
 test('an image block exports with sizing that keeps it inside its slot', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Image Deck',
         'content' => [
@@ -127,7 +127,7 @@ test('an image block exports with sizing that keeps it inside its slot', functio
 
 test('a code block exports through Animotion Code via the code prop', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Code Deck',
         'content' => [
@@ -202,7 +202,7 @@ test('a slide with no incoming nav edge is dropped from the exported deck', func
         'data' => ['slideId' => $slideId],
     ];
 
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Gated Deck',
         'content' => [
@@ -267,7 +267,7 @@ test('a slide marked disabled stays hidden when no nav edges remain', function (
     // Disabling the only non-entry slide removes the last nav edge. Without
     // the explicit marker that reads as an unwired legacy deck (fully
     // enabled), silently undoing the disable.
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Emptied Chain Deck',
         'content' => [
@@ -314,7 +314,7 @@ test('a slide marked disabled stays hidden when no nav edges remain', function (
 
 test('a presentation can be exported as a web component', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create([
+    $presentation = Presentation::factory()->withSlides(1)->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Launch Deck',
     ]);
@@ -335,7 +335,7 @@ test('a presentation can be exported as a web component', function () {
 
 test('a text block font family exports as font-family plus a Bunny @import', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Typeset Deck',
         'content' => [
@@ -380,7 +380,7 @@ test('a text block font family exports as font-family plus a Bunny @import', fun
 
 test('the web component inlines the used fonts and makes no external font calls', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Typeset Deck',
         'content' => [
@@ -427,7 +427,7 @@ test('the web component inlines the used fonts and makes no external font calls'
 
 test('an unknown export format is rejected', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -443,7 +443,7 @@ test('an unknown export format is rejected', function () {
 
 test('presentations of other teams cannot be exported through the current team', function () {
     $user = User::factory()->create();
-    $otherTeamPresentation = PresentationModel::factory()->create();
+    $otherTeamPresentation = Presentation::factory()->create();
 
     $response = $this
         ->actingAs($user)

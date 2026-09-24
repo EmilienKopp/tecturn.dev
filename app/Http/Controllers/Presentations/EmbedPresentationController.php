@@ -6,7 +6,7 @@ use App\Domain\Presentation\ValueObjects\FlowGraph;
 use App\Domain\Presentation\ValueObjects\PresentationContent;
 use App\Http\Controllers\Controller;
 use App\Infrastructure\ReadModels\PresentationReadModel;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Presentation\EmbedCache;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
@@ -23,7 +23,7 @@ class EmbedPresentationController extends Controller
         private readonly EmbedCache $embeds,
     ) {}
 
-    public function __invoke(PresentationModel $presentation): BinaryFileResponse
+    public function __invoke(Presentation $presentation): BinaryFileResponse
     {
         $path = $this->embeds->find($presentation->embed_token);
 

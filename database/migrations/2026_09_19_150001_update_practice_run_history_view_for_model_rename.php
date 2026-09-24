@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    // PracticeRunModel was renamed to RehearsalModel, so the media morph type
+    // PracticeRunModel was renamed to Rehearsal, so the media morph type
     // stored in `media.model_type` changed. The view name and columns are
     // unchanged; only the `model_type LIKE` filter follows the class rename.
     public function up(): void

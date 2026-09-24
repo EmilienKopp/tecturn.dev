@@ -6,7 +6,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Presentation\Contracts\RehearsalRepository;
 use App\Domain\Presentation\Entities\RehearsalEntity;
-use App\Models\RehearsalModel;
+use App\Models\Rehearsal;
 
 class EloquentRehearsalRepository implements RehearsalRepository
 {
@@ -25,9 +25,9 @@ class EloquentRehearsalRepository implements RehearsalRepository
         ];
 
         if ($run->id === null) {
-            $model = RehearsalModel::create($attributes);
+            $model = Rehearsal::create($attributes);
         } else {
-            $model = RehearsalModel::findOrFail($run->id);
+            $model = Rehearsal::findOrFail($run->id);
             $model->update($attributes);
         }
 
@@ -36,14 +36,14 @@ class EloquentRehearsalRepository implements RehearsalRepository
 
     public function findById(int $id): RehearsalEntity
     {
-        return RehearsalModel::findOrFail($id)->toEntity();
+        return Rehearsal::findOrFail($id)->toEntity();
     }
 
     public function storeRecording(int $runId, string $filePath, string $fileName): void
     {
-        RehearsalModel::findOrFail($runId)
+        Rehearsal::findOrFail($runId)
             ->addMedia($filePath)
             ->usingFileName($fileName)
-            ->toMediaCollection(RehearsalModel::RECORDING_COLLECTION);
+            ->toMediaCollection(Rehearsal::RECORDING_COLLECTION);
     }
 }

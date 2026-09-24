@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Application\Sequences\Presentations\ImportPresentationPayload;
 use App\Application\Sequences\Presentations\Steps\CreatePresentationStep;
 use App\Domain\Presentation\Contracts\PresentationRepository;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\UploadedFile;
@@ -101,7 +101,7 @@ test('a presentation can be imported from a JSON file as a fresh clone', functio
             'file' => jsonUpload(importablePresentation()),
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     $response->assertRedirect(route('presentations.edit', [
         'current_team' => $team->slug,
@@ -128,7 +128,7 @@ test('a presentation can be imported from pasted JSON', function () {
             'json' => json_encode(importablePresentation()),
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     $response->assertRedirect(route('presentations.edit', [
         'current_team' => $team->slug,
@@ -232,12 +232,12 @@ test('remote images are re-hosted and their URLs rebound', function () {
         ])
         ->assertRedirect();
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
     $storedSrc = $presentation->content['slides'][0]['slots']['main'][0]['src'];
 
     expect($storedSrc)->not->toBe($remoteUrl)
         ->and($storedSrc)->toContain('/storage/')
-        ->and($presentation->getMedia(PresentationModel::IMAGES_COLLECTION))->toHaveCount(1);
+        ->and($presentation->getMedia(Presentation::IMAGES_COLLECTION))->toHaveCount(1);
 
     Http::assertSent(fn (HttpRequest $request) => $request->url() === $remoteUrl);
 });
@@ -266,10 +266,10 @@ test('an unreachable image keeps its original URL and the import still succeeds'
         ])
         ->assertRedirect();
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     expect($presentation->content['slides'][0]['slots']['main'][0]['src'])->toBe($remoteUrl)
-        ->and($presentation->getMedia(PresentationModel::IMAGES_COLLECTION))->toHaveCount(0);
+        ->and($presentation->getMedia(Presentation::IMAGES_COLLECTION))->toHaveCount(0);
 });
 
 test('a failure after creation compensates the committed presentation row', function () {

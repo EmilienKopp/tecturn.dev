@@ -3,14 +3,14 @@
 namespace Database\Factories;
 
 use App\Enums\BetaRequestStatus;
-use App\Models\BetaRequestModel;
+use App\Models\BetaRequest;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Str;
 
 /**
- * @extends Factory<BetaRequestModel>
+ * @extends Factory<BetaRequest>
  */
-class BetaRequestModelFactory extends Factory
+class BetaRequestFactory extends Factory
 {
     /**
      * Define the model's default state.

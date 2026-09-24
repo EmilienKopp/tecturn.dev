@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -25,7 +25,7 @@ function validFlowPayload(): array
 
 test('a valid flow persists and is returned to the editor', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -56,7 +56,7 @@ test('a valid flow persists and is returned to the editor', function () {
 
 test('a flow with code-action nodes and matching block actions persists', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -100,7 +100,7 @@ test('a flow with code-action nodes and matching block actions persists', functi
 
 test('a flow-only update leaves the content untouched', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
     $originalContent = $presentation->content;
@@ -118,7 +118,7 @@ test('a flow-only update leaves the content untouched', function () {
 
 test('a structurally invalid flow is rejected', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -140,7 +140,7 @@ test('a structurally invalid flow is rejected', function () {
 
 test('a flow referencing a nonexistent slide is rejected', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create([
+    $presentation = Presentation::factory()->withSlides(1)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -163,7 +163,7 @@ test('a flow referencing a nonexistent slide is rejected', function () {
 
 test('privacy can be updated and returned to the editor', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'is_private' => false,
     ]);
@@ -192,7 +192,7 @@ test('privacy can be updated and returned to the editor', function () {
 
 test('the editor loads a presentation without a flow', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 

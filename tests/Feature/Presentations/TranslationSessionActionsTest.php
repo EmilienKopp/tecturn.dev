@@ -8,7 +8,7 @@ use App\Application\Commands\StartTranslationSessionCommand;
 use App\Application\Commands\StopTranslationSessionCommand;
 use App\Domain\Presentation\Contracts\TranslationServiceContract;
 use App\Domain\Presentation\ValueObjects\YoYoTranslateSession;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Laravel\Pennant\Feature;
@@ -37,7 +37,7 @@ function makeFakeTranslationService(string $sessionId = 'fake-session-abc'): Tra
 }
 
 it('starts a translation session and persists the session id', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
     $fake = makeFakeTranslationService('session-xyz');
 
     $this->app->instance(TranslationServiceContract::class, $fake);
@@ -62,7 +62,7 @@ it('starts a translation session and persists the session id', function () {
 });
 
 it('links a manually created event without calling the translation service', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $entity = app(StartTranslationSession::class)->execute(
         new StartTranslationSessionCommand(
@@ -80,7 +80,7 @@ it('links a manually created event without calling the translation service', fun
 
 it('accepts a pasted event url over http and extracts the event id', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -106,7 +106,7 @@ it('accepts a pasted event url over http and extracts the event id', function ()
 
 it('forbids starting a translation session when the team flag is off', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -128,7 +128,7 @@ it('forbids starting a translation session when the team flag is off', function 
 
 it('rejects a start request with no languages', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -145,7 +145,7 @@ it('rejects a start request with no languages', function () {
 
 it('rejects a start request with neither event url nor source language', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -161,7 +161,7 @@ it('rejects a start request with neither event url nor source language', functio
 });
 
 it('stops a translation session and clears the session id', function () {
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'yoyotranslate_session_id' => 'session-to-close',
         'yoyotranslate_session_started_at' => now(),
     ]);
@@ -187,7 +187,7 @@ it('stops a translation session and clears the session id', function () {
 });
 
 it('calls closeSession on the translation service when stopping', function () {
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'yoyotranslate_session_id' => 'active-session',
     ]);
 
@@ -206,7 +206,7 @@ it('calls closeSession on the translation service when stopping', function () {
 });
 
 it('does not call closeSession when there is no active session', function () {
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'yoyotranslate_session_id' => null,
     ]);
 

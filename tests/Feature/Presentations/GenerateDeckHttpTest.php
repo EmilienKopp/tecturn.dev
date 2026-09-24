@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use App\Presentation\GeneratingDeckTally;
 use Illuminate\Support\Facades\Queue;
@@ -34,7 +34,7 @@ test('generating a draft defers a job and redirects back without building synchr
     });
 
     // Nothing is built during the request; the job does that later.
-    expect(PresentationModel::query()->count())->toBe(0)
+    expect(Presentation::query()->count())->toBe(0)
         // A skeleton is reserved on the index straight away.
         ->and(app(GeneratingDeckTally::class)->count($team->id))->toBe(1);
 });

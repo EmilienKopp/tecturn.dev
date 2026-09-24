@@ -17,7 +17,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\CreatePresentationRequest;
 use App\Http\Requests\Presentations\UpdatePresentationRequest;
 use App\Infrastructure\ReadModels\PresentationReadModel;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Presentation\EmbedCache;
 use App\Presentation\GeneratingDeckTally;
@@ -47,7 +47,7 @@ class PresentationController extends Controller
 
     public function store(CreatePresentationRequest $request, Team $current_team): RedirectResponse
     {
-        Gate::authorize('create', [PresentationModel::class, $current_team]);
+        Gate::authorize('create', [Presentation::class, $current_team]);
 
         $sourceType = $request->validated('source_type', 'editor');
         $pdf = $sourceType === 'pdf' ? $request->file('file') : null;
@@ -70,7 +70,7 @@ class PresentationController extends Controller
         ]);
     }
 
-    public function edit(Team $current_team, PresentationModel $presentation): Response
+    public function edit(Team $current_team, Presentation $presentation): Response
     {
         Gate::authorize('view', $presentation);
 
@@ -92,7 +92,7 @@ class PresentationController extends Controller
     public function update(
         UpdatePresentationRequest $request,
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): RedirectResponse {
         Gate::authorize('update', $presentation);
 
@@ -138,7 +138,7 @@ class PresentationController extends Controller
         return back();
     }
 
-    public function destroy(Team $current_team, PresentationModel $presentation): RedirectResponse
+    public function destroy(Team $current_team, Presentation $presentation): RedirectResponse
     {
         Gate::authorize('delete', $presentation);
 

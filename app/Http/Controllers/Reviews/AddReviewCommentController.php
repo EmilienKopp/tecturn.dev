@@ -8,7 +8,7 @@ use App\Application\Actions\Presentations\AddReviewComment;
 use App\Application\Commands\AddReviewCommentCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Reviews\AddReviewCommentRequest;
-use App\Models\RehearsalReviewModel;
+use App\Models\RehearsalReview;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 
@@ -16,7 +16,7 @@ class AddReviewCommentController extends Controller
 {
     public function __construct(private readonly AddReviewComment $addComment) {}
 
-    public function __invoke(AddReviewCommentRequest $request, RehearsalReviewModel $rehearsal_review): RedirectResponse
+    public function __invoke(AddReviewCommentRequest $request, RehearsalReview $rehearsal_review): RedirectResponse
     {
         Gate::authorize('comment', $rehearsal_review);
 

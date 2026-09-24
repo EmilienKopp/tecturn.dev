@@ -7,14 +7,14 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Beta\Contracts\BetaRequestRepository;
 use App\Domain\Beta\Entities\BetaRequestEntity;
 use App\Enums\BetaRequestStatus;
-use App\Models\BetaRequestModel;
+use App\Models\BetaRequest;
 use Illuminate\Support\Str;
 
 class EloquentBetaRequestRepository implements BetaRequestRepository
 {
     public function save(BetaRequestEntity $request): BetaRequestEntity
     {
-        $model = BetaRequestModel::updateOrCreate(
+        $model = BetaRequest::updateOrCreate(
             ['email_hash' => $this->hashEmail($request->email)],
             [
                 'name' => $request->name,
@@ -29,12 +29,12 @@ class EloquentBetaRequestRepository implements BetaRequestRepository
 
     public function findById(int $id): BetaRequestEntity
     {
-        return BetaRequestModel::findOrFail($id)->toEntity();
+        return BetaRequest::findOrFail($id)->toEntity();
     }
 
     public function hasApprovedRequestForEmail(string $email): bool
     {
-        return BetaRequestModel::query()
+        return BetaRequest::query()
             ->where('email_hash', $this->hashEmail($email))
             ->where('status', BetaRequestStatus::Approved)
             ->exists();
@@ -42,7 +42,7 @@ class EloquentBetaRequestRepository implements BetaRequestRepository
 
     public function hasActiveRequestForEmail(string $email): bool
     {
-        return BetaRequestModel::query()
+        return BetaRequest::query()
             ->where('email_hash', $this->hashEmail($email))
             ->whereIn('status', [BetaRequestStatus::Pending, BetaRequestStatus::Approved])
             ->exists();

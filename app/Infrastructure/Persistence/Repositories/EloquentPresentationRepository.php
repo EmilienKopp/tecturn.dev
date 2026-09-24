@@ -6,7 +6,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Entities\PresentationEntity;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -14,7 +14,7 @@ class EloquentPresentationRepository implements PresentationRepository
 {
     public function findById(int $id): PresentationEntity
     {
-        return PresentationModel::findOrFail($id)->toEntity();
+        return Presentation::findOrFail($id)->toEntity();
     }
 
     public function save(PresentationEntity $presentation): PresentationEntity
@@ -33,9 +33,9 @@ class EloquentPresentationRepository implements PresentationRepository
         ];
 
         if ($presentation->id === null) {
-            $model = PresentationModel::create($attributes);
+            $model = Presentation::create($attributes);
         } else {
-            $model = PresentationModel::findOrFail($presentation->id);
+            $model = Presentation::findOrFail($presentation->id);
             $model->update($attributes);
         }
 
@@ -44,51 +44,51 @@ class EloquentPresentationRepository implements PresentationRepository
 
     public function delete(int $id): void
     {
-        PresentationModel::whereKey($id)->delete();
+        Presentation::whereKey($id)->delete();
     }
 
     public function storeBackgroundImage(int $id, string $filePath, string $fileName): string
     {
-        $model = PresentationModel::findOrFail($id);
+        $model = Presentation::findOrFail($id);
 
         $media = $model->addMedia($filePath)
             ->usingFileName($fileName)
-            ->toMediaCollection(PresentationModel::BACKGROUND_COLLECTION);
+            ->toMediaCollection(Presentation::BACKGROUND_COLLECTION);
 
         return $media->getFullUrl();
     }
 
     public function clearBackgroundImage(int $id): void
     {
-        PresentationModel::findOrFail($id)
-            ->clearMediaCollection(PresentationModel::BACKGROUND_COLLECTION);
+        Presentation::findOrFail($id)
+            ->clearMediaCollection(Presentation::BACKGROUND_COLLECTION);
     }
 
     public function storeSourcePdf(int $id, string $filePath, string $fileName): string
     {
-        $model = PresentationModel::findOrFail($id);
+        $model = Presentation::findOrFail($id);
 
         $media = $model->addMedia($filePath)
             ->usingFileName($fileName)
-            ->toMediaCollection(PresentationModel::SOURCE_COLLECTION);
+            ->toMediaCollection(Presentation::SOURCE_COLLECTION);
 
         return $media->getFullUrl();
     }
 
     public function storeImage(int $id, string $filePath, string $fileName): string
     {
-        $model = PresentationModel::findOrFail($id);
+        $model = Presentation::findOrFail($id);
 
         $media = $model->addMedia($filePath)
             ->usingFileName($fileName)
-            ->toMediaCollection(PresentationModel::IMAGES_COLLECTION);
+            ->toMediaCollection(Presentation::IMAGES_COLLECTION);
 
         return $media->getFullUrl();
     }
 
     public function storeImageFromUrl(int $id, string $url): string
     {
-        $model = PresentationModel::findOrFail($id);
+        $model = Presentation::findOrFail($id);
 
         $response = Http::connectTimeout(10)->timeout(20)->get($url);
 
@@ -103,7 +103,7 @@ class EloquentPresentationRepository implements PresentationRepository
             // The collection's accepted mime types reject anything that isn't an image.
             $media = $model->addMedia($temporaryPath)
                 ->usingFileName($this->fileNameForUrl($url))
-                ->toMediaCollection(PresentationModel::IMAGES_COLLECTION);
+                ->toMediaCollection(Presentation::IMAGES_COLLECTION);
         } finally {
             if (is_file($temporaryPath)) {
                 unlink($temporaryPath);
@@ -115,8 +115,8 @@ class EloquentPresentationRepository implements PresentationRepository
 
     public function clearImages(int $id): void
     {
-        PresentationModel::findOrFail($id)
-            ->clearMediaCollection(PresentationModel::IMAGES_COLLECTION);
+        Presentation::findOrFail($id)
+            ->clearMediaCollection(Presentation::IMAGES_COLLECTION);
     }
 
     private function fileNameForUrl(string $url): string

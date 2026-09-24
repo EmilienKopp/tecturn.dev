@@ -10,7 +10,7 @@ use App\Domain\Presentation\Exceptions\DuplicateReviewRequest;
 use App\Domain\Presentation\Exceptions\ReviewerDoesNotFollowRequester;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\RequestRehearsalReviewRequest;
-use App\Models\RehearsalModel;
+use App\Models\Rehearsal;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -20,7 +20,7 @@ class RequestRehearsalReviewController extends Controller
 {
     public function __construct(private readonly RequestRehearsalReview $requestReview) {}
 
-    public function __invoke(RequestRehearsalReviewRequest $request, Team $current_team, RehearsalModel $rehearsal): RedirectResponse
+    public function __invoke(RequestRehearsalReviewRequest $request, Team $current_team, Rehearsal $rehearsal): RedirectResponse
     {
         Gate::authorize('view', $rehearsal->presentation);
 

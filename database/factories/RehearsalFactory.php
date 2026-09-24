@@ -3,17 +3,17 @@
 namespace Database\Factories;
 
 use App\Domain\Presentation\ValueObjects\PresentationContent;
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Carbon;
 
 /**
- * @extends Factory<RehearsalModel>
+ * @extends Factory<Rehearsal>
  */
-class RehearsalModelFactory extends Factory
+class RehearsalFactory extends Factory
 {
-    protected $model = RehearsalModel::class;
+    protected $model = Rehearsal::class;
 
     /**
      * @return array<string, mixed>
@@ -21,8 +21,8 @@ class RehearsalModelFactory extends Factory
     public function definition(): array
     {
         return [
-            'presentation_id' => PresentationModel::factory(),
-            'team_id' => fn (array $attributes) => PresentationModel::findOrFail($attributes['presentation_id'])->team_id,
+            'presentation_id' => Presentation::factory(),
+            'team_id' => fn (array $attributes) => Presentation::findOrFail($attributes['presentation_id'])->team_id,
             'started_at' => Carbon::now()->subMinutes(20),
             'ended_at' => Carbon::now()->subMinutes(5),
             'duration_seconds' => 900,
