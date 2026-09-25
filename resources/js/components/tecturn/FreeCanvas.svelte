@@ -13,6 +13,7 @@
         clampPercent,
         FREE_DEFAULTS,
         round2,
+        snapAxis,
         startPointerDrag,
     } from '@/lib/tecturn/free-drag';
     import { uploadImage } from '@/lib/tecturn/uploads';
@@ -26,6 +27,9 @@
     const blocks = $derived(slide.slots['main'] ?? []);
 
     let canvasEl = $state<HTMLDivElement | null>(null);
+    // Active snap guide lines (percent) shown mid-drag; null when nothing snaps.
+    let snapGuideX = $state<number | null>(null);
+    let snapGuideY = $state<number | null>(null);
     let imageInput = $state<HTMLInputElement | null>(null);
     let pendingImagePosition = $state<{ x: string; y: string } | null>(null);
     let uploadingImage = $state(false);
@@ -135,7 +139,11 @@
         editor.selectedBlockId = null;
     }
 
-    function startMove(event: PointerEvent, block: (typeof blocks)[number]) {
+    function startMove(
+        event: PointerEvent,
+        block: (typeof blocks)[number],
+        wrapper: HTMLElement,
+    ) {
         if (!canvasEl) {
             return;
         }
@@ -143,16 +151,36 @@
         const startX = num(block.style.x, FREE_DEFAULTS.x);
         const startY = num(block.style.y, FREE_DEFAULTS.y);
         const width = num(block.style.width, FREE_DEFAULTS.width);
+        const rect = canvasEl.getBoundingClientRect();
+        // Auto-height blocks have no stored height; seed from the rendered box.
+        const height =
+            block.style.height !== null
+                ? num(block.style.height, 20)
+                : (wrapper.getBoundingClientRect().height / rect.height) * 100;
 
         startPointerDrag(event, {
             container: canvasEl,
             onMove: (dx, dy) => {
+                const snappedX = snapAxis(
+                    clampPercent(startX + dx, 0, 100 - width),
+                    width,
+                );
+                const snappedY = snapAxis(
+                    clampPercent(startY + dy, 0, 95),
+                    height,
+                );
+                snapGuideX = snappedX.line;
+                snapGuideY = snappedY.line;
                 editor.updateBlockStyle(block.id, {
                     x: String(
-                        round2(clampPercent(startX + dx, 0, 100 - width)),
+                        round2(clampPercent(snappedX.value, 0, 100 - width)),
                     ),
-                    y: String(round2(clampPercent(startY + dy, 0, 95))),
+                    y: String(round2(clampPercent(snappedY.value, 0, 95))),
                 });
+            },
+            onEnd: () => {
+                snapGuideX = null;
+                snapGuideY = null;
             },
         });
     }
@@ -228,7 +256,8 @@
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                     class="absolute -top-4 left-0 flex h-4 w-full cursor-move items-center justify-center rounded-t bg-primary/80"
-                    onpointerdown={(e) => startMove(e, block)}
+                    onpointerdown={(e) =>
+                        startMove(e, block, e.currentTarget.parentElement!)}
                     title="Drag to move"
                 >
                     <div
@@ -273,6 +302,19 @@
             {/if}
         </div>
     {/each}
+
+    {#if snapGuideX !== null}
+        <div
+            class="pointer-events-none absolute top-0 bottom-0 z-20 w-px bg-primary/70"
+            style="left: {snapGuideX}%;"
+        ></div>
+    {/if}
+    {#if snapGuideY !== null}
+        <div
+            class="pointer-events-none absolute right-0 left-0 z-20 h-px bg-primary/70"
+            style="top: {snapGuideY}%;"
+        ></div>
+    {/if}
 
     {#if popoverVisible}
         <div
