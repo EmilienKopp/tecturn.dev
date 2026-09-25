@@ -25,7 +25,7 @@ Export is a **read operation** (no mutation), so per ARCHITECTURE.md:
 
 - No Action class — the controller reads via `PresentationReadModel::findForEditor()`
 - `PresentationContent::fromArray($data['content'])` reconstructs the domain VO
-- Authorization via route-bound `PresentationModel` + existing `PresentationPolicy`
+- Authorization via route-bound `Presentation` + existing `PresentationPolicy`
 
 The `app/Presentation/` namespace (distinct from `app/Domain/Presentation/`) hosts the Presenter port and implementations. It may use Laravel freely (it is infrastructure-adjacent: processes, paths).
 
@@ -78,7 +78,7 @@ Two embed-specific compile details (both handled by the "Copy Embed" snippet):
 - The element compiles with **`shadow: 'none'`** (light DOM). Animotion's `Presentation` initializes Reveal.js via `document.querySelector('.reveal')`, which cannot see into a shadow root — and the reveal/theme CSS injected into `<head>` couldn't style it either. Light DOM makes both work; the tradeoff is no style encapsulation from the host page.
 - The element **must be block-level with a real height** (Reveal sizes to 100% of its container); custom elements default to `display: inline` with zero height.
 
-**Access model** — the route is public (external pages can't send session cookies) and keyed by `embed_token`, a random 32-char string on the presentations table (generated in `PresentationModel::booted()` on create; backfilled by migration). The URL is a capability: private until shared, revocable by rotating the token. Throttled at 60 req/min.
+**Access model** — the route is public (external pages can't send session cookies) and keyed by `embed_token`, a random 32-char string on the presentations table (generated in `Presentation::booted()` on create; backfilled by migration). The URL is a capability: private until shared, revocable by rotating the token. Throttled at 60 req/min.
 
 **Caching & regeneration** (`app/Presentation/EmbedCache.php`):
 
