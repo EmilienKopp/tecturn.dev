@@ -33,11 +33,16 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
  * @property list<string>|null $yoyotranslate_languages
+ * @property string|null $draft_plan
+ * @property Carbon|null $draft_requested_at
+ * @property Carbon|null $draft_completed_at
+ * @property Carbon|null $draft_failed_at
+ * @property string|null $draft_error
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team $team
  */
-#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages'])]
+#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages', 'draft_plan', 'draft_requested_at', 'draft_completed_at', 'draft_failed_at', 'draft_error'])]
 #[UsePolicy(PresentationPolicy::class)]
 class PresentationModel extends Model implements HasMedia
 {
@@ -121,6 +126,11 @@ class PresentationModel extends Model implements HasMedia
             yoyotranslateSessionId: $this->yoyotranslate_session_id,
             yoyotranslateSessionStartedAt: $this->yoyotranslate_session_started_at?->toDateTimeImmutable(),
             yoyotranslateLanguages: $this->yoyotranslate_languages ?? [],
+            draftPlan: $this->draft_plan,
+            draftRequestedAt: $this->draft_requested_at?->toDateTimeImmutable(),
+            draftCompletedAt: $this->draft_completed_at?->toDateTimeImmutable(),
+            draftFailedAt: $this->draft_failed_at?->toDateTimeImmutable(),
+            draftError: $this->draft_error,
         );
     }
 
@@ -142,6 +152,9 @@ class PresentationModel extends Model implements HasMedia
             'source' => 'array',
             'yoyotranslate_session_started_at' => 'datetime',
             'yoyotranslate_languages' => 'array',
+            'draft_requested_at' => 'datetime',
+            'draft_completed_at' => 'datetime',
+            'draft_failed_at' => 'datetime',
         ];
     }
 }

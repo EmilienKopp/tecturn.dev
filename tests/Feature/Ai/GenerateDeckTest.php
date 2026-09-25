@@ -4,8 +4,18 @@ declare(strict_types=1);
 
 use App\Ai\Agents\Deckster;
 use App\Application\Actions\Presentations\GenerateDeckFromPlan;
+use App\Application\Actions\Presentations\RequestDeckDraft;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
+use App\Application\Commands\RequestDeckDraftCommand;
 use App\Models\Team;
+
+/** Creates the draft row the fill action expects, mirroring the real two-step flow. */
+function requestDraft(Team $team, string $plan = '# My plan', string $name = ''): int
+{
+    return app(RequestDeckDraft::class)->execute(
+        new RequestDeckDraftCommand(team_id: $team->id, name: $name, plan: $plan),
+    )->id;
+}
 
 function fakeDeck(): array
 {
@@ -35,15 +45,17 @@ it('generates and persists a deck from a plan via the action', function () {
     Deckster::fake([fakeDeck()]);
 
     $team = Team::factory()->create();
+    $draftId = requestDraft($team);
 
     $entity = app(GenerateDeckFromPlan::class)->execute(
-        new GenerateDeckFromPlanCommand(team_id: $team->id, name: '', plan: '# My plan'),
+        new GenerateDeckFromPlanCommand(presentation_id: $draftId, name: ''),
     );
 
-    expect($entity->id)->not->toBeNull()
+    expect($entity->id)->toBe($draftId)
         ->and($entity->name)->toBe('Intro to Widgets') // falls back to the generated title
         ->and($entity->content->slides)->toHaveCount(2)
         ->and($entity->flow)->not->toBeNull()
+        ->and($entity->draftCompletedAt)->not->toBeNull()
         ->and($entity->getCreatedEvents())->toHaveCount(1); // records a domain event for the app layer to dispatch
 
     $this->assertDatabaseHas('presentations', [
@@ -61,12 +73,12 @@ it('generates a deck locked onto the creator branding', function () {
     ]);
 
     $team = Team::factory()->create();
+    $draftId = requestDraft($team);
 
     $entity = app(GenerateDeckFromPlan::class)->execute(
         new GenerateDeckFromPlanCommand(
-            team_id: $team->id,
+            presentation_id: $draftId,
             name: '',
-            plan: '# My plan',
             branding: [
                 'background' => 'linear-gradient(135deg, #0f2027, #2c5364)',
                 'primary' => '#111827',
@@ -85,9 +97,10 @@ it('prefers an explicit name over the generated title', function () {
     Deckster::fake([fakeDeck()]);
 
     $team = Team::factory()->create();
+    $draftId = requestDraft($team, plan: '# plan', name: 'Custom name');
 
     $entity = app(GenerateDeckFromPlan::class)->execute(
-        new GenerateDeckFromPlanCommand(team_id: $team->id, name: 'Custom name', plan: '# plan'),
+        new GenerateDeckFromPlanCommand(presentation_id: $draftId, name: 'Custom name'),
     );
 
     expect($entity->name)->toBe('Custom name');

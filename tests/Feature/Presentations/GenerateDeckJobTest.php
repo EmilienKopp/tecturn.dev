@@ -10,7 +10,6 @@ use App\Application\Events\DeckGenerationFailed;
 use App\Jobs\GenerateDeckJob;
 use App\Models\PresentationModel;
 use App\Models\User;
-use App\Presentation\GeneratingDeckTally;
 use Illuminate\Support\Facades\Event;
 
 beforeEach(function () {
@@ -34,38 +33,38 @@ function fakeJobDeck(): array
     ];
 }
 
-function runDeckJob(User $user, string $plan = '# My plan', string $name = ''): void
+function draftFor(User $user, string $plan = '# My plan', string $name = 'Generating deck…'): PresentationModel
+{
+    return PresentationModel::factory()
+        ->generatingDraft($plan)
+        ->create(['team_id' => $user->currentTeam->id, 'name' => $name]);
+}
+
+function runDeckJob(PresentationModel $draft, User $user, string $name = ''): void
 {
     $job = new GenerateDeckJob(
-        new GenerateDeckFromPlanCommand(
-            team_id: $user->currentTeam->id,
-            name: $name,
-            plan: $plan,
-        ),
+        new GenerateDeckFromPlanCommand(presentation_id: $draft->id, name: $name),
         $user->id,
         $user->currentTeam->slug,
     );
 
-    $job->handle(app(GenerateDeckFromPlan::class), app(GeneratingDeckTally::class));
+    $job->handle(app(GenerateDeckFromPlan::class));
 }
 
-test('the job builds the deck and broadcasts a ready event to the user', function () {
+test('the job fills the draft and broadcasts a ready event to the user', function () {
     Deckster::fake([fakeJobDeck()]);
     Event::fake([DeckGenerated::class]);
 
     $user = User::factory()->create();
-    $team = $user->currentTeam;
+    $draft = draftFor($user);
 
-    $tally = app(GeneratingDeckTally::class);
-    $tally->increment($team->id);
+    runDeckJob($draft, $user);
 
-    runDeckJob($user);
-
-    $presentation = PresentationModel::query()->firstOrFail();
-    expect($presentation->team_id)->toBe($team->id)
-        ->and($presentation->name)->toBe('Intro to Widgets')
-        // The skeleton is cleared once the deck exists.
-        ->and($tally->count($team->id))->toBe(0);
+    $presentation = $draft->fresh();
+    expect($presentation->name)->toBe('Intro to Widgets')
+        ->and($presentation->draft_completed_at)->not->toBeNull()
+        ->and($presentation->draft_failed_at)->toBeNull()
+        ->and($presentation->content['slides'])->toHaveCount(1);
 
     Deckster::assertPrompted('# My plan');
 
@@ -85,40 +84,41 @@ test('an explicit name overrides the generated title', function () {
     Event::fake([DeckGenerated::class]);
 
     $user = User::factory()->create();
+    $draft = draftFor($user, name: 'Custom name');
 
-    runDeckJob($user, name: 'Custom name');
+    runDeckJob($draft, $user, name: 'Custom name');
 
-    expect(PresentationModel::query()->firstOrFail()->name)->toBe('Custom name');
+    expect($draft->fresh()->name)->toBe('Custom name');
 });
 
-test('a failing build broadcasts a failure event and persists nothing', function () {
+test('a failing build marks the draft failed and broadcasts a failure event', function () {
     Deckster::fake([function () {
         throw new RuntimeException('provider exploded');
     }]);
     Event::fake([DeckGenerationFailed::class]);
 
     $user = User::factory()->create();
-    $team = $user->currentTeam;
-
-    $tally = app(GeneratingDeckTally::class);
-    $tally->increment($team->id);
+    $draft = draftFor($user);
 
     $job = new GenerateDeckJob(
-        new GenerateDeckFromPlanCommand(team_id: $team->id, name: '', plan: '# plan'),
+        new GenerateDeckFromPlanCommand(presentation_id: $draft->id, name: ''),
         $user->id,
-        $team->slug,
+        $user->currentTeam->slug,
     );
 
     // The queue calls handle(); on a thrown exception it then calls failed().
     try {
-        $job->handle(app(GenerateDeckFromPlan::class), $tally);
+        $job->handle(app(GenerateDeckFromPlan::class));
     } catch (RuntimeException) {
         $job->failed(new RuntimeException('provider exploded'));
     }
 
-    expect(PresentationModel::query()->count())->toBe(0)
-        // The skeleton is cleared even when the build fails.
-        ->and($tally->count($team->id))->toBe(0);
+    $presentation = $draft->fresh();
+    // The row survives so the user sees the failure and can retry.
+    expect($presentation)->not->toBeNull()
+        ->and($presentation->draft_failed_at)->not->toBeNull()
+        ->and($presentation->draft_error)->toBe('provider exploded')
+        ->and($presentation->draft_completed_at)->toBeNull();
 
     Event::assertDispatched(DeckGenerationFailed::class, function (DeckGenerationFailed $event) use ($user): bool {
         return $event->broadcastOn()[0]->name === "private-App.Models.User.{$user->id}"

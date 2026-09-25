@@ -6,10 +6,9 @@ use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Jobs\GenerateDeckJob;
 use App\Models\PresentationModel;
 use App\Models\User;
-use App\Presentation\GeneratingDeckTally;
 use Illuminate\Support\Facades\Queue;
 
-test('generating a draft defers a job and redirects back without building synchronously', function () {
+test('generating a draft creates a pending row and defers the build', function () {
     Queue::fake();
 
     $user = User::factory()->create();
@@ -24,19 +23,38 @@ test('generating a draft defers a job and redirects back without building synchr
 
     $response->assertRedirect();
 
-    Queue::assertPushed(GenerateDeckJob::class, function (GenerateDeckJob $job) use ($team, $user): bool {
+    // The row exists straight away and is inspectable as an in-progress draft.
+    $presentation = PresentationModel::query()->firstOrFail();
+    expect($presentation->team_id)->toBe($team->id)
+        ->and($presentation->name)->toBe('Custom name')
+        ->and($presentation->draft_plan)->toBe('# My talk plan')
+        ->and($presentation->draft_requested_at)->not->toBeNull()
+        ->and($presentation->draft_completed_at)->toBeNull()
+        ->and($presentation->draft_failed_at)->toBeNull();
+
+    Queue::assertPushed(GenerateDeckJob::class, function (GenerateDeckJob $job) use ($team, $user, $presentation): bool {
         return $job->command instanceof GenerateDeckFromPlanCommand
-            && $job->command->plan === '# My talk plan'
+            && $job->command->presentation_id === $presentation->id
             && $job->command->name === 'Custom name'
-            && $job->command->team_id === $team->id
             && $job->userId === $user->id
             && $job->teamSlug === $team->slug;
     });
+});
 
-    // Nothing is built during the request; the job does that later.
-    expect(PresentationModel::query()->count())->toBe(0)
-        // A skeleton is reserved on the index straight away.
-        ->and(app(GeneratingDeckTally::class)->count($team->id))->toBe(1);
+test('a draft without a name uses a placeholder until the AI titles it', function () {
+    Queue::fake();
+
+    $user = User::factory()->create();
+    $team = $user->currentTeam;
+
+    $this
+        ->actingAs($user)
+        ->post(route('presentations.generate', ['current_team' => $team->slug]), [
+            'plan' => '# My talk plan',
+        ])
+        ->assertRedirect();
+
+    expect(PresentationModel::query()->firstOrFail()->name)->toBe('Generating deck…');
 });
 
 test('the plan is required', function () {

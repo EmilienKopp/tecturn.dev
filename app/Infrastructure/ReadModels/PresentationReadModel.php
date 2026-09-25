@@ -11,7 +11,7 @@ use App\Models\Views\PresentationsView;
 class PresentationReadModel
 {
     /**
-     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, updated_at: string|null}>
+     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, status: 'ready'|'generating'|'failed', draft_error: string|null, updated_at: string|null}>
      */
     public function listForTeam(int $teamId): array
     {
@@ -24,9 +24,30 @@ class PresentationReadModel
                 'name' => $presentation->name,
                 'is_private' => $presentation->is_private,
                 'slide_count' => count($presentation->content['slides'] ?? []),
+                'status' => $this->draftStatus($presentation),
+                'draft_error' => $presentation->draft_error,
                 'updated_at' => $presentation->updated_at?->toISOString(),
             ])
             ->all();
+    }
+
+    /**
+     * Derives the deck's AI-draft state from its draft timestamps. Decks created
+     * before draft tracking (all timestamps null) are treated as ready.
+     *
+     * @return 'ready'|'generating'|'failed'
+     */
+    private function draftStatus(PresentationsView $presentation): string
+    {
+        if ($presentation->draft_failed_at !== null) {
+            return 'failed';
+        }
+
+        if ($presentation->draft_requested_at !== null && $presentation->draft_completed_at === null) {
+            return 'generating';
+        }
+
+        return 'ready';
     }
 
     /**

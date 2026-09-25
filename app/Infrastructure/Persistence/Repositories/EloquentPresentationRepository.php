@@ -30,6 +30,11 @@ class EloquentPresentationRepository implements PresentationRepository
             'yoyotranslate_session_id' => $presentation->yoyotranslateSessionId,
             'yoyotranslate_session_started_at' => $presentation->yoyotranslateSessionStartedAt,
             'yoyotranslate_languages' => $presentation->yoyotranslateLanguages,
+            'draft_plan' => $presentation->draftPlan,
+            'draft_requested_at' => $presentation->draftRequestedAt,
+            'draft_completed_at' => $presentation->draftCompletedAt,
+            'draft_failed_at' => $presentation->draftFailedAt,
+            'draft_error' => $presentation->draftError,
         ];
 
         if ($presentation->id === null) {
