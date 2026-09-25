@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\DatabaseView;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
@@ -27,7 +28,7 @@ return new class extends Migration
         }
 
         DB::statement('DROP VIEW IF EXISTS practice_run_history');
-        DB::statement(file_get_contents(database_path('views/2026_09_19_150000_practice_run_history.sql')));
+        DB::statement(DatabaseView::sql('2026_09_19_150000_practice_run_history.sql'));
     }
 
     public function down(): void
