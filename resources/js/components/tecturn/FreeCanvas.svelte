@@ -196,11 +196,10 @@
 
         const startWidth = num(block.style.width, FREE_DEFAULTS.width);
         const rect = canvasEl.getBoundingClientRect();
-        // Auto-height blocks have no stored height; seed from the rendered box.
+        // Seed from the rendered box so a content-grown flow block resizes from
+        // what's on screen, not a stale (smaller) stored min-height.
         const startHeight =
-            block.style.height !== null
-                ? num(block.style.height, 20)
-                : (wrapper.getBoundingClientRect().height / rect.height) * 100;
+            (wrapper.getBoundingClientRect().height / rect.height) * 100;
         const x = num(block.style.x, FREE_DEFAULTS.x);
         const y = num(block.style.y, FREE_DEFAULTS.y);
 
@@ -235,6 +234,9 @@
     {#each blocks as block (block.id)}
         {@const selected = editor.selectedBlockId === block.id}
         {@const height = block.style.height}
+        <!-- Media keeps a hard height for its aspect box; flow content uses
+             min-height so the outline always grows to contain the text. -->
+        {@const isMedia = block.type === 'image' || block.type === 'qr'}
         <div
             class="free-block absolute {selected
                 ? 'z-10 ring-2 ring-primary'
@@ -245,7 +247,9 @@
             )}%; width: {num(
                 block.style.width,
                 FREE_DEFAULTS.width,
-            )}%;{height !== null ? ` height: ${num(height, 20)}%;` : ''}"
+            )}%;{height !== null
+                ? ` ${isMedia ? 'height' : 'min-height'}: ${num(height, 20)}%;`
+                : ''}"
             onclick={(e) => {
                 e.stopPropagation();
                 editor.selectedBlockId = block.id;
