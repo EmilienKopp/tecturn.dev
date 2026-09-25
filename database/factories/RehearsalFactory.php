@@ -22,7 +22,7 @@ class RehearsalFactory extends Factory
     {
         return [
             'presentation_id' => Presentation::factory(),
-            'team_id' => fn (array $attributes) => Presentation::findOrFail($attributes['presentation_id'])->team_id,
+            'team_id' => fn (array $attributes) => Presentation::findOrFail((int) $attributes['presentation_id'])->team_id,
             'started_at' => Carbon::now()->subMinutes(20),
             'ended_at' => Carbon::now()->subMinutes(5),
             'duration_seconds' => 900,

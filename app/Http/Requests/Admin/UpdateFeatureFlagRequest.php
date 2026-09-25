@@ -26,9 +26,11 @@ class UpdateFeatureFlagRequest extends FormRequest
     {
         $flag = FeatureCatalog::find((string) $this->input('key'));
 
+        $options = $flag !== null ? array_column($flag->options, 'value') : [];
+
         $valueRule = $flag !== null && $flag->isBoolean()
             ? ['required', 'boolean']
-            : ['required', 'string', Rule::in(array_column($flag?->options ?? [], 'value'))];
+            : ['required', 'string', Rule::in($options)];
 
         $isTeamScoped = $flag !== null && ! $flag->isGlobal();
 

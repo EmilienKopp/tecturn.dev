@@ -9,13 +9,15 @@ use App\Domain\Presentation\Exceptions\InvalidFlowGraph;
 readonly class FlowNode
 {
     /**
-     * @param  array{slideId?: string, label?: string|null, blockId?: string, actionId?: string, disabled?: bool}  $data  Slide nodes
-     *                                                                                                                    carry `slideId` and an optional `disabled` marker (explicitly removed
-     *                                                                                                                    from the show, so an edge-less chain isn't mistaken for an unwired
-     *                                                                                                                    deck); transition nodes carry an optional `label` and,
-     *                                                                                                                    once assigned, the `slideId` of the slide that owns the step.
-     *                                                                                                                    Code-action nodes reference the code block and action they order
-     *                                                                                                                    (`blockId` + `actionId`), plus an optional `label` and `slideId`.
+     * @param  array<string, mixed>  $data  Raw, unvalidated node data. Slide nodes carry `slideId`
+     *                                      and an optional `disabled` marker (explicitly removed from
+     *                                      the show, so an edge-less chain isn't mistaken for an
+     *                                      unwired deck); transition nodes carry an optional `label`
+     *                                      and, once assigned, the `slideId` of the slide that owns
+     *                                      the step. Code-action nodes reference the code block and
+     *                                      action they order (`blockId` + `actionId`), plus an
+     *                                      optional `label` and `slideId`. The constructor validates
+     *                                      these per node type.
      */
     public function __construct(
         public string $id,

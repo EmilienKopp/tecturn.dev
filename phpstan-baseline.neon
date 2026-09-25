@@ -1,0 +1,14 @@
+# PHPStan baseline.
+#
+# Known PHPStan limitation, not a real error. accountsFor() returns
+# $user->created_at, which at runtime is a Carbon\CarbonImmutable, so the method
+# correctly declares CarbonInterface. PHPStan instead infers Illuminate\Support\Carbon
+# from the User @property annotation, and Collection's invariant TValue rejects the
+# (compatible) subtype. See https://phpstan.org/blog/whats-up-with-template-covariant
+parameters:
+	ignoreErrors:
+		-
+			message: '#^Method App\\Infrastructure\\ReadModels\\AdminBetaRequestsReadModel\:\:accountsFor\(\) should return Illuminate\\Support\\Collection\<string, Carbon\\CarbonInterface\|null\> but returns Illuminate\\Support\\Collection\<string, Illuminate\\Support\\Carbon\|null\>\.$#'
+			identifier: return.type
+			count: 1
+			path: app/Infrastructure/ReadModels/AdminBetaRequestsReadModel.php

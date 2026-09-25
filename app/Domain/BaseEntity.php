@@ -17,7 +17,7 @@ abstract class BaseEntity implements Entity
     use ArrayLike;
 
     /**
-     * @var SplObjectStorage<DomainEventType,list<DomainEvent>>
+     * @var SplObjectStorage<DomainEventType,list<DomainEvent>>|null
      */
     protected ?SplObjectStorage $events = null;
 
@@ -30,28 +30,20 @@ abstract class BaseEntity implements Entity
         }
     }
 
-    public static function fromArray(array $data): static
-    {
-        $data = array_filter(
-            $data,
-            static fn (string $key): bool => property_exists(static::class, $key),
-            ARRAY_FILTER_USE_KEY,
-        );
-
-        return new static(...$data);
-    }
-
     final public function getIterator(): Traversable
     {
         return new ArrayIterator($this->toArray());
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function events(): array
     {
         $flattened = [];
         if ($this->events !== null) {
             foreach ($this->events as $type) {
-                $flattened = [...$flattened, ...($this->events[$type] ?? [])];
+                $flattened = [...$flattened, ...$this->events[$type]];
             }
         }
 
@@ -63,75 +55,98 @@ abstract class BaseEntity implements Entity
      */
     public function getEvents(DomainEventType $type): array
     {
-        $this->ensureEventStorage();
+        $storage = $this->ensureEventStorage();
 
-        return $this->events[$type] ?? [];
+        return $storage[$type] ?? [];
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function getCreatedEvents(): array
     {
         return $this->getEvents(DomainEventType::CREATED);
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function getUpdatedEvents(): array
     {
         return $this->getEvents(DomainEventType::UPDATED);
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function getDeletedEvents(): array
     {
         return $this->getEvents(DomainEventType::DELETED);
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function getRestoredEvents(): array
     {
         return $this->getEvents(DomainEventType::RESTORED);
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function created(): array
     {
         return [DomainEvent::plain($this)];
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function updated(): array
     {
         return [DomainEvent::plain($this)];
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function deleted(): array
     {
         return [DomainEvent::plain($this)];
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function restored(): array
     {
         return [DomainEvent::plain($this)];
     }
 
-    public function onCreated()
+    public function onCreated(): void
     {
-        $this->ensureEventStorage();
-        $this->events[DomainEventType::CREATED] = $this->created();
+        $this->ensureEventStorage()[DomainEventType::CREATED] = $this->created();
     }
 
-    public function onUpdated()
+    public function onUpdated(): void
     {
-        $this->ensureEventStorage();
-        $this->events[DomainEventType::UPDATED] = $this->updated();
+        $this->ensureEventStorage()[DomainEventType::UPDATED] = $this->updated();
     }
 
-    public function onDeleted()
+    public function onDeleted(): void
     {
-        $this->ensureEventStorage();
-        $this->events[DomainEventType::DELETED] = $this->deleted();
+        $this->ensureEventStorage()[DomainEventType::DELETED] = $this->deleted();
     }
 
-    public function onRestored()
+    public function onRestored(): void
     {
-        $this->ensureEventStorage();
-        $this->events[DomainEventType::RESTORED] = $this->restored();
+        $this->ensureEventStorage()[DomainEventType::RESTORED] = $this->restored();
     }
 
+    /**
+     * @return list<DomainEvent>
+     */
     public function flushEvents(): array
     {
         $events = $this->events();
@@ -143,16 +158,16 @@ abstract class BaseEntity implements Entity
     /**
      * @param  list<DomainEvent>  $events
      */
-    public function on(DomainEventType $type, array $events)
+    public function on(DomainEventType $type, array $events): void
     {
-        $this->ensureEventStorage();
-        $this->events[$type] = $events;
+        $this->ensureEventStorage()[$type] = $events;
     }
 
-    private function ensureEventStorage(): void
+    /**
+     * @return SplObjectStorage<DomainEventType, list<DomainEvent>>
+     */
+    private function ensureEventStorage(): SplObjectStorage
     {
-        if ($this->events === null) {
-            $this->events = new SplObjectStorage;
-        }
+        return $this->events ??= new SplObjectStorage;
     }
 }

@@ -10,7 +10,6 @@ use App\Models\Presentation;
 use App\Models\Team;
 use App\Support\Features;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class StartTranslationSessionController extends Controller
@@ -26,7 +25,7 @@ class StartTranslationSessionController extends Controller
         $this->startTranslationSession->execute(
             new StartTranslationSessionCommand(
                 presentationId: $presentation->id,
-                userId: Auth::id(),
+                userId: $request->user()->id,
                 sourceLanguage: $request->validated('source_language'),
                 eventId: $request->eventId(),
                 languages: $request->languages(),

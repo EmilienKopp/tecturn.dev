@@ -16,6 +16,9 @@ use IteratorAggregate;
  */
 interface Entity extends Arrayable, ArrayAccess, IteratorAggregate
 {
+    /**
+     * @return list<DomainEvent>
+     */
     public function events(): array;
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Contacts;
 
+use App\Models\User;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
@@ -9,9 +10,11 @@ class ToggleFollowRequest extends FormRequest
 {
     public function authorize(): bool
     {
+        $routeUser = $this->route('user');
+
         return $this->user() !== null
-            && $this->route('user') !== null
-            && $this->user()->id !== $this->route('user')->id;
+            && $routeUser instanceof User
+            && $this->user()->id !== $routeUser->id;
     }
 
     /**

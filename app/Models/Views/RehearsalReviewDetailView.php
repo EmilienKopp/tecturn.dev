@@ -52,6 +52,10 @@ class RehearsalReviewDetailView extends ReadOnlyModel
         ];
     }
 
+    /**
+     * @param  Builder<RehearsalReviewDetailView>  $query
+     * @return Builder<RehearsalReviewDetailView>
+     */
     public function scopePendingLast(Builder $query): Builder
     {
         return $query->orderByRaw("CASE WHEN status = 'pending' THEN 0 ELSE 1 END")->orderByDesc('created_at');

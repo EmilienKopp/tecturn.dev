@@ -49,7 +49,7 @@ class RehearsalController extends Controller
 
         return Inertia::render('rehearsals/Show', [
             'run' => $run,
-            'source' => PresentationSource::fromArray($presentation?->source ?? [])->toArray(),
+            'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'sourcePdfUrl' => $presentation?->sourcePdfUrl(),
             'reviews' => $this->reviews->listForRun($rehearsal->id),
             'followers' => $this->contacts->followersForUser($request->user()->id),

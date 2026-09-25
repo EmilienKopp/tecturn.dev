@@ -27,14 +27,14 @@ class AdminOverviewReadModel
         $row = AdminOverviewView::query()->first();
 
         return [
-            'total_users' => $row?->total_users ?? 0,
-            'total_teams' => $row?->total_teams ?? 0,
-            'total_workspaces' => $row?->total_workspaces ?? 0,
-            'total_presentations' => $row?->total_presentations ?? 0,
-            'total_sessions' => $row?->total_sessions ?? 0,
-            'live_sessions' => $row?->live_sessions ?? 0,
-            'total_reactions' => $row?->total_reactions ?? 0,
-            'total_viewers' => $row?->total_viewers ?? 0,
+            'total_users' => $row->total_users ?? 0,
+            'total_teams' => $row->total_teams ?? 0,
+            'total_workspaces' => $row->total_workspaces ?? 0,
+            'total_presentations' => $row->total_presentations ?? 0,
+            'total_sessions' => $row->total_sessions ?? 0,
+            'live_sessions' => $row->live_sessions ?? 0,
+            'total_reactions' => $row->total_reactions ?? 0,
+            'total_viewers' => $row->total_viewers ?? 0,
         ];
     }
 }

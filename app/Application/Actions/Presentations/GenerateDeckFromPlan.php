@@ -9,6 +9,7 @@ use App\Ai\DeckAssembler;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Entities\PresentationEntity;
+use Laravel\Ai\Responses\StructuredAgentResponse;
 
 class GenerateDeckFromPlan
 {
@@ -19,7 +20,8 @@ class GenerateDeckFromPlan
 
     public function execute(GenerateDeckFromPlanCommand $command): PresentationEntity
     {
-        $structured = (new Deckster)->prompt($command->plan)->toArray();
+        $response = (new Deckster)->prompt($command->plan);
+        $structured = $response instanceof StructuredAgentResponse ? $response->toArray() : [];
 
         $deck = $this->assembler->assemble($structured, $command->branding);
 

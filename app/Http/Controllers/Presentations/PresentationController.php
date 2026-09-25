@@ -59,7 +59,7 @@ class PresentationController extends Controller
                 slide_background: $request->user()->branding['background'],
                 sourceType: $sourceType,
                 externalUrl: $sourceType === 'google_slides' ? $request->validated('external_url') : null,
-                pdfFilePath: $pdf?->getRealPath(),
+                pdfFilePath: $pdf?->getRealPath() ?: null,
                 pdfFileName: $pdf !== null ? 'source.'.$pdf->getClientOriginalExtension() : null,
             ),
         );

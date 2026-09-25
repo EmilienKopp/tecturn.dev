@@ -21,7 +21,7 @@ class PresentationSessionFactory extends Factory
     {
         return [
             'presentation_id' => Presentation::factory(),
-            'team_id' => fn (array $attributes) => Presentation::findOrFail($attributes['presentation_id'])->team_id,
+            'team_id' => fn (array $attributes) => Presentation::findOrFail((int) $attributes['presentation_id'])->team_id,
             'started_at' => Carbon::now()->subMinutes(30),
             'ended_at' => null,
             'last_seen_at' => Carbon::now()->subMinutes(30),

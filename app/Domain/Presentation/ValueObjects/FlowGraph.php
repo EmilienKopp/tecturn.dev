@@ -36,10 +36,6 @@ readonly class FlowGraph
         $nodesById = [];
 
         foreach ($this->nodes as $node) {
-            if (! $node instanceof FlowNode) {
-                throw new InvalidFlowGraph('Nodes must be FlowNode value objects.');
-            }
-
             if (isset($nodesById[$node->id])) {
                 throw new InvalidFlowGraph("Duplicate flow node id \"{$node->id}\".");
             }
@@ -53,10 +49,6 @@ readonly class FlowGraph
         $outgoingChainBySource = [];
 
         foreach ($this->edges as $edge) {
-            if (! $edge instanceof FlowEdge) {
-                throw new InvalidFlowGraph('Edges must be FlowEdge value objects.');
-            }
-
             if (isset($edgeIds[$edge->id])) {
                 throw new InvalidFlowGraph("Duplicate flow edge id \"{$edge->id}\".");
             }

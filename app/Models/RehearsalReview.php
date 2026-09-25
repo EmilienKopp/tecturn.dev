@@ -58,9 +58,11 @@ class RehearsalReview extends Model
             requester_user_id: $this->requester_user_id,
             reviewer_user_id: $this->reviewer_user_id,
             status: $this->status,
-            comments: $this->comments
-                ->map(fn (ReviewComment $comment): ReviewCommentEntity => $comment->toEntity())
-                ->all(),
+            comments: array_values(
+                $this->comments
+                    ->map(fn (ReviewComment $comment): ReviewCommentEntity => $comment->toEntity())
+                    ->all()
+            ),
             id: $this->id,
         );
     }
