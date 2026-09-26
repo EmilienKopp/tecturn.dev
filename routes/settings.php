@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\AiCredentialController;
 use App\Http\Controllers\Settings\BrandingController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Teams\TeamController;
@@ -21,6 +22,12 @@ Route::middleware([
 
     Route::get('settings/branding', [BrandingController::class, 'edit'])->name('branding.edit');
     Route::patch('settings/branding', [BrandingController::class, 'update'])->name('branding.update');
+
+    Route::get('settings/ai', [AiCredentialController::class, 'index'])->name('ai-credentials.index');
+    Route::post('settings/ai', [AiCredentialController::class, 'store'])->name('ai-credentials.store');
+    Route::post('settings/ai/test', [AiCredentialController::class, 'test'])->name('ai-credentials.test');
+    Route::patch('settings/ai/{aiCredential}/default', [AiCredentialController::class, 'setDefault'])->name('ai-credentials.default');
+    Route::delete('settings/ai/{aiCredential}', [AiCredentialController::class, 'destroy'])->name('ai-credentials.destroy');
 
     Route::inertia('settings/appearance', 'settings/Appearance')->name('appearance.edit');
 

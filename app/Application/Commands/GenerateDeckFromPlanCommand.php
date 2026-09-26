@@ -19,5 +19,11 @@ readonly class GenerateDeckFromPlanCommand
         public string $name,
         /** The creating user's branding; overrides the agent's theme so the deck stays on brand. */
         public ?array $branding = null,
+        /**
+         * The user's chosen "bring your own AI" credential id, or null to use
+         * the house provider. Only the id travels on the queue payload; the
+         * key is decrypted in the job so it never lands in the jobs table.
+         */
+        public ?int $ai_credential_id = null,
     ) {}
 }

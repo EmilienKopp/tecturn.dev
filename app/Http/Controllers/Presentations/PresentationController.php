@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Presentations;
 
+use App\Ai\HouseAllowance;
 use App\Application\Actions\Presentations\CreatePresentation;
 use App\Application\Actions\Presentations\DeletePresentation;
 use App\Application\Actions\Presentations\UpdatePresentation;
@@ -38,8 +39,20 @@ class PresentationController extends Controller
 
     public function index(Team $current_team): Response
     {
+        $user = request()->user();
+
         return Inertia::render('presentations/Index', [
             'presentations' => $this->presentations->listForTeam($current_team->id),
+            'houseAllowance' => HouseAllowance::toArray($user),
+            'aiCredentials' => $user->aiCredentials()
+                ->latest()
+                ->get()
+                ->map(fn ($credential): array => [
+                    'id' => $credential->id,
+                    'label' => $credential->label ?: $credential->model,
+                    'model' => $credential->model,
+                    'is_default' => $credential->is_default,
+                ]),
         ]);
     }
 

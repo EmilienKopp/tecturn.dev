@@ -6,6 +6,7 @@
     import { Separator } from '@/components/ui/separator';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
+    import { index as aiCredentials } from '@/routes/ai-credentials';
     import { edit as editAppearance } from '@/routes/appearance';
     import { edit as editBranding } from '@/routes/branding';
     import { edit as editProfile } from '@/routes/profile';
@@ -26,6 +27,10 @@
         {
             title: 'Branding',
             href: editBranding(),
+        },
+        {
+            title: 'AI models',
+            href: aiCredentials(),
         },
         {
             title: 'Teams',

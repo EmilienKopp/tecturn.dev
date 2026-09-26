@@ -11,6 +11,7 @@
     import Upload from 'lucide-svelte/icons/upload';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
+    import Select from '@/components/input/Select.svelte';
     import { Button } from '@/components/ui/button';
     import {
         Card,
@@ -36,6 +37,7 @@
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
     import { Skeleton } from '@/components/ui/skeleton';
+    import { index as aiSettings } from '@/routes/ai-credentials';
     import {
         destroy,
         edit,
@@ -57,10 +59,21 @@
         updated_at: string | null;
     };
 
+    type AiCredentialOption = {
+        id: number;
+        label: string;
+        model: string;
+        is_default: boolean;
+    };
+
     let {
         presentations,
+        houseAllowance,
+        aiCredentials,
     }: {
         presentations: PresentationListItem[];
+        houseAllowance: { max: number; remaining: number };
+        aiCredentials: AiCredentialOption[];
     } = $props();
 
     let createDialogOpen = $state(false);
@@ -82,6 +95,18 @@
     let draftPlan = $state('');
     let drafting = $state(false);
     let draftError = $state<string | null>(null);
+    // Which model builds the deck: 'house' (free, rate limited) or a credential id.
+    let selectedModel = $state<number | 'house'>(
+        aiCredentials.find((credential) => credential.is_default)?.id ??
+            'house',
+    );
+
+    const houseExhausted = $derived(houseAllowance.remaining <= 0);
+    const draftSubmitDisabled = $derived(
+        drafting ||
+            draftPlan.trim() === '' ||
+            (selectedModel === 'house' && houseExhausted),
+    );
 
     const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
 
@@ -200,7 +225,13 @@
 
         router.post(
             generate(teamSlug).url,
-            { name: draftName, plan: draftPlan },
+            {
+                name: draftName,
+                plan: draftPlan,
+                // Omit the field for the house model; an id selects an own key.
+                ai_credential_id:
+                    selectedModel === 'house' ? undefined : selectedModel,
+            },
             {
                 onSuccess: () => {
                     // The build runs in the background; close the modal and let a
@@ -250,8 +281,10 @@
 
     const retryDeck = (presentation: PresentationListItem) => {
         router.post(
-            retryDraft({ current_team: teamSlug, presentation: presentation.id })
-                .url,
+            retryDraft({
+                current_team: teamSlug,
+                presentation: presentation.id,
+            }).url,
             {},
             { preserveScroll: true },
         );
@@ -394,6 +427,44 @@
                             ></textarea>
                         </div>
 
+                        <div class="space-y-2">
+                            <Label for="draft-model">Model</Label>
+                            <Select
+                                id="draft-model"
+                                class="*:bg-background  flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                                value={String(selectedModel)}
+                                onchange={(event) =>
+                                    (selectedModel =
+                                        event.currentTarget.value === 'house'
+                                            ? 'house'
+                                            : Number(
+                                                  event.currentTarget.value,
+                                              ))}
+                                data-test="magic-draft-model"
+                            >
+                                <option value="house" disabled={houseExhausted}>
+                                    Default (free) — {houseAllowance.remaining}/{houseAllowance.max}
+                                    left today
+                                </option>
+                                {#each aiCredentials as credential (credential.id)}
+                                    <option value={String(credential.id)}>
+                                        {credential.label} ({credential.model})
+                                    </option>
+                                {/each}
+                            </Select>
+                            {#if selectedModel === 'house' && houseExhausted}
+                                <p
+                                    class="text-xs text-muted-foreground"
+                                    data-test="magic-draft-house-exhausted"
+                                >
+                                    No free builds left today. <a
+                                        href={aiSettings().url}
+                                        class="underline">Add your own AI key</a
+                                    > to keep going.
+                                </p>
+                            {/if}
+                        </div>
+
                         {#if draftError}
                             <p
                                 class="text-sm text-destructive"
@@ -406,7 +477,7 @@
                         <DialogFooter>
                             <Button
                                 type="submit"
-                                disabled={drafting || draftPlan.trim() === ''}
+                                disabled={draftSubmitDisabled}
                                 data-test="magic-draft-submit"
                             >
                                 {drafting
@@ -469,7 +540,8 @@
                                             ? 'border-primary bg-primary/10 font-medium text-primary'
                                             : 'border-input text-muted-foreground hover:bg-muted'}"
                                         onclick={() => {
-                                            sourceType = option.value as typeof sourceType;
+                                            sourceType =
+                                                option.value as typeof sourceType;
                                             createError = null;
                                         }}
                                         data-test="new-presentation-source-{option.value}"
@@ -482,7 +554,8 @@
 
                         {#if sourceType === 'pdf'}
                             <div class="space-y-2">
-                                <Label for="new-presentation-pdf">PDF file</Label
+                                <Label for="new-presentation-pdf"
+                                    >PDF file</Label
                                 >
                                 <input
                                     id="new-presentation-pdf"
