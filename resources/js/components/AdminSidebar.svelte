@@ -2,6 +2,7 @@
     import { Link } from '@inertiajs/svelte';
     import Inbox from 'lucide-svelte/icons/inbox';
     import LayoutGrid from 'lucide-svelte/icons/layout-grid';
+    import Megaphone from 'lucide-svelte/icons/megaphone';
     import ToggleRight from 'lucide-svelte/icons/toggle-right';
     import Users from 'lucide-svelte/icons/users';
     import AppLogo from '@/components/AppLogo.svelte';
@@ -16,7 +17,13 @@
         SidebarMenuButton,
         SidebarMenuItem,
     } from '@/components/ui/sidebar';
-    import { betaRequests, dashboard, features, users } from '@/routes/admin';
+    import {
+        betaRequests,
+        dashboard,
+        features,
+        feedback,
+        users,
+    } from '@/routes/admin';
     import type { NavItem } from '@/types';
 
     const items: NavItem[] = [
@@ -24,6 +31,7 @@
         { title: 'Users', href: users(), icon: Users },
         { title: 'Requests', href: betaRequests(), icon: Inbox },
         { title: 'Features', href: features(), icon: ToggleRight },
+        { title: 'Feedback', href: feedback(), icon: Megaphone },
     ];
 </script>
 
