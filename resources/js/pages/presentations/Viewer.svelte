@@ -50,7 +50,7 @@
     let viewerId = '';
     // Reactions accumulate here between flushes instead of hitting the server
     // on every tap.
-    const pending = new Map<string, number>();
+    let pending: Record<string, number> = {};
     let lastFlushAt = 0;
 
     function sendReaction(emoji: string): void {
@@ -75,19 +75,19 @@
         http.post(SendReactionController.url({ presentation: embedToken }));
 
         // Tally locally; the batch flush persists it.
-        pending.set(emoji, (pending.get(emoji) ?? 0) + 1);
+        pending[emoji] = (pending[emoji] ?? 0) + 1;
     }
 
     function flush(): void {
-        const hasReactions = pending.size > 0;
+        const hasReactions = Object.keys(pending).length > 0;
         const heartbeatDue = performance.now() - lastFlushAt >= HEARTBEAT_MS;
 
         if (!hasReactions && !heartbeatDue) {
             return;
         }
 
-        const counts = Object.fromEntries(pending);
-        pending.clear();
+        const counts = { ...pending };
+        pending = {};
         lastFlushAt = performance.now();
 
         batch.viewerId = viewerId;
@@ -120,9 +120,9 @@
             beaconPost(batchUrl, {
                 viewerId,
                 leaving: true,
-                counts: Object.fromEntries(pending),
+                counts: { ...pending },
             });
-            pending.clear();
+            pending = {};
         };
 
         window.addEventListener('pagehide', leave);

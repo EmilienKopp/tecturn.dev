@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { SvelteSet } from 'svelte/reactivity';
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
@@ -15,7 +16,7 @@
     const blocks = $derived(slide.slots['main'] ?? []);
 
     // Cell selection state
-    let selectedCells = $state<Set<string>>(new Set());
+    let selectedCells = $state<SvelteSet<string>>(new SvelteSet());
     let popoverVisible = $state(false);
     let popoverRect = $state<{ top: number; left: number } | null>(null);
     let gridEl = $state<HTMLDivElement | null>(null);
@@ -54,7 +55,7 @@
     function toggleCell(event: MouseEvent, r: number, c: number) {
         if (!event.ctrlKey && !event.metaKey) {
             // Plain click selects a placed block if one exists at this cell, otherwise clears
-            selectedCells = new Set();
+            selectedCells = new SvelteSet();
             popoverVisible = false;
 
             return;
@@ -63,7 +64,7 @@
         event.preventDefault();
 
         const key = cellKey(r, c);
-        const next = new Set(selectedCells);
+        const next = new SvelteSet(selectedCells);
 
         if (next.has(key)) {
             next.delete(key);
@@ -145,12 +146,12 @@
         const gridColumn = `${minC + 1} / span ${maxC - minC + 1}`;
         const gridRow = `${minR + 1} / span ${maxR - minR + 1}`;
         editor.addGridBlock('main', gridColumn, gridRow, type);
-        selectedCells = new Set();
+        selectedCells = new SvelteSet();
         popoverVisible = false;
     }
 
     function clearSelection() {
-        selectedCells = new Set();
+        selectedCells = new SvelteSet();
         popoverVisible = false;
     }
 
