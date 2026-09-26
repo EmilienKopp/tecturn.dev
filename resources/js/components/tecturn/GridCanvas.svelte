@@ -16,7 +16,7 @@
     const blocks = $derived(slide.slots['main'] ?? []);
 
     // Cell selection state
-    let selectedCells = $state<SvelteSet<string>>(new SvelteSet());
+    let selectedCells = new SvelteSet<string>();
     let popoverVisible = $state(false);
     let popoverRect = $state<{ top: number; left: number } | null>(null);
     let gridEl = $state<HTMLDivElement | null>(null);
@@ -55,7 +55,7 @@
     function toggleCell(event: MouseEvent, r: number, c: number) {
         if (!event.ctrlKey && !event.metaKey) {
             // Plain click selects a placed block if one exists at this cell, otherwise clears
-            selectedCells = new SvelteSet();
+            selectedCells.clear();
             popoverVisible = false;
 
             return;
@@ -64,17 +64,14 @@
         event.preventDefault();
 
         const key = cellKey(r, c);
-        const next = new SvelteSet(selectedCells);
 
-        if (next.has(key)) {
-            next.delete(key);
+        if (selectedCells.has(key)) {
+            selectedCells.delete(key);
         } else {
-            next.add(key);
+            selectedCells.add(key);
         }
 
-        selectedCells = next;
-
-        if (next.size > 0 && isRectangular(next)) {
+        if (selectedCells.size > 0 && isRectangular(selectedCells)) {
             showPopover();
         } else {
             popoverVisible = false;
@@ -146,12 +143,12 @@
         const gridColumn = `${minC + 1} / span ${maxC - minC + 1}`;
         const gridRow = `${minR + 1} / span ${maxR - minR + 1}`;
         editor.addGridBlock('main', gridColumn, gridRow, type);
-        selectedCells = new SvelteSet();
+        selectedCells.clear();
         popoverVisible = false;
     }
 
     function clearSelection() {
-        selectedCells = new SvelteSet();
+        selectedCells.clear();
         popoverVisible = false;
     }
 
