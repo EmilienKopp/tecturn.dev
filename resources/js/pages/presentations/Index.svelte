@@ -4,8 +4,10 @@
     import ClipboardPaste from 'lucide-svelte/icons/clipboard-paste';
     import Plus from 'lucide-svelte/icons/plus';
     import Presentation from 'lucide-svelte/icons/presentation';
+    import RotateCw from 'lucide-svelte/icons/rotate-cw';
     import Sparkles from 'lucide-svelte/icons/sparkles';
     import Trash2 from 'lucide-svelte/icons/trash-2';
+    import TriangleAlert from 'lucide-svelte/icons/triangle-alert';
     import Upload from 'lucide-svelte/icons/upload';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
@@ -13,6 +15,7 @@
     import {
         Card,
         CardDescription,
+        CardFooter,
         CardHeader,
         CardTitle,
     } from '@/components/ui/card';
@@ -38,23 +41,26 @@
         edit,
         generate,
         importJson,
+        retryDraft,
         store,
     } from '@/routes/presentations';
+
+    type PresentationStatus = 'ready' | 'generating' | 'failed';
 
     type PresentationListItem = {
         id: number;
         name: string;
         is_private: boolean;
         slide_count: number;
+        status: PresentationStatus;
+        draft_error: string | null;
         updated_at: string | null;
     };
 
     let {
         presentations,
-        generatingCount = 0,
     }: {
         presentations: PresentationListItem[];
-        generatingCount?: number;
     } = $props();
 
     let createDialogOpen = $state(false);
@@ -239,6 +245,23 @@
     const openEditor = (presentation: PresentationListItem) => {
         router.visit(
             edit({ current_team: teamSlug, presentation: presentation.id }).url,
+        );
+    };
+
+    const retryDeck = (presentation: PresentationListItem) => {
+        router.post(
+            retryDraft({ current_team: teamSlug, presentation: presentation.id })
+                .url,
+            {},
+            { preserveScroll: true },
+        );
+    };
+
+    const dismissDeck = (presentation: PresentationListItem) => {
+        router.delete(
+            destroy({ current_team: teamSlug, presentation: presentation.id })
+                .url,
+            { preserveScroll: true },
         );
     };
 
@@ -529,74 +552,113 @@
     {/if}
 
     <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {#each Array.from({ length: generatingCount }) as _, index (index)}
-            <div class="relative" data-test="presentation-skeleton">
-                <Card>
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Sparkles
-                                class="h-4 w-4 animate-pulse text-muted-foreground"
-                            />
-                            <Skeleton class="h-4 w-40" />
-                        </CardTitle>
-                        <CardDescription>
-                            <Skeleton class="mt-1 h-3 w-28" />
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-            </div>
-        {/each}
-
         {#each presentations as presentation (presentation.id)}
-            <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-            <div
-                class="group relative cursor-pointer"
-                onclick={() => openEditor(presentation)}
-                data-test="presentation-card"
-            >
-                <Card class="transition-shadow group-hover:shadow-md">
-                    <CardHeader>
-                        <CardTitle class="flex items-center gap-2">
-                            <Presentation
-                                class="h-4 w-4 text-muted-foreground"
-                            />
-                            {presentation.name}
-                            {#if presentation.is_private}
-                                <span
-                                    class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
-                                >
-                                    Private
-                                </span>
-                            {/if}
-                        </CardTitle>
-                        <CardDescription>
-                            {presentation.slide_count}
-                            {presentation.slide_count === 1
-                                ? 'slide'
-                                : 'slides'}
-                            · updated {formatUpdatedAt(presentation.updated_at)}
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    class="absolute top-2 right-2 hidden text-muted-foreground group-hover:flex hover:text-destructive"
-                    onclick={(event: MouseEvent) => {
-                        event.stopPropagation();
-                        presentationDeleting = presentation;
-                        deleteDialogOpen = true;
-                    }}
-                    data-test="presentation-delete-button"
+            {#if presentation.status === 'generating'}
+                <div class="relative" data-test="presentation-skeleton">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Sparkles
+                                    class="h-4 w-4 animate-pulse text-muted-foreground"
+                                />
+                                {presentation.name}
+                            </CardTitle>
+                            <CardDescription>
+                                <Skeleton class="mt-1 h-3 w-28" />
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+                </div>
+            {:else if presentation.status === 'failed'}
+                <div class="relative" data-test="presentation-failed">
+                    <Card class="border-destructive/40">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <TriangleAlert
+                                    class="h-4 w-4 text-destructive"
+                                />
+                                {presentation.name}
+                            </CardTitle>
+                            <CardDescription>
+                                {presentation.draft_error ??
+                                    "We couldn't build this deck."}
+                            </CardDescription>
+                        </CardHeader>
+                        <CardFooter class="gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onclick={() => retryDeck(presentation)}
+                                data-test="presentation-retry-button"
+                            >
+                                <RotateCw class="mr-1 h-4 w-4" />
+                                Retry
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                class="text-muted-foreground hover:text-destructive"
+                                onclick={() => dismissDeck(presentation)}
+                                data-test="presentation-dismiss-button"
+                            >
+                                Dismiss
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                </div>
+            {:else}
+                <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                <div
+                    class="group relative cursor-pointer"
+                    onclick={() => openEditor(presentation)}
+                    data-test="presentation-card"
                 >
-                    <Trash2 class="h-4 w-4" />
-                </Button>
-            </div>
+                    <Card class="transition-shadow group-hover:shadow-md">
+                        <CardHeader>
+                            <CardTitle class="flex items-center gap-2">
+                                <Presentation
+                                    class="h-4 w-4 text-muted-foreground"
+                                />
+                                {presentation.name}
+                                {#if presentation.is_private}
+                                    <span
+                                        class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                    >
+                                        Private
+                                    </span>
+                                {/if}
+                            </CardTitle>
+                            <CardDescription>
+                                {presentation.slide_count}
+                                {presentation.slide_count === 1
+                                    ? 'slide'
+                                    : 'slides'}
+                                · updated {formatUpdatedAt(
+                                    presentation.updated_at,
+                                )}
+                            </CardDescription>
+                        </CardHeader>
+                    </Card>
+
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        class="absolute top-2 right-2 hidden text-muted-foreground group-hover:flex hover:text-destructive"
+                        onclick={(event: MouseEvent) => {
+                            event.stopPropagation();
+                            presentationDeleting = presentation;
+                            deleteDialogOpen = true;
+                        }}
+                        data-test="presentation-delete-button"
+                    >
+                        <Trash2 class="h-4 w-4" />
+                    </Button>
+                </div>
+            {/if}
         {/each}
     </div>
 
-    {#if presentations.length === 0 && generatingCount === 0}
+    {#if presentations.length === 0}
         <p class="py-12 text-center text-muted-foreground">
             No presentations yet. Create your first one to get started.
         </p>

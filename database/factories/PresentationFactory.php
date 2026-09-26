@@ -60,6 +60,31 @@ class PresentationFactory extends Factory
         });
     }
 
+    /** An AI draft still building (requested, not yet completed). */
+    public function generatingDraft(string $plan = '# My plan'): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Generating deck…',
+            'draft_plan' => $plan,
+            'draft_requested_at' => now(),
+            'draft_completed_at' => null,
+            'draft_failed_at' => null,
+            'draft_error' => null,
+        ]);
+    }
+
+    /** An AI draft whose build failed. */
+    public function failedDraft(string $error = 'provider exploded', string $plan = '# My plan'): static
+    {
+        return $this->state(fn () => [
+            'draft_plan' => $plan,
+            'draft_requested_at' => now(),
+            'draft_completed_at' => null,
+            'draft_failed_at' => now(),
+            'draft_error' => $error,
+        ]);
+    }
+
     /** A Google Slides external deck. */
     public function googleSlides(string $url = 'https://docs.google.com/presentation/d/e/abc/pub'): static
     {

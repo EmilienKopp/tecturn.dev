@@ -31,7 +31,40 @@ class PresentationEntity extends BaseEntity
         public ?DateTimeInterface $yoyotranslateSessionStartedAt = null,
         /** @var list<string> */
         public array $yoyotranslateLanguages = [],
+        public ?string $draftPlan = null,
+        public ?DateTimeInterface $draftRequestedAt = null,
+        public ?DateTimeInterface $draftCompletedAt = null,
+        public ?DateTimeInterface $draftFailedAt = null,
+        public ?string $draftError = null,
     ) {}
+
+    /**
+     * Marks the deck as an in-progress AI draft. The plan is kept so a stalled
+     * or failed generation can be inspected and retried without re-typing it.
+     */
+    public function markDraftRequested(DateTimeInterface $at, string $plan): void
+    {
+        $this->draftPlan = $plan;
+        $this->draftRequestedAt = $at;
+        $this->draftCompletedAt = null;
+        $this->draftFailedAt = null;
+        $this->draftError = null;
+    }
+
+    /** The AI build finished; the deck now holds real content. */
+    public function markDraftCompleted(DateTimeInterface $at): void
+    {
+        $this->draftCompletedAt = $at;
+        $this->draftFailedAt = null;
+        $this->draftError = null;
+    }
+
+    /** The AI build failed; keep the row so the user sees why and can retry. */
+    public function markDraftFailed(DateTimeInterface $at, string $error): void
+    {
+        $this->draftFailedAt = $at;
+        $this->draftError = mb_substr($error, 0, 1000);
+    }
 
     public function rename(string $name): void
     {
@@ -129,6 +162,11 @@ class PresentationEntity extends BaseEntity
             'yoyotranslate_session_id' => $this->yoyotranslateSessionId,
             'yoyotranslate_session_started_at' => $this->yoyotranslateSessionStartedAt,
             'yoyotranslate_languages' => $this->yoyotranslateLanguages,
+            'draft_plan' => $this->draftPlan,
+            'draft_requested_at' => $this->draftRequestedAt,
+            'draft_completed_at' => $this->draftCompletedAt,
+            'draft_failed_at' => $this->draftFailedAt,
+            'draft_error' => $this->draftError,
         ];
     }
 }

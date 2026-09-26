@@ -20,7 +20,6 @@ use App\Infrastructure\ReadModels\PresentationReadModel;
 use App\Models\Presentation;
 use App\Models\Team;
 use App\Presentation\EmbedCache;
-use App\Presentation\GeneratingDeckTally;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
@@ -37,11 +36,10 @@ class PresentationController extends Controller
         private readonly DeletePresentation $deletePresentation,
     ) {}
 
-    public function index(Team $current_team, GeneratingDeckTally $tally): Response
+    public function index(Team $current_team): Response
     {
         return Inertia::render('presentations/Index', [
             'presentations' => $this->presentations->listForTeam($current_team->id),
-            'generatingCount' => $tally->count($current_team->id),
         ]);
     }
 

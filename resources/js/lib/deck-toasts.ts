@@ -9,15 +9,15 @@ type DeckGeneratedPayload = {
 };
 
 /**
- * If the user is looking at the presentations index, refresh the list and the
- * "building…" skeleton count so the finished deck replaces its skeleton.
+ * If the user is looking at the presentations index, refresh the list so the
+ * finished (or failed) deck replaces its "building…" skeleton.
  */
 function refreshPresentationsIndex(): void {
     if (page.component !== 'presentations/Index') {
         return;
     }
 
-    router.reload({ only: ['presentations', 'generatingCount'] });
+    router.reload({ only: ['presentations'] });
 }
 
 /**

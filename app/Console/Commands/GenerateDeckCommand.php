@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Application\Actions\Presentations\GenerateDeckFromPlan;
+use App\Application\Actions\Presentations\RequestDeckDraft;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
+use App\Application\Commands\RequestDeckDraftCommand;
 use App\Models\Team;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -15,7 +17,7 @@ use Illuminate\Console\Command;
 #[Description('Generate a Tecturn deck from a markdown plan using the Deckster agent.')]
 class GenerateDeckCommand extends Command
 {
-    public function handle(GenerateDeckFromPlan $generateDeck): int
+    public function handle(RequestDeckDraft $requestDraft, GenerateDeckFromPlan $generateDeck): int
     {
         $team = $this->resolveTeam((string) $this->argument('team'));
 
@@ -35,11 +37,20 @@ class GenerateDeckCommand extends Command
 
         $this->info('Asking Deckster to build your deck…');
 
+        $name = (string) ($this->option('name') ?? '');
+
+        $draft = $requestDraft->execute(
+            new RequestDeckDraftCommand(
+                team_id: $team->id,
+                name: $name,
+                plan: $plan,
+            ),
+        );
+
         $presentation = $generateDeck->execute(
             new GenerateDeckFromPlanCommand(
-                team_id: $team->id,
-                name: (string) ($this->option('name') ?? ''),
-                plan: $plan,
+                presentation_id: $draft->id,
+                name: $name,
             ),
         );
 

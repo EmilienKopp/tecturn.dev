@@ -18,6 +18,10 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
  * @property list<string>|null $yoyotranslate_languages
+ * @property Carbon|null $draft_requested_at
+ * @property Carbon|null $draft_completed_at
+ * @property Carbon|null $draft_failed_at
+ * @property string|null $draft_error
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -42,6 +46,9 @@ class PresentationsView extends ReadOnlyModel
             'updated_at' => 'datetime',
             'yoyotranslate_session_started_at' => 'datetime',
             'yoyotranslate_languages' => 'array',
+            'draft_requested_at' => 'datetime',
+            'draft_completed_at' => 'datetime',
+            'draft_failed_at' => 'datetime',
         ];
     }
 }

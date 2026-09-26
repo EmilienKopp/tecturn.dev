@@ -23,6 +23,7 @@ use App\Http\Controllers\Presentations\PresentPresentationController;
 use App\Http\Controllers\Presentations\RecordReactionsController;
 use App\Http\Controllers\Presentations\RehearsalController;
 use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
+use App\Http\Controllers\Presentations\RetryDeckController;
 use App\Http\Controllers\Presentations\SendReactionController;
 use App\Http\Controllers\Presentations\StartSessionController;
 use App\Http\Controllers\Presentations\StartTranslationSessionController;
@@ -123,6 +124,7 @@ Route::prefix('{current_team}')
         Route::get('presentations', [PresentationController::class, 'index'])->name('presentations.index');
         Route::post('presentations', [PresentationController::class, 'store'])->name('presentations.store');
         Route::post('presentations/generate', GenerateDeckController::class)->name('presentations.generate');
+        Route::post('presentations/{presentation}/retry-draft', RetryDeckController::class)->name('presentations.retryDraft');
         Route::post('presentations/import', ImportPresentationController::class)->name('presentations.importJson');
         Route::get('presentations/{presentation}', [PresentationController::class, 'edit'])->name('presentations.edit');
         Route::get('presentations/{presentation}/present', PresentPresentationController::class)->name('presentations.present');
