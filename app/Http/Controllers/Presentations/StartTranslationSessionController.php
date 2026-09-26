@@ -6,18 +6,17 @@ use App\Application\Actions\Presentations\StartTranslationSession;
 use App\Application\Commands\StartTranslationSessionCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\StartTranslationSessionRequest;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Support\Features;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class StartTranslationSessionController extends Controller
 {
     public function __construct(private readonly StartTranslationSession $startTranslationSession) {}
 
-    public function __invoke(StartTranslationSessionRequest $request, Team $current_team, PresentationModel $presentation): RedirectResponse
+    public function __invoke(StartTranslationSessionRequest $request, Team $current_team, Presentation $presentation): RedirectResponse
     {
         Gate::authorize('update', $presentation);
 
@@ -26,7 +25,7 @@ class StartTranslationSessionController extends Controller
         $this->startTranslationSession->execute(
             new StartTranslationSessionCommand(
                 presentationId: $presentation->id,
-                userId: Auth::id(),
+                userId: $request->user()->id,
                 sourceLanguage: $request->validated('source_language'),
                 eventId: $request->eventId(),
                 languages: $request->languages(),

@@ -245,7 +245,6 @@
             talkSettings={presentation.talk_settings}
             {slideCount}
             {currentSlide}
-            {recentReactions}
             {viewerCount}
             {reactionTotal}
             bind:showReactions

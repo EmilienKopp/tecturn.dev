@@ -6,7 +6,7 @@ use App\Application\Actions\Presentations\UploadPresentationImage;
 use App\Application\Commands\UploadPresentationImageCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\UploadPresentationImageRequest;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -18,7 +18,7 @@ class UploadPresentationImageController extends Controller
     public function __invoke(
         UploadPresentationImageRequest $request,
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): JsonResponse {
         Gate::authorize('update', $presentation);
 

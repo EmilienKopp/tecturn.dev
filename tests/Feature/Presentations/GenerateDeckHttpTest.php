@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
@@ -24,7 +24,7 @@ test('generating a draft creates a pending row and defers the build', function (
     $response->assertRedirect();
 
     // The row exists straight away and is inspectable as an in-progress draft.
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
     expect($presentation->team_id)->toBe($team->id)
         ->and($presentation->name)->toBe('Custom name')
         ->and($presentation->draft_plan)->toBe('# My talk plan')
@@ -54,7 +54,7 @@ test('a draft without a name uses a placeholder until the AI titles it', functio
         ])
         ->assertRedirect();
 
-    expect(PresentationModel::query()->firstOrFail()->name)->toBe('Generating deck…');
+    expect(Presentation::query()->firstOrFail()->name)->toBe('Generating deck…');
 });
 
 test('the plan is required', function () {

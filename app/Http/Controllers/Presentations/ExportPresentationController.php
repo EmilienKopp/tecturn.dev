@@ -7,7 +7,7 @@ use App\Domain\Presentation\ValueObjects\PresentationContent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\ExportPresentationRequest;
 use App\Infrastructure\ReadModels\PresentationReadModel;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Presentation\PresenterFactory;
 use Illuminate\Support\Facades\Gate;
@@ -23,7 +23,7 @@ class ExportPresentationController extends Controller
     public function __invoke(
         ExportPresentationRequest $request,
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): StreamedResponse {
         Gate::authorize('view', $presentation);
 

@@ -8,7 +8,7 @@ use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Application\Commands\RetryDeckDraftCommand;
 use App\Http\Controllers\Controller;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -16,7 +16,7 @@ use Inertia\Inertia;
 
 class RetryDeckController extends Controller
 {
-    public function __invoke(Team $current_team, PresentationModel $presentation, RetryDeckDraft $retryDraft): RedirectResponse
+    public function __invoke(Team $current_team, Presentation $presentation, RetryDeckDraft $retryDraft): RedirectResponse
     {
         Gate::authorize('update', $presentation);
 

@@ -87,7 +87,10 @@ const freeBlockStyle = (block: Block): string => {
     const parts = [`left: ${x}%;`, `top: ${y}%;`, `width: ${width}%;`];
 
     if (style.height != null) {
-        parts.push(`height: ${style.height}%;`);
+        // Media keeps a hard height for its aspect box; flow content uses
+        // min-height so the box always grows to contain its text.
+        const isMedia = block.type === 'image' || block.type === 'qr';
+        parts.push(`${isMedia ? 'height' : 'min-height'}: ${style.height}%;`);
     }
 
     return parts.join(' ');

@@ -56,17 +56,17 @@
             code: 'code block',
             box: 'box',
         };
-        const counts = new Map<string, number>();
+        const counts: Record<string, number> = {};
 
         for (const block of blocks) {
             const noun = nouns[block.type];
 
             if (noun) {
-                counts.set(noun, (counts.get(noun) ?? 0) + 1);
+                counts[noun] = (counts[noun] ?? 0) + 1;
             }
         }
 
-        return [...counts]
+        return Object.entries(counts)
             .map(([noun, count]) =>
                 count === 1 ? `1 ${noun}` : `${count} ${noun}s`,
             )

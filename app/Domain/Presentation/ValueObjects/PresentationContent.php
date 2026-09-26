@@ -22,11 +22,6 @@ readonly class PresentationContent
             throw new InvalidPresentationContent("Unsupported content version \"{$this->version}\".");
         }
 
-        foreach ($this->slides as $slide) {
-            if (! $slide instanceof Slide) {
-                throw new InvalidPresentationContent('Slides must be Slide value objects.');
-            }
-        }
     }
 
     /** @param array<string, mixed> $data */

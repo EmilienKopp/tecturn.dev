@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Support\Carbon;
@@ -35,6 +36,7 @@ use Illuminate\Support\Str;
  * @property-read Collection<int, Team> $ownedTeams
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
+ * @property-read Collection<int, UserAiCredential> $aiCredentials
  */
 #[Fillable(['name', 'handle', 'email', 'email_verified_at', 'workos_id', 'avatar', 'social_x_handle', 'social_github_handle', 'branding', 'current_team_id'])]
 #[Hidden(['workos_id', 'remember_token'])]
@@ -68,6 +70,25 @@ class User extends Authenticatable
             get: fn (?string $value): array => Branding::merge($value ? json_decode($value, true) : null),
             set: fn (?array $value): string => (string) json_encode(Branding::merge($value)),
         );
+    }
+
+    /**
+     * The user's "bring your own AI" credentials for deck generation.
+     *
+     * @return HasMany<UserAiCredential, $this>
+     */
+    public function aiCredentials(): HasMany
+    {
+        return $this->hasMany(UserAiCredential::class);
+    }
+
+    /**
+     * The credential Deckster should use for this user, or null to fall back to
+     * the house provider. The one flagged default, else null.
+     */
+    public function defaultAiCredential(): ?UserAiCredential
+    {
+        return $this->aiCredentials()->where('is_default', true)->first();
     }
 
     /**

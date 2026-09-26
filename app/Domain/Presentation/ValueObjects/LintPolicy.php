@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Presentation\ValueObjects;
 
-use Splitstack\Typewriter\Attributes\TypeScript;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * Thresholds that govern the content linter: delivery speed for the

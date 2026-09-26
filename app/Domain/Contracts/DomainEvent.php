@@ -10,7 +10,7 @@ class DomainEvent
 
     public static function plain(Entity $entity): self
     {
-        return new static($entity);
+        return new self($entity);
     }
 
     public function entity(): Entity

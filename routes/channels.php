@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Support\Facades\Broadcast;
 
@@ -17,7 +17,7 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  * itself.
  */
 Broadcast::channel('presentation-live.{embedToken}', function (Authenticatable $user, string $embedToken): array|false {
-    if (! PresentationModel::where('embed_token', $embedToken)->exists()) {
+    if (! Presentation::where('embed_token', $embedToken)->exists()) {
         return false;
     }
 

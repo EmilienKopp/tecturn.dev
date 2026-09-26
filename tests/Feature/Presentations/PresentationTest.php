@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -18,8 +18,8 @@ test('the presentations index lists only the current team presentations', functi
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    PresentationModel::factory()->count(2)->create(['team_id' => $team->id]);
-    PresentationModel::factory()->create(); // other team
+    Presentation::factory()->count(2)->create(['team_id' => $team->id]);
+    Presentation::factory()->create(); // other team
 
     $response = $this
         ->actingAs($user)
@@ -42,7 +42,7 @@ test('a presentation can be created and redirects to the editor', function () {
             'name' => 'Launch deck',
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     $response->assertRedirect(route('presentations.edit', [
         'current_team' => $team->slug,
@@ -64,14 +64,14 @@ test('a new presentation first slide uses the creator branding background', func
             'name' => 'Branded deck',
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     expect($presentation->content['slides'][0]['background'])->toBe($gradient);
 });
 
 test('the editor page renders with the presentation content', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -99,7 +99,7 @@ test('the editor page renders with the presentation content', function () {
 
 test('the content linter policy is shared to the frontend from config', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -120,7 +120,7 @@ test('the content linter policy is shared to the frontend from config', function
 
 test('a presentation can be renamed', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -135,7 +135,7 @@ test('a presentation can be renamed', function () {
 
 test('presentation content can be saved', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $content = [
         'version' => '1.0',
@@ -169,13 +169,13 @@ test('presentation content can be saved', function () {
     $response->assertRedirect();
     $response->assertSessionHasNoErrors();
 
-    $stored = PresentationModel::findOrFail($presentation->id);
+    $stored = Presentation::findOrFail($presentation->id);
     expect($stored->content['slides'][0]['slots']['left'][0]['content'])->toBe('Hello world');
 });
 
 test('a slide title, background and config survive a save', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $content = [
         'version' => '1.0',
@@ -200,7 +200,7 @@ test('a slide title, background and config survive a save', function () {
         ->assertRedirect()
         ->assertSessionHasNoErrors();
 
-    $slide = PresentationModel::findOrFail($presentation->id)->content['slides'][0];
+    $slide = Presentation::findOrFail($presentation->id)->content['slides'][0];
 
     expect($slide['title'])->toBe('Introduction')
         ->and($slide['background'])->toBe('#0f0f0f')
@@ -209,7 +209,7 @@ test('a slide title, background and config survive a save', function () {
 
 test('a free-layout slide with positioned blocks can be saved', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $content = [
         'version' => '1.0',
@@ -243,14 +243,14 @@ test('a free-layout slide with positioned blocks can be saved', function () {
     $response->assertRedirect();
     $response->assertSessionHasNoErrors();
 
-    $stored = PresentationModel::findOrFail($presentation->id);
+    $stored = Presentation::findOrFail($presentation->id);
     expect($stored->content['slides'][0]['slots']['main'][0]['style'])
         ->toBe(['x' => '12.5', 'y' => '20', 'width' => '30']);
 });
 
 test('invalid content is rejected with a validation error', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -277,7 +277,7 @@ test('invalid content is rejected with a validation error', function () {
 
 test('an unknown layout is rejected by request validation', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -298,7 +298,7 @@ test('an unknown layout is rejected by request validation', function () {
 
 test('the present page renders with the presentation content, talk settings and viewer url', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create([
+    $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -326,7 +326,7 @@ test('the present page renders with the presentation content, talk settings and 
 
 test('the present page builds the translation socket url from the stored languages', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'yoyotranslate_session_id' => '01a05520-5454-7352-aa0f-b9bcb9a23517',
         'yoyotranslate_session_started_at' => now(),
@@ -354,7 +354,7 @@ test('the present page builds the translation socket url from the stored languag
 
 test('the present page flags a test run so no analytics session opens', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -375,7 +375,7 @@ test('the present page flags a test run so no analytics session opens', function
 
 test('the present page flags a rehearsal and exposes the save route', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -400,7 +400,7 @@ test('the present page flags a rehearsal and exposes the save route', function (
 
 test('the present page of another team presentation is not reachable', function () {
     $user = User::factory()->create();
-    $otherTeamPresentation = PresentationModel::factory()->create();
+    $otherTeamPresentation = Presentation::factory()->create();
 
     $response = $this
         ->actingAs($user)
@@ -414,7 +414,7 @@ test('the present page of another team presentation is not reachable', function 
 
 test('presentations of other teams cannot be reached through the current team', function () {
     $user = User::factory()->create();
-    $otherTeamPresentation = PresentationModel::factory()->create();
+    $otherTeamPresentation = Presentation::factory()->create();
 
     $response = $this
         ->actingAs($user)
@@ -428,7 +428,7 @@ test('presentations of other teams cannot be reached through the current team', 
 
 test('a presentation can be deleted', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)

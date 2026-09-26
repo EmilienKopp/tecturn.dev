@@ -32,15 +32,7 @@ class AdminBetaRequestsReadModel
      * The account correlation lives in PHP rather than the SQL view because the
      * stored email is non-deterministic ciphertext, so it can't be joined on.
      *
-     * @return array<int, array{
-     *     id: int,
-     *     name: string,
-     *     email: string,
-     *     message: string|null,
-     *     status: string,
-     *     registered: bool,
-     *     created_at: string|null
-     * }>
+     * @return array<int, array<string, mixed>>
      */
     public function all(): array
     {

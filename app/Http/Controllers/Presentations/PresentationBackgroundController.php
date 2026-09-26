@@ -7,7 +7,7 @@ use App\Application\Actions\Presentations\UploadPresentationBackground;
 use App\Application\Commands\UploadPresentationBackgroundCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\UploadPresentationBackgroundRequest;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Gate;
@@ -22,7 +22,7 @@ class PresentationBackgroundController extends Controller
     public function store(
         UploadPresentationBackgroundRequest $request,
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): JsonResponse {
         Gate::authorize('update', $presentation);
 
@@ -41,7 +41,7 @@ class PresentationBackgroundController extends Controller
 
     public function destroy(
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): JsonResponse {
         Gate::authorize('update', $presentation);
 

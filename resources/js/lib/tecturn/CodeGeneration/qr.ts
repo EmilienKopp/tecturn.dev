@@ -40,6 +40,7 @@ export function qrToSvg(url: string, opts: { title?: string } = {}): string {
     const dim = count + margin * 2;
 
     let rects = '';
+
     for (let row = 0; row < count; row++) {
         for (let col = 0; col < count; col++) {
             if (data[row * count + col]) {

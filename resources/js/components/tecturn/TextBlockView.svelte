@@ -35,6 +35,7 @@
         const html = sanitizeInlineHtml(block.content);
 
         if (el && el !== document.activeElement && el.innerHTML !== html) {
+            // eslint-disable-next-line svelte/no-dom-manipulating -- contenteditable seeding is external to Svelte's model; the focus guard keeps them in sync
             el.innerHTML = html;
         }
     });

@@ -12,8 +12,8 @@ use App\Http\Requests\Presentations\RecordRehearsalRequest;
 use App\Infrastructure\ReadModels\ContactsReadModel;
 use App\Infrastructure\ReadModels\RehearsalReadModel;
 use App\Infrastructure\ReadModels\RehearsalReviewReadModel;
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,18 +38,18 @@ class RehearsalController extends Controller
         ]);
     }
 
-    public function show(Request $request, Team $current_team, RehearsalModel $rehearsal): Response
+    public function show(Request $request, Team $current_team, Rehearsal $rehearsal): Response
     {
         $run = $this->rehearsals->findForReplay($rehearsal->id);
 
         // External decks (PDF / Google Slides) aren't in the frozen snapshot —
         // their slides live on the presentation, so the replay renders the live
         // source and steps it along the recorded timeline.
-        $presentation = PresentationModel::find($run['presentation_id']);
+        $presentation = Presentation::find($run['presentation_id']);
 
         return Inertia::render('rehearsals/Show', [
             'run' => $run,
-            'source' => PresentationSource::fromArray($presentation?->source ?? [])->toArray(),
+            'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'sourcePdfUrl' => $presentation?->sourcePdfUrl(),
             'reviews' => $this->reviews->listForRun($rehearsal->id),
             'followers' => $this->contacts->followersForUser($request->user()->id),
@@ -59,7 +59,7 @@ class RehearsalController extends Controller
         ]);
     }
 
-    public function store(RecordRehearsalRequest $request, Team $current_team, PresentationModel $presentation): RedirectResponse
+    public function store(RecordRehearsalRequest $request, Team $current_team, Presentation $presentation): RedirectResponse
     {
         Gate::authorize('view', $presentation);
 

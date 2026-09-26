@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminBetaRequestsController;
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\Admin\AdminFeatureFlagsController;
+use App\Http\Controllers\Admin\AdminFeedbackController;
 use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\ApproveBetaRequestController;
 use App\Http\Controllers\Admin\RejectBetaRequestController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Contacts\FollowController;
 use App\Http\Controllers\Contacts\RejectFollowRequestController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Feedback\FeedbackController;
 use App\Http\Controllers\Presentations\EmbedPresentationController;
 use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
@@ -76,6 +78,7 @@ $adminRoutes->group(function () {
     Route::post('beta-requests/{betaRequest}/reject', RejectBetaRequestController::class)->name('beta-requests.reject');
     Route::get('features', [AdminFeatureFlagsController::class, 'index'])->name('features');
     Route::post('features', [AdminFeatureFlagsController::class, 'update'])->name('features.update');
+    Route::get('feedback', AdminFeedbackController::class)->name('feedback');
 });
 
 Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentationController::class)
@@ -101,6 +104,9 @@ Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function ()
     Route::post('reviews/{rehearsal_review}/comments', AddReviewCommentController::class)->name('reviews.comments.store');
     Route::post('reviews/{rehearsal_review}/complete', CompleteRehearsalReviewController::class)->name('reviews.complete');
     Route::get('rehearsal-audio/{rehearsal}', StreamRehearsalAudioController::class)->name('rehearsals.audio');
+
+    Route::get('feedback', [FeedbackController::class, 'create'])->name('feedback.create');
+    Route::post('feedback', [FeedbackController::class, 'store'])->name('feedback.store');
 });
 
 Route::post('present/{presentation:embed_token}/reactions', SendReactionController::class)

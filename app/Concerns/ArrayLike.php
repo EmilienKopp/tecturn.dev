@@ -25,12 +25,14 @@ trait ArrayLike
 
     public function offsetExists(mixed $offset): bool
     {
-        return property_exists($this, $offset) && isset($this->{$offset});
+        $property = (string) $offset;
+
+        return property_exists($this, $property) && isset($this->{$property});
     }
 
     public function offsetGet(mixed $offset): mixed
     {
-        return $this->{$offset} ?? null;
+        return $this->{(string) $offset} ?? null;
     }
 
     public function offsetSet(mixed $offset, mixed $value): void

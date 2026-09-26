@@ -1,7 +1,7 @@
 <?php
 
-use App\Models\PresentationModel;
-use App\Models\PresentationSessionModel;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
 use App\Models\Team;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -85,8 +85,8 @@ test('admins see a user\'s per-team presentation analytics', function () {
     $target = User::factory()->create();
     $team = $target->currentTeam;
 
-    $presentation = PresentationModel::factory()->create(['team_id' => $team->id]);
-    PresentationSessionModel::factory()->create([
+    $presentation = Presentation::factory()->create(['team_id' => $team->id]);
+    PresentationSession::factory()->create([
         'team_id' => $team->id,
         'presentation_id' => $presentation->id,
         'reaction_total' => 5,
@@ -112,7 +112,7 @@ test('the overview reports platform-wide counts', function () {
 
     $admin = User::factory()->create(['email' => 'boss@example.com']);
     $team = Team::factory()->create();
-    PresentationModel::factory()->count(3)->create(['team_id' => $team->id]);
+    Presentation::factory()->count(3)->create(['team_id' => $team->id]);
 
     $response = $this->actingAs($admin)->get(route('admin.dashboard'));
 

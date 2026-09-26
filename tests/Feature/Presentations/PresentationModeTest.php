@@ -3,13 +3,13 @@
 declare(strict_types=1);
 
 use App\Events\Presentations\ReactionSent;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('the viewer page renders for any visitor using the embed token', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $response = $this->get(
         route('presentations.viewer', ['presentation' => $presentation->embed_token]),
@@ -26,7 +26,7 @@ test('the viewer page renders for any visitor using the embed token', function (
 test('sending a valid reaction dispatches a ReactionSent event', function () {
     Event::fake([ReactionSent::class]);
 
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $response = $this->postJson(
         route('presentations.reactions', ['presentation' => $presentation->embed_token]),
@@ -41,7 +41,7 @@ test('sending a valid reaction dispatches a ReactionSent event', function () {
 });
 
 test('sending an unsupported emoji is rejected', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $response = $this->postJson(
         route('presentations.reactions', ['presentation' => $presentation->embed_token]),
@@ -53,7 +53,7 @@ test('sending an unsupported emoji is rejected', function () {
 
 test('talk settings can be saved via the update route', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -73,7 +73,7 @@ test('talk settings can be saved via the update route', function () {
     $response->assertRedirect();
     $response->assertSessionHasNoErrors();
 
-    $stored = PresentationModel::findOrFail($presentation->id);
+    $stored = Presentation::findOrFail($presentation->id);
     expect($stored->talk_settings['showReactions'])->toBeTrue()
         ->and($stored->talk_settings['showDock'])->toBeFalse()
         ->and($stored->talk_settings['showTranslation'])->toBeFalse()

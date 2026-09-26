@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain;
 
-use App\Concerns\ImmutableArrayable;
+use App\Concerns\ArrayLike;
 use App\Domain\Contracts\DTO;
 use App\Domain\Contracts\HasValidatedData;
 use ArrayIterator;
@@ -17,14 +17,15 @@ use Traversable;
  */
 abstract class BaseDTO implements DTO, IteratorAggregate
 {
-    use ImmutableArrayable;
+    use ArrayLike;
 
     /** @param array<string, mixed> $data */
     abstract public static function fromArray(array $data): static;
 
     final public static function fromValidatable(HasValidatedData $source, int|string|null $id = null): static
     {
-        $data = (array) $source->validated();
+        $validated = $source->validated();
+        $data = is_array($validated) ? $validated : [];
         $data['id'] ??= $id;
 
         foreach ($data as $key => $value) {

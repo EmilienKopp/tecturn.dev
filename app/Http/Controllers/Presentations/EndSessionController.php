@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Presentations;
 use App\Application\Actions\Presentations\EndSession;
 use App\Application\Commands\EndSessionCommand;
 use App\Http\Controllers\Controller;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -17,7 +17,7 @@ class EndSessionController extends Controller
 {
     public function __construct(private readonly EndSession $endSession) {}
 
-    public function __invoke(Team $current_team, PresentationModel $presentation): Response
+    public function __invoke(Team $current_team, Presentation $presentation): Response
     {
         Gate::authorize('view', $presentation);
 

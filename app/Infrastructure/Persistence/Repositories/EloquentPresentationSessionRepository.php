@@ -6,8 +6,8 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Presentation\Contracts\PresentationSessionRepository;
 use App\Domain\Presentation\Entities\PresentationSessionEntity;
-use App\Models\PresentationModel;
-use App\Models\PresentationSessionModel;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
 
 class EloquentPresentationSessionRepository implements PresentationSessionRepository
 {
@@ -26,9 +26,9 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
         ];
 
         if ($session->id === null) {
-            $model = PresentationSessionModel::create($attributes);
+            $model = PresentationSession::create($attributes);
         } else {
-            $model = PresentationSessionModel::findOrFail($session->id);
+            $model = PresentationSession::findOrFail($session->id);
             $model->update($attributes);
         }
 
@@ -37,7 +37,7 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
 
     public function findActiveByPresentationId(int $presentationId): ?PresentationSessionEntity
     {
-        return PresentationSessionModel::query()
+        return PresentationSession::query()
             ->where('presentation_id', $presentationId)
             ->whereNull('ended_at')
             ->latest('started_at')
@@ -47,7 +47,7 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
 
     public function findActiveByEmbedToken(string $embedToken): ?PresentationSessionEntity
     {
-        $presentationId = PresentationModel::query()
+        $presentationId = Presentation::query()
             ->where('embed_token', $embedToken)
             ->value('id');
 

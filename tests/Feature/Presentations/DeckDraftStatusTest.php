@@ -5,7 +5,7 @@ declare(strict_types=1);
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Infrastructure\ReadModels\PresentationReadModel;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
 
@@ -13,9 +13,9 @@ test('the read model reports a draft status for each deck', function () {
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    $ready = PresentationModel::factory()->create(['team_id' => $team->id]);
-    $generating = PresentationModel::factory()->generatingDraft()->create(['team_id' => $team->id]);
-    $failed = PresentationModel::factory()->failedDraft('boom')->create(['team_id' => $team->id]);
+    $ready = Presentation::factory()->create(['team_id' => $team->id]);
+    $generating = Presentation::factory()->generatingDraft()->create(['team_id' => $team->id]);
+    $failed = Presentation::factory()->failedDraft('boom')->create(['team_id' => $team->id]);
 
     $rows = collect(app(PresentationReadModel::class)->listForTeam($team->id))
         ->keyBy('id');
@@ -33,7 +33,7 @@ test('retrying a failed draft resets it and re-dispatches the build', function (
     $user = User::factory()->create();
     $team = $user->currentTeam;
 
-    $draft = PresentationModel::factory()
+    $draft = Presentation::factory()
         ->failedDraft('boom', '# retry me')
         ->create(['team_id' => $team->id, 'name' => 'My deck']);
 
@@ -63,7 +63,7 @@ test('a member of another team cannot retry a draft', function () {
     Queue::fake();
 
     $owner = User::factory()->create();
-    $draft = PresentationModel::factory()
+    $draft = Presentation::factory()
         ->failedDraft()
         ->create(['team_id' => $owner->currentTeam->id]);
 

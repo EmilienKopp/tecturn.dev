@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
-use App\Models\PresentationSessionModel;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('going live opens a session for the deck', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this->actingAs($user)->post(route('presentations.session.start', [
         'current_team' => $user->currentTeam->slug,
@@ -27,7 +27,7 @@ test('going live opens a session for the deck', function () {
 
 test('starting is idempotent while a session is already live', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $url = route('presentations.session.start', [
         'current_team' => $user->currentTeam->slug,
@@ -37,13 +37,13 @@ test('starting is idempotent while a session is already live', function () {
     $this->actingAs($user)->post($url)->assertNoContent();
     $this->actingAs($user)->post($url)->assertNoContent();
 
-    expect(PresentationSessionModel::where('presentation_id', $presentation->id)->count())->toBe(1);
+    expect(PresentationSession::where('presentation_id', $presentation->id)->count())->toBe(1);
 });
 
 test('closing a session records ended_at', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
-    $session = PresentationSessionModel::factory()->create([
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
+    $session = PresentationSession::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
     ]);
@@ -57,8 +57,8 @@ test('closing a session records ended_at', function () {
 });
 
 test('batched reactions accumulate on the live session and count the viewer', function () {
-    $presentation = PresentationModel::factory()->create();
-    $session = PresentationSessionModel::factory()->create([
+    $presentation = Presentation::factory()->create();
+    $session = PresentationSession::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $presentation->team_id,
     ]);
@@ -78,8 +78,8 @@ test('batched reactions accumulate on the live session and count the viewer', fu
 });
 
 test('a heartbeat with no reactions still counts the viewer', function () {
-    $presentation = PresentationModel::factory()->create();
-    $session = PresentationSessionModel::factory()->create([
+    $presentation = Presentation::factory()->create();
+    $session = PresentationSession::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $presentation->team_id,
     ]);
@@ -99,7 +99,7 @@ test('an anonymous viewer can authorize on the live presence channel', function 
     config(['broadcasting.default' => 'reverb']);
     require base_path('routes/channels.php');
 
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $this->postJson('/broadcasting/auth', [
         'socket_id' => '1234.5678',
@@ -123,7 +123,7 @@ test('joining the presence channel for an unknown talk is rejected', function ()
 test('the presence channel rejects a member with no viewer id', function () {
     config(['broadcasting.default' => 'reverb']);
 
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $this->postJson('/broadcasting/auth', [
         'socket_id' => '1234.5678',
@@ -132,18 +132,18 @@ test('the presence channel rejects a member with no viewer id', function () {
 });
 
 test('reactions are dropped when no session is live', function () {
-    $presentation = PresentationModel::factory()->create();
+    $presentation = Presentation::factory()->create();
 
     $this->postJson(route('presentations.reactions.batch', [
         'presentation' => $presentation->embed_token,
     ]), ['viewerId' => 'viewer-1', 'counts' => ['🔥' => 2]])->assertNoContent();
 
-    expect(PresentationSessionModel::count())->toBe(0);
+    expect(PresentationSession::count())->toBe(0);
 });
 
 test('unsupported reaction emojis are rejected', function () {
-    $presentation = PresentationModel::factory()->create();
-    PresentationSessionModel::factory()->create([
+    $presentation = Presentation::factory()->create();
+    PresentationSession::factory()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $presentation->team_id,
     ]);
@@ -155,11 +155,11 @@ test('unsupported reaction emojis are rejected', function () {
 
 test('the dashboard exposes session analytics for the team', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Scaling Postgres',
     ]);
-    PresentationSessionModel::factory()->ended()->withReactions(['🔥' => 8, '👏' => 2])->create([
+    PresentationSession::factory()->ended()->withReactions(['🔥' => 8, '👏' => 2])->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
         'viewer_count' => 15,

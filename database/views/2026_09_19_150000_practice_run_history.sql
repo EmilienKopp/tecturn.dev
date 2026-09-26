@@ -21,7 +21,7 @@ SELECT
             media m
         WHERE
             m.model_id = r.id
-            AND m.model_type LIKE '%RehearsalModel'
+            AND m.model_type LIKE '%Rehearsal'
             AND m.collection_name = 'recording'
     ) AS has_recording,
     (

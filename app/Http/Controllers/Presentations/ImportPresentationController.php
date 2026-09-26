@@ -9,7 +9,7 @@ use App\Domain\Presentation\Exceptions\InvalidFlowGraph;
 use App\Domain\Presentation\Exceptions\InvalidPresentationContent;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\ImportPresentationRequest;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Gate;
@@ -22,7 +22,7 @@ class ImportPresentationController extends Controller
 
     public function __invoke(ImportPresentationRequest $request, Team $current_team): RedirectResponse
     {
-        Gate::authorize('create', [PresentationModel::class, $current_team]);
+        Gate::authorize('create', [Presentation::class, $current_team]);
 
         $payload = $request->presentationPayload();
 

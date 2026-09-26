@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
+use App\Models\RehearsalReview;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
-/** @return array{User, PresentationModel, RehearsalModel} */
+/** @return array{User, Presentation, Rehearsal} */
 function requesterWithRun(): array
 {
     $requester = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
-    $run = RehearsalModel::factory()->withStepEvents()->create([
+    $presentation = Presentation::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
+    $run = Rehearsal::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,
@@ -25,7 +25,7 @@ function requesterWithRun(): array
 test('the reviews index splits reviews by side', function () {
     [$requester, , $run] = requesterWithRun();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -55,7 +55,7 @@ test('the reviews index splits reviews by side', function () {
 test('the requester sees a received review with sibling and other-run shortcuts', function () {
     [$requester, $presentation, $run] = requesterWithRun();
     $reviewer = User::factory()->create(['name' => 'Aiko Reviewer']);
-    $review = RehearsalReviewModel::factory()->completed()->create([
+    $review = RehearsalReview::factory()->completed()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,
@@ -63,18 +63,18 @@ test('the requester sees a received review with sibling and other-run shortcuts'
     $review->comments()->create(['slide_number' => 0, 'message' => 'Great opener.']);
 
     // A second review on the same run, by someone else.
-    $sibling = RehearsalReviewModel::factory()->create([
+    $sibling = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
     ]);
 
     // A reviewed rehearsal of the same presentation.
-    $otherRun = RehearsalModel::factory()->withStepEvents()->create([
+    $otherRun = Rehearsal::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,
     ]);
-    $otherReview = RehearsalReviewModel::factory()->create([
+    $otherReview = RehearsalReview::factory()->create([
         'practice_run_id' => $otherRun->id,
         'requester_user_id' => $requester->id,
     ]);
@@ -98,7 +98,7 @@ test('the requester sees a received review with sibling and other-run shortcuts'
 test('only the requester can open the received review page', function () {
     [$requester, , $run] = requesterWithRun();
     $reviewer = User::factory()->create();
-    $review = RehearsalReviewModel::factory()->create([
+    $review = RehearsalReview::factory()->create([
         'practice_run_id' => $run->id,
         'requester_user_id' => $requester->id,
         'reviewer_user_id' => $reviewer->id,

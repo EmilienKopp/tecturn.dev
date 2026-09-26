@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Presentation\ValueObjects;
 
 use App\Domain\Presentation\Exceptions\InvalidPresentationContent;
-use Splitstack\Typewriter\Attributes\TypeScript;
+use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 
 /**
  * The origin of a presentation's slides. Editor decks store no external URL and

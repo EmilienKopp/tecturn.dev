@@ -11,11 +11,6 @@ abstract class AppEvent
         public DomainEvent $domainEvent,
     ) {}
 
-    /**
-     * @template T of Entity
-     *
-     * @return T
-     */
     public function entity(): Entity
     {
         return $this->domainEvent->entity();

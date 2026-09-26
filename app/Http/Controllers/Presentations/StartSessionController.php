@@ -7,7 +7,7 @@ namespace App\Http\Controllers\Presentations;
 use App\Application\Actions\Presentations\StartSession;
 use App\Application\Commands\StartSessionCommand;
 use App\Http\Controllers\Controller;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use Illuminate\Http\Response;
 use Illuminate\Support\Carbon;
@@ -17,7 +17,7 @@ class StartSessionController extends Controller
 {
     public function __construct(private readonly StartSession $startSession) {}
 
-    public function __invoke(Team $current_team, PresentationModel $presentation): Response
+    public function __invoke(Team $current_team, Presentation $presentation): Response
     {
         Gate::authorize('view', $presentation);
 

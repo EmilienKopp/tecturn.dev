@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Presentations;
 
+use App\Ai\HouseAllowance;
 use App\Application\Actions\Presentations\CreatePresentation;
 use App\Application\Actions\Presentations\DeletePresentation;
 use App\Application\Actions\Presentations\UpdatePresentation;
@@ -17,7 +18,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\CreatePresentationRequest;
 use App\Http\Requests\Presentations\UpdatePresentationRequest;
 use App\Infrastructure\ReadModels\PresentationReadModel;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Presentation\EmbedCache;
 use Illuminate\Http\RedirectResponse;
@@ -38,14 +39,26 @@ class PresentationController extends Controller
 
     public function index(Team $current_team): Response
     {
+        $user = request()->user();
+
         return Inertia::render('presentations/Index', [
             'presentations' => $this->presentations->listForTeam($current_team->id),
+            'houseAllowance' => HouseAllowance::toArray($user),
+            'aiCredentials' => $user->aiCredentials()
+                ->latest()
+                ->get()
+                ->map(fn ($credential): array => [
+                    'id' => $credential->id,
+                    'label' => $credential->label ?: $credential->model,
+                    'model' => $credential->model,
+                    'is_default' => $credential->is_default,
+                ]),
         ]);
     }
 
     public function store(CreatePresentationRequest $request, Team $current_team): RedirectResponse
     {
-        Gate::authorize('create', [PresentationModel::class, $current_team]);
+        Gate::authorize('create', [Presentation::class, $current_team]);
 
         $sourceType = $request->validated('source_type', 'editor');
         $pdf = $sourceType === 'pdf' ? $request->file('file') : null;
@@ -57,7 +70,7 @@ class PresentationController extends Controller
                 slide_background: $request->user()->branding['background'],
                 sourceType: $sourceType,
                 externalUrl: $sourceType === 'google_slides' ? $request->validated('external_url') : null,
-                pdfFilePath: $pdf?->getRealPath(),
+                pdfFilePath: $pdf?->getRealPath() ?: null,
                 pdfFileName: $pdf !== null ? 'source.'.$pdf->getClientOriginalExtension() : null,
             ),
         );
@@ -68,7 +81,7 @@ class PresentationController extends Controller
         ]);
     }
 
-    public function edit(Team $current_team, PresentationModel $presentation): Response
+    public function edit(Team $current_team, Presentation $presentation): Response
     {
         Gate::authorize('view', $presentation);
 
@@ -90,7 +103,7 @@ class PresentationController extends Controller
     public function update(
         UpdatePresentationRequest $request,
         Team $current_team,
-        PresentationModel $presentation,
+        Presentation $presentation,
     ): RedirectResponse {
         Gate::authorize('update', $presentation);
 
@@ -136,7 +149,7 @@ class PresentationController extends Controller
         return back();
     }
 
-    public function destroy(Team $current_team, PresentationModel $presentation): RedirectResponse
+    public function destroy(Team $current_team, Presentation $presentation): RedirectResponse
     {
         Gate::authorize('delete', $presentation);
 

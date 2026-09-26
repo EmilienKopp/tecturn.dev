@@ -1,8 +1,8 @@
 <?php
 
-use App\Models\PresentationModel;
-use App\Models\PresentationSessionModel;
-use App\Models\RehearsalModel;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
+use App\Models\Rehearsal;
 use App\Models\User;
 use App\Support\Features;
 use Illuminate\Support\Facades\DB;
@@ -102,25 +102,25 @@ test('following someone shows their public talks and stats but hides private tal
         'social_x_handle' => 'taylorx',
     ]);
 
-    $publicTalk = PresentationModel::factory()->create([
+    $publicTalk = Presentation::factory()->create([
         'team_id' => $speaker->currentTeam->id,
         'name' => 'Public Talk',
         'is_private' => false,
     ]);
 
-    $privateTalk = PresentationModel::factory()->create([
+    $privateTalk = Presentation::factory()->create([
         'team_id' => $speaker->currentTeam->id,
         'name' => 'Private Talk',
         'is_private' => true,
     ]);
 
-    PresentationSessionModel::factory()->ended()->withReactions(['🔥' => 6])->create([
+    PresentationSession::factory()->ended()->withReactions(['🔥' => 6])->create([
         'presentation_id' => $publicTalk->id,
         'team_id' => $speaker->currentTeam->id,
         'viewer_count' => 18,
     ]);
 
-    PresentationSessionModel::factory()->ended()->withReactions(['👏' => 4])->create([
+    PresentationSession::factory()->ended()->withReactions(['👏' => 4])->create([
         'presentation_id' => $privateTalk->id,
         'team_id' => $speaker->currentTeam->id,
         'viewer_count' => 99,
@@ -276,8 +276,8 @@ test('re-requesting after acceptance does not downgrade the follow to pending', 
 
 test('a pending follower cannot be asked for a rehearsal review', function () {
     $requester = User::factory()->create(['handle' => 'requester']);
-    $presentation = PresentationModel::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
-    $run = RehearsalModel::factory()->withStepEvents()->create([
+    $presentation = Presentation::factory()->withSlides(2)->create(['team_id' => $requester->currentTeam->id]);
+    $run = Rehearsal::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $requester->currentTeam->id,
         'content' => $presentation->content,

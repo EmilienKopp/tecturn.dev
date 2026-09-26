@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('footer settings persist through the update flow and return to the editor', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create([
+    $presentation = Presentation::factory()->withSlides(1)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -49,7 +49,7 @@ test('footer settings persist through the update flow and return to the editor',
 
 test('footer handles are normalized on save', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create([
+    $presentation = Presentation::factory()->withSlides(1)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 

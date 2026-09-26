@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\Team;
 use App\Models\User;
 
@@ -19,7 +19,7 @@ class PresentationPolicy
     /**
      * Determine whether the user can view the presentation.
      */
-    public function view(User $user, PresentationModel $presentation): bool
+    public function view(User $user, Presentation $presentation): bool
     {
         return $user->belongsToTeam($presentation->team);
     }
@@ -27,7 +27,7 @@ class PresentationPolicy
     /**
      * Determine whether the user can update the presentation.
      */
-    public function update(User $user, PresentationModel $presentation): bool
+    public function update(User $user, Presentation $presentation): bool
     {
         return $user->belongsToTeam($presentation->team);
     }
@@ -35,7 +35,7 @@ class PresentationPolicy
     /**
      * Determine whether the user can delete the presentation.
      */
-    public function delete(User $user, PresentationModel $presentation): bool
+    public function delete(User $user, Presentation $presentation): bool
     {
         return $user->belongsToTeam($presentation->team);
     }

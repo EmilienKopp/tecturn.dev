@@ -6,7 +6,7 @@ namespace App\Http\Controllers\Reviews;
 
 use App\Http\Controllers\Controller;
 use App\Infrastructure\ReadModels\RehearsalReviewReadModel;
-use App\Models\RehearsalReviewModel;
+use App\Models\RehearsalReview;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
@@ -26,7 +26,7 @@ class RehearsalReviewController extends Controller
         ]);
     }
 
-    public function show(RehearsalReviewModel $rehearsal_review): Response
+    public function show(RehearsalReview $rehearsal_review): Response
     {
         Gate::authorize('view', $rehearsal_review);
 

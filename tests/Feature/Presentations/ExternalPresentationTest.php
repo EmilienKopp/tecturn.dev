@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
-use App\Models\RehearsalModel;
+use App\Models\Presentation;
+use App\Models\Rehearsal;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -31,7 +31,7 @@ test('a Google Slides presentation is created and stores its source', function (
             'external_url' => $url,
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     $response->assertRedirect(route('presentations.edit', [
         'current_team' => $team->slug,
@@ -56,7 +56,7 @@ test('a PDF presentation is created and stores the uploaded file', function () {
             'file' => fakePdf(),
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     $response->assertRedirect(route('presentations.edit', [
         'current_team' => $team->slug,
@@ -65,7 +65,7 @@ test('a PDF presentation is created and stores the uploaded file', function () {
 
     expect($presentation->source['type'])->toBe('pdf')
         ->and($presentation->sourcePdfUrl())->not->toBeNull()
-        ->and($presentation->getMedia(PresentationModel::SOURCE_COLLECTION))->toHaveCount(1);
+        ->and($presentation->getMedia(Presentation::SOURCE_COLLECTION))->toHaveCount(1);
 });
 
 test('a plain presentation defaults to the editor source', function () {
@@ -77,7 +77,7 @@ test('a plain presentation defaults to the editor source', function () {
             'name' => 'Editor deck',
         ]);
 
-    $presentation = PresentationModel::query()->firstOrFail();
+    $presentation = Presentation::query()->firstOrFail();
 
     expect($presentation->source['type'])->toBe('editor');
 });
@@ -136,7 +136,7 @@ test('a PDF deck rejects a non-pdf file', function () {
 
 test('an external deck opens the shared editor shell with its source', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->googleSlides()->create([
+    $presentation = Presentation::factory()->googleSlides()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -160,13 +160,13 @@ test('the present page carries the external source and pdf url', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->pdf()->create([
+    $presentation = Presentation::factory()->pdf()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
     $presentation
         ->addMedia(fakePdf())
-        ->toMediaCollection(PresentationModel::SOURCE_COLLECTION);
+        ->toMediaCollection(Presentation::SOURCE_COLLECTION);
 
     $response = $this
         ->actingAs($user)
@@ -185,7 +185,7 @@ test('the present page carries the external source and pdf url', function () {
 
 test('the manual slide count can be set on an external deck and drives the present page', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->googleSlides()->create([
+    $presentation = Presentation::factory()->googleSlides()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -213,7 +213,7 @@ test('the manual slide count can be set on an external deck and drives the prese
 
 test('the slide count rejects values below one', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->googleSlides()->create([
+    $presentation = Presentation::factory()->googleSlides()->create([
         'team_id' => $user->currentTeam->id,
     ]);
 
@@ -228,7 +228,7 @@ test('the slide count rejects values below one', function () {
 
 test('the rehearsal replay carries the external source so it can render the slides', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->googleSlides()->create([
+    $presentation = Presentation::factory()->googleSlides()->create([
         'team_id' => $user->currentTeam->id,
     ]);
     $presentation->update(['source' => [
@@ -237,7 +237,7 @@ test('the rehearsal replay carries the external source so it can render the slid
         'slideCount' => 8,
     ]]);
 
-    $rehearsal = RehearsalModel::factory()->withStepEvents()->create([
+    $rehearsal = Rehearsal::factory()->withStepEvents()->create([
         'presentation_id' => $presentation->id,
         'team_id' => $user->currentTeam->id,
     ]);
@@ -259,7 +259,7 @@ test('the rehearsal replay carries the external source so it can render the slid
 
 test('an editor deck presents with a null pdf url', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->withSlides(1)->create([
+    $presentation = Presentation::factory()->withSlides(1)->create([
         'team_id' => $user->currentTeam->id,
     ]);
 

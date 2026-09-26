@@ -8,7 +8,7 @@ use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Application\Events\DeckGenerated;
 use App\Application\Events\DeckGenerationFailed;
 use App\Jobs\GenerateDeckJob;
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Support\Facades\Event;
 
@@ -33,14 +33,14 @@ function fakeJobDeck(): array
     ];
 }
 
-function draftFor(User $user, string $plan = '# My plan', string $name = 'Generating deck…'): PresentationModel
+function draftFor(User $user, string $plan = '# My plan', string $name = 'Generating deck…'): Presentation
 {
-    return PresentationModel::factory()
+    return Presentation::factory()
         ->generatingDraft($plan)
         ->create(['team_id' => $user->currentTeam->id, 'name' => $name]);
 }
 
-function runDeckJob(PresentationModel $draft, User $user, string $name = ''): void
+function runDeckJob(Presentation $draft, User $user, string $name = ''): void
 {
     $job = new GenerateDeckJob(
         new GenerateDeckFromPlanCommand(presentation_id: $draft->id, name: $name),

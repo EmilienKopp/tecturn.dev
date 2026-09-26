@@ -30,6 +30,7 @@
     data-test="qr-block-{block.id}"
 >
     {#if svg}
+        <!-- eslint-disable-next-line svelte/no-at-html-tags -- svg comes from our own qrToSvg generator, not user input -->
         <div style="width: {widthCqw}cqw; max-width: 100%;">{@html svg}</div>
     {:else}
         <div

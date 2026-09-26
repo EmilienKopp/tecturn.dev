@@ -37,10 +37,6 @@ readonly class Block
         $actionIds = [];
 
         foreach ($this->actions as $action) {
-            if (! $action instanceof CodeAction) {
-                throw new InvalidPresentationContent('Block actions must be CodeAction value objects.');
-            }
-
             if (isset($actionIds[$action->id])) {
                 throw new InvalidPresentationContent("Duplicate code action id \"{$action->id}\" on block \"{$this->id}\".");
             }

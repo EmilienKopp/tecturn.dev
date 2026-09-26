@@ -3,6 +3,7 @@
 namespace App\Listeners\BetaRequests;
 
 use App\Application\Events\BetaRequestCreated;
+use App\Domain\Beta\Entities\BetaRequestEntity;
 use App\Notifications\Beta\BetaRequestReceived;
 use App\Notifications\Beta\BetaRequestSubmitted;
 use Illuminate\Support\Facades\Notification;
@@ -20,6 +21,11 @@ class BetaRequestsCreatedListener
     public function handle(BetaRequestCreated $event): void
     {
         $request = $event->entity();
+
+        if (! $request instanceof BetaRequestEntity) {
+            return;
+        }
+
         $admins = config('admin.emails', []);
 
         logger()->info('Beta request created', ['request' => $request]);

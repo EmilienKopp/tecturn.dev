@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use App\Models\PresentationModel;
+use App\Models\Presentation;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +11,7 @@ test('a background image can be uploaded and returns its url', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -32,7 +32,7 @@ test('a content image can be uploaded and returns its url', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -46,7 +46,7 @@ test('a content image can be uploaded and returns its url', function () {
     $response->assertOk();
     expect($response->json('url'))->toBeString()->toContain('diagram');
 
-    expect($presentation->fresh()->getMedia(PresentationModel::IMAGES_COLLECTION))
+    expect($presentation->fresh()->getMedia(Presentation::IMAGES_COLLECTION))
         ->toHaveCount(1);
 });
 
@@ -54,7 +54,7 @@ test('uploading a non-image is rejected', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $response = $this
         ->actingAs($user)
@@ -72,11 +72,11 @@ test('a background image can be removed', function () {
     Storage::fake('public');
 
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create(['team_id' => $user->currentTeam->id]);
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
 
     $presentation
         ->addMedia(UploadedFile::fake()->image('backdrop.jpg'))
-        ->toMediaCollection(PresentationModel::BACKGROUND_COLLECTION);
+        ->toMediaCollection(Presentation::BACKGROUND_COLLECTION);
 
     expect($presentation->fresh()->backgroundImageUrl())->not->toBeNull();
 
@@ -93,7 +93,7 @@ test('a background image can be removed', function () {
 
 test('a deck background image is exported onto slides without their own color', function () {
     $user = User::factory()->create();
-    $presentation = PresentationModel::factory()->create([
+    $presentation = Presentation::factory()->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Backdrop Deck',
         'content' => [

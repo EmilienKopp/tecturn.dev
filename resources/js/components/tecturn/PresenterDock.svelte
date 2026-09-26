@@ -10,7 +10,6 @@
         talkSettings,
         slideCount = 0,
         currentSlide = 0,
-        recentReactions = [],
         viewerCount = 0,
         reactionTotal = 0,
         showReactions = $bindable(false),
@@ -19,7 +18,6 @@
         talkSettings: TalkSettings;
         slideCount?: number;
         currentSlide?: number;
-        recentReactions?: { id: number; emoji: string }[];
         viewerCount?: number;
         reactionTotal?: number;
         showReactions?: boolean;

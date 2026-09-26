@@ -33,7 +33,9 @@ class AppNavigation
                     ->add('Teams', route('teams.index'), attributes: ['icon' => 'users']);
             })
             ->add(title: 'Help', configure: function (Section $section) {
-                $section->add('Documentation', route('docs'), attributes: ['icon' => 'book-open']);
+                $section
+                    ->add('Documentation', route('docs'), attributes: ['icon' => 'book-open'])
+                    ->add('Feedback', route('feedback.create'), attributes: ['icon' => 'megaphone']);
             })
             ->tree();
     }

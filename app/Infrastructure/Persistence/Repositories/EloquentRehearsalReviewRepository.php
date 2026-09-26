@@ -6,13 +6,13 @@ namespace App\Infrastructure\Persistence\Repositories;
 
 use App\Domain\Presentation\Contracts\RehearsalReviewRepository;
 use App\Domain\Presentation\Entities\RehearsalReviewEntity;
-use App\Models\RehearsalReviewModel;
+use App\Models\RehearsalReview;
 
 class EloquentRehearsalReviewRepository implements RehearsalReviewRepository
 {
     public function findById(int $id): RehearsalReviewEntity
     {
-        return RehearsalReviewModel::with('comments')->findOrFail($id)->toEntity();
+        return RehearsalReview::with('comments')->findOrFail($id)->toEntity();
     }
 
     public function save(RehearsalReviewEntity $review): RehearsalReviewEntity
@@ -25,9 +25,9 @@ class EloquentRehearsalReviewRepository implements RehearsalReviewRepository
         ];
 
         if ($review->id === null) {
-            $model = RehearsalReviewModel::create($attributes);
+            $model = RehearsalReview::create($attributes);
         } else {
-            $model = RehearsalReviewModel::findOrFail($review->id);
+            $model = RehearsalReview::findOrFail($review->id);
             $model->update($attributes);
         }
 
@@ -45,7 +45,7 @@ class EloquentRehearsalReviewRepository implements RehearsalReviewRepository
 
     public function existsForRunAndReviewer(int $rehearsalId, int $reviewerUserId): bool
     {
-        return RehearsalReviewModel::query()
+        return RehearsalReview::query()
             ->where('practice_run_id', $rehearsalId)
             ->where('reviewer_user_id', $reviewerUserId)
             ->exists();
