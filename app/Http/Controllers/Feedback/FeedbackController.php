@@ -9,7 +9,6 @@ use App\Application\Commands\SubmitFeedbackCommand;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Feedback\SubmitFeedbackRequest;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -26,7 +25,7 @@ class FeedbackController extends Controller
     {
         $this->submitFeedback->execute(new SubmitFeedbackCommand(
             message: $request->validated('message'),
-            userId: Auth::id(),
+            userId: $request->user()?->id,
         ));
 
         Inertia::flash('toast', [

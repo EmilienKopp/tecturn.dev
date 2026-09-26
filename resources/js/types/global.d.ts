@@ -1,6 +1,6 @@
 import type { Auth } from '@/types/auth';
-import type { Team } from '@/types/teams';
 import type { LintPolicy } from '@/types/generated';
+import type { Team } from '@/types/teams';
 
 // Extend ImportMeta interface for Vite...
 declare module 'vite/client' {

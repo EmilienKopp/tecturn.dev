@@ -4,6 +4,7 @@ import type {
     PresentationContent,
     Slide,
 } from '@/types/generated';
+import { isGradientBackground } from '../background.ts';
 import type { CodeActionCue, StepIndex } from '../flow-compiler.ts';
 import {
     codeActionCues,
@@ -13,7 +14,6 @@ import {
     migrateLegacyTransitions,
     stepIndexBySlide,
 } from '../flow-compiler.ts';
-import { isGradientBackground } from '../background.ts';
 import { bunnyImportCss } from '../fonts.ts';
 import type { CodegenContainer } from './Container.ts';
 import type { BlockRendererPlugin, RenderContext } from './contracts.ts';

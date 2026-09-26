@@ -10,6 +10,7 @@ use App\Ai\DeckAssembler;
 use App\Application\Commands\GenerateDeckFromPlanCommand;
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Entities\PresentationEntity;
+use Laravel\Ai\Responses\StructuredAgentResponse;
 use RuntimeException;
 
 /**
@@ -68,11 +69,16 @@ class GenerateDeckFromPlan
             : $this->credentials->resolve($credentialId);
 
         if ($resolved === null) {
-            return (new Deckster)->prompt($plan)->toArray();
+            $response = (new Deckster)->prompt($plan);
+        } else {
+            ['provider' => $provider, 'model' => $model] = $this->credentials->apply($resolved);
+            $response = (new Deckster)->prompt($plan, provider: $provider, model: $model);
         }
 
-        ['provider' => $provider, 'model' => $model] = $this->credentials->apply($resolved);
+        if (! $response instanceof StructuredAgentResponse) {
+            throw new RuntimeException('Deckster returned a non-structured response.');
+        }
 
-        return (new Deckster)->prompt($plan, provider: $provider, model: $model)->toArray();
+        return $response->toArray();
     }
 }
