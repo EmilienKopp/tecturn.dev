@@ -7,6 +7,7 @@ import {
     defaultFlowFromContent,
     enabledSlideIds,
     migrateLegacyTransitions,
+    slidesInNavOrder,
     transitionsForSlide,
 } from '@/lib/tecturn/flow-compiler';
 import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
@@ -86,13 +87,16 @@ export class EditorState {
         this.selectedBlockId = null;
         this.syncSlideNodes();
 
-        // A wired deck gates playback on the nav chain, so a new slide has to
-        // join it or it would be born disabled; splice it onto the tail by
-        // order. Unwired decks stay implicit (every slide shown).
+        // The flow diagram is the source of truth for order, so every new slide
+        // joins the nav chain: splice it onto a wired deck, or materialize the
+        // implied chain (in content order) for one that was still unwired.
         if (this.hasNavEdges()) {
             this.enableSlide(id);
+        } else {
+            this.materializeChain();
         }
 
+        this.reorderSlidesToNavChain();
         this.dirty = true;
     }
 
@@ -157,11 +161,15 @@ export class EditorState {
         this.selectedBlockId = null;
         this.syncSlideNodes();
 
-        // If there's a nav chain, insert the new slide into it
+        // Same as addSlide: the duplicate joins the nav chain so the diagram
+        // stays connected and drives order.
         if (this.hasNavEdges()) {
             this.enableSlide(newSlideId);
+        } else {
+            this.materializeChain();
         }
 
+        this.reorderSlidesToNavChain();
         this.dirty = true;
     }
 
@@ -234,6 +242,10 @@ export class EditorState {
             }
         }
 
+        // The flow diagram drives order, so a deck must always show its chain.
+        // materializeChain no-ops once any nav edge exists, so this only wires
+        // an untouched or legacy deck (once), in its current content order.
+        this.materializeChain();
         this.reconcilePins();
         this.reconcileCodeActionNodes();
     }
@@ -411,6 +423,17 @@ export class EditorState {
             return false;
         }
 
+        // Slide→slide means "the target slide comes right after the source":
+        // relink the chain and let the content order follow, rather than
+        // pushing a raw edge that would branch or duplicate.
+        if (source.type === 'slide' && target.type === 'slide') {
+            this.moveSlideNodeAfter(source.id, target.id);
+            this.reorderSlidesToNavChain();
+            this.dirty = true;
+
+            return true;
+        }
+
         if (source.type === 'transition' && target.type === 'slide') {
             return false;
         }
@@ -500,6 +523,9 @@ export class EditorState {
         // edge never changes which steps a slide has or unpins any block. The
         // now-unwired step simply reorders by its canvas position.
         if (this.flow.edges.length !== before) {
+            // A removed nav edge may split the chain, so mirror the content
+            // order to whatever chain remains.
+            this.reorderSlidesToNavChain();
             this.dirty = true;
         }
     }
@@ -659,6 +685,7 @@ export class EditorState {
             this.enableSlide(slide.id);
         }
 
+        this.reorderSlidesToNavChain();
         this.dirty = true;
     }
 
@@ -675,15 +702,23 @@ export class EditorState {
         // legacy deck and silently undo the disable.
         node.data.disabled = true;
 
-        const navIn = this.navInEdges(node.id);
-        const navOut = this.navOutEdge(node.id);
+        this.detachNavNode(node.id);
+    }
+
+    /**
+     * Removes a slide node's incoming and outgoing nav edges, bridging its
+     * predecessors to its successor so the chain stays continuous. Leaves the
+     * node's `disabled` marker untouched; callers set it when they mean to keep
+     * the slide out of the show.
+     */
+    private detachNavNode(nodeId: string): void {
+        const navIn = this.navInEdges(nodeId);
+        const navOut = this.navOutEdge(nodeId);
         const nextTargetId = navOut?.target ?? null;
         const removed = new SvelteSet(
             [...navIn, ...(navOut ? [navOut] : [])].map((edge) => edge.id),
         );
 
-        // Reconnect whatever pointed here to whatever this pointed at, so the
-        // chain stays continuous and nothing downstream disables by accident.
         if (nextTargetId) {
             for (const edge of navIn) {
                 if (edge.source === nextTargetId) {
@@ -706,6 +741,79 @@ export class EditorState {
         this.flow.edges = this.flow.edges.filter(
             (edge) => !removed.has(edge.id),
         );
+    }
+
+    /**
+     * Splices the moving slide node in right after another: detach it from the
+     * chain (bridging its old neighbors), then insert it between the anchor and
+     * the anchor's former next. Both ends are re-enabled — hand-wiring a slide
+     * into the chain always means it plays.
+     */
+    private moveSlideNodeAfter(afterNodeId: string, movingNodeId: string): void {
+        if (afterNodeId === movingNodeId) {
+            return;
+        }
+
+        this.detachNavNode(movingNodeId);
+
+        const anchorOut = this.navOutEdge(afterNodeId);
+        const anchorNextId = anchorOut?.target ?? null;
+
+        if (anchorOut) {
+            this.flow.edges = this.flow.edges.filter(
+                (edge) => edge.id !== anchorOut.id,
+            );
+        }
+
+        this.pushNavEdge(afterNodeId, movingNodeId);
+
+        if (anchorNextId && anchorNextId !== movingNodeId) {
+            this.pushNavEdge(movingNodeId, anchorNextId);
+        }
+
+        const afterNode = this.findFlowNode(afterNodeId);
+        const movingNode = this.findFlowNode(movingNodeId);
+
+        if (afterNode) {
+            delete afterNode.data.disabled;
+        }
+
+        if (movingNode) {
+            delete movingNode.data.disabled;
+        }
+    }
+
+    /**
+     * Reorders content.slides to match the nav chain, so the Slides editor and
+     * the export follow the flow diagram. Unwired or disabled slides keep their
+     * position (see slidesInNavOrder). Selection tracks the same slide across
+     * the reorder.
+     */
+    private reorderSlidesToNavChain(): void {
+        const orderedIds = slidesInNavOrder(this.content, this.flow);
+        const currentIds = this.content.slides.map((slide) => slide.id);
+
+        if (
+            orderedIds.length !== currentIds.length ||
+            orderedIds.every((id, index) => id === currentIds[index])
+        ) {
+            return;
+        }
+
+        const selectedId = this.content.slides[this.selectedSlideIndex]?.id;
+        const bySlideId = new SvelteMap(
+            this.content.slides.map((slide) => [slide.id, slide]),
+        );
+
+        this.content.slides = orderedIds
+            .map((id) => bySlideId.get(id))
+            .filter((slide): slide is MutableSlide => slide != null);
+
+        if (selectedId) {
+            this.selectedSlideIndex = this.content.slides.findIndex(
+                (slide) => slide.id === selectedId,
+            );
+        }
     }
 
     /**
