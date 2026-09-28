@@ -6,6 +6,7 @@ use App\Domain\Presentation\ValueObjects\FlowGraph;
 use App\Domain\Presentation\ValueObjects\FlowNodeType;
 use App\Domain\Presentation\ValueObjects\PresentationContent;
 use App\Domain\Presentation\ValueObjects\SlideLayout;
+use App\Domain\Presentation\ValueObjects\TalkSettings;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -67,6 +68,8 @@ class UpdatePresentationRequest extends FormRequest
             'talk_settings.footer.bgColor' => ['sometimes', 'string', 'max:32'],
             'talk_settings.footer.fontColor' => ['sometimes', 'string', 'max:32'],
             'talk_settings.footer.showInDock' => ['sometimes', 'boolean'],
+            'talk_settings.reactions' => ['sometimes', 'array', 'max:'.TalkSettings::MAX_REACTIONS],
+            'talk_settings.reactions.*' => ['string', 'max:16'],
         ];
     }
 }

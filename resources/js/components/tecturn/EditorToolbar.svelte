@@ -30,11 +30,13 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
     import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
+    import ReactionsSettingsModal from './ReactionsSettingsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
 
     let {
@@ -68,6 +70,12 @@
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
+    let reactions = $state<string[]>(
+        talkSettings.reactions?.length
+            ? [...talkSettings.reactions]
+            : [...DEFAULT_REACTIONS],
+    );
+    let reactionsModalOpen = $state(false);
     let presentationPrivate = $state(isPrivate);
     let showDock = $state(talkSettings.showDock);
     let showTranslation = $state(talkSettings.showTranslation);
@@ -105,6 +113,7 @@
                 talk_settings: {
                     ...talkSettings,
                     showReactions,
+                    reactions,
                     showDock,
                     showTranslation,
                     autoSave,
@@ -123,11 +132,23 @@
         );
     };
 
-    const toggleReactions = () =>
+    const saveReactions = (next: {
+        showReactions: boolean;
+        reactions: string[];
+    }) => {
+        const previousShow = showReactions;
+        const previousReactions = reactions;
         persistTalkSettings(
-            () => (showReactions = !showReactions),
-            () => (showReactions = !showReactions),
+            () => {
+                showReactions = next.showReactions;
+                reactions = next.reactions;
+            },
+            () => {
+                showReactions = previousShow;
+                reactions = previousReactions;
+            },
         );
+    };
 
     const toggleDock = () =>
         persistTalkSettings(
@@ -463,13 +484,23 @@
                 {/snippet}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4} class="w-56">
-                {@render toggleRow(
-                    'Reactions',
-                    Heart,
-                    showReactions,
-                    toggleReactions,
-                    'editor-reactions-toggle',
-                )}
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onclick={() => (reactionsModalOpen = true)}
+                    data-test="editor-reactions-menu-item"
+                >
+                    <Heart class="h-4 w-4" />
+                    Reactions…
+                    <span
+                        class="ml-auto text-xs {showReactions
+                            ? 'font-medium text-primary'
+                            : 'text-muted-foreground'}"
+                    >
+                        {showReactions ? 'On' : 'Off'}
+                    </span>
+                </button>
                 {@render toggleRow(
                     'Dock',
                     PanelRight,
@@ -633,6 +664,13 @@
 <Confirm bind:this={confirmModal} />
 
 <FooterSettingsModal {footer} bind:open={footerModalOpen} onSave={saveFooter} />
+
+<ReactionsSettingsModal
+    {reactions}
+    {showReactions}
+    bind:open={reactionsModalOpen}
+    onSave={saveReactions}
+/>
 
 <TalkLengthModal
     {durationMinutes}

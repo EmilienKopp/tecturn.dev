@@ -11,12 +11,13 @@
     let {
         presentationName,
         embedToken,
+        reactions,
     }: {
         presentationName: string;
         embedToken: string;
+        // The presentation's reaction set (custom or defaults), from the server.
+        reactions: string[];
     } = $props();
-
-    const EMOJIS = ['👏', '❤️', '😂', '🤯', '🙌', '🔥'] as const;
 
     // How often to persist the batched tally, and how often to refresh presence
     // even while idle so the presenter's "watching now" count stays honest.
@@ -171,7 +172,7 @@
     </p>
 
     <div class="grid grid-cols-3 gap-4">
-        {#each EMOJIS as emoji (emoji)}
+        {#each reactions as emoji (emoji)}
             <button
                 type="button"
                 class="footlight-key flex h-20 w-20 items-center justify-center rounded-full text-4xl select-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[hsl(37_91%_55%)]"

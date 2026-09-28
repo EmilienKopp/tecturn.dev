@@ -62,13 +62,7 @@ export type FlowNode = {
 readonly id: string,
 readonly type: FlowNodeType,
 readonly position: NodePosition,
-readonly data: {
-slideId?: string,
-label?: string | null,
-blockId?: string,
-actionId?: string,
-disabled?: boolean,
-},
+readonly data: Record<string, any>,
 };
 export type FlowNodeType = 'slide' | 'transition' | 'code-action';
 export type FooterSettings = {
@@ -145,6 +139,7 @@ readonly timerMode: string,
 readonly durationMinutes: number | null,
 readonly autoSave: boolean,
 readonly footer: FooterSettings,
+readonly reactions: string[],
 };
 export type Transition = {
 readonly nodeId: string | null,
