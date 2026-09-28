@@ -644,8 +644,26 @@ export class EditorState {
             return;
         }
 
-        // Slides explicitly disabled while the chain was empty stay out of
-        // the materialized chain, otherwise wiring would re-enable them.
+        this.rewireNavChainToContentOrder();
+    }
+
+    /**
+     * Rebuilds the slide→slide chain as a single line in current content order,
+     * skipping disabled slides. Drops any existing nav edges first, so it is the
+     * write side of the order model: reorder the array, then call this to make
+     * the diagram match. Chain lanes (transition/code-action) are untouched.
+     */
+    private rewireNavChainToContentOrder(): void {
+        this.flow.edges = this.flow.edges.filter(
+            (edge) =>
+                !(
+                    this.isSlideNode(edge.source) &&
+                    this.isSlideNode(edge.target)
+                ),
+        );
+
+        // Slides explicitly disabled stay out of the chain, otherwise wiring
+        // would re-enable them; the entry (index 0) is always in.
         const chainSlides = this.content.slides.filter(
             (slide, index) =>
                 index === 0 ||
@@ -660,6 +678,39 @@ export class EditorState {
                 this.pushNavEdge(from.id, to.id);
             }
         }
+    }
+
+    /**
+     * Moves a slide from one index to another and rewires the nav chain to the
+     * new order, so the Slides list and the flow diagram stay in lockstep.
+     * No-op when the move is trivial or out of range.
+     */
+    moveSlide(fromIndex: number, toIndex: number): void {
+        const slides = this.content.slides;
+
+        if (
+            fromIndex === toIndex ||
+            fromIndex < 0 ||
+            toIndex < 0 ||
+            fromIndex >= slides.length ||
+            toIndex >= slides.length
+        ) {
+            return;
+        }
+
+        const selectedId = slides[this.selectedSlideIndex]?.id;
+        const [moved] = slides.splice(fromIndex, 1);
+        slides.splice(toIndex, 0, moved);
+
+        this.rewireNavChainToContentOrder();
+
+        if (selectedId) {
+            this.selectedSlideIndex = slides.findIndex(
+                (slide) => slide.id === selectedId,
+            );
+        }
+
+        this.dirty = true;
     }
 
     /** Enables or disables the slide at an index; the entry slide is a no-op. */
