@@ -13,6 +13,7 @@
         viewerCount = 0,
         reactionTotal = 0,
         showReactions = $bindable(false),
+        showMessages = $bindable(false),
     }: {
         viewerUrl: string;
         talkSettings: TalkSettings;
@@ -21,6 +22,7 @@
         viewerCount?: number;
         reactionTotal?: number;
         showReactions?: boolean;
+        showMessages?: boolean;
     } = $props();
 
     // --- Timer ---
@@ -219,7 +221,7 @@
     </section>
 
     <!-- Reactions -->
-    <section class="rounded-lg bg-zinc-800 p-4">
+    <section class="space-y-3 rounded-lg bg-zinc-800 p-4">
         <div class="flex items-center justify-between">
             <p
                 class="text-xs font-semibold uppercase tracking-wider text-zinc-400"
@@ -247,6 +249,33 @@
                 ></span>
             </button>
         </div>
+
+        {#if talkSettings.allowFreeText}
+            <div class="flex items-center justify-between border-t border-zinc-700 pt-3">
+                <p
+                    class="text-xs font-semibold uppercase tracking-wider text-zinc-400"
+                >
+                    Messages
+                </p>
+                <button
+                    type="button"
+                    role="switch"
+                    aria-checked={showMessages}
+                    aria-label="Show audience messages on screen"
+                    class="relative h-5 w-9 rounded-full transition-colors {showMessages
+                        ? 'bg-amber-500'
+                        : 'bg-zinc-600'}"
+                    onclick={() => (showMessages = !showMessages)}
+                    data-test="dock-messages-toggle"
+                >
+                    <span
+                        class="absolute top-0.5 left-0.5 h-4 w-4 rounded-full bg-white transition-transform {showMessages
+                            ? 'translate-x-4'
+                            : ''}"
+                    ></span>
+                </button>
+            </div>
+        {/if}
     </section>
 
     <!-- Footer (when relocated into the dock) -->

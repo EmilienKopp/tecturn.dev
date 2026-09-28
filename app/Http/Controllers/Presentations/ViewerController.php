@@ -20,6 +20,8 @@ class ViewerController extends Controller
             'presentationName' => $presentation->name,
             'embedToken' => $presentation->embed_token,
             'reactions' => $settings->reactions,
+            'allowFreeText' => $settings->allowFreeText,
+            'freeTextMaxLength' => $settings->freeTextMaxLength,
         ]);
     }
 }

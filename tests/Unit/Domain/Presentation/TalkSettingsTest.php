@@ -62,9 +62,21 @@ it('roundtrips through fromArray and toArray', function () {
             'showInDock' => false,
         ],
         'reactions' => ['👏', '🔥', '🚀'],
+        'allowFreeText' => true,
+        'freeTextMaxLength' => 40,
     ];
 
     expect(TalkSettings::fromArray($original)->toArray())->toEqual($original);
+});
+
+it('clamps the free-text length into range and defaults when invalid', function () {
+    expect(TalkSettings::fromArray(['freeTextMaxLength' => 999])->freeTextMaxLength)
+        ->toBe(TalkSettings::MAX_FREE_TEXT_LENGTH)
+        ->and(TalkSettings::fromArray(['freeTextMaxLength' => 0])->freeTextMaxLength)
+        ->toBe(1)
+        ->and(TalkSettings::fromArray(['freeTextMaxLength' => 'nope'])->freeTextMaxLength)
+        ->toBe(TalkSettings::DEFAULT_FREE_TEXT_LENGTH)
+        ->and(TalkSettings::defaults()->allowFreeText)->toBeFalse();
 });
 
 it('falls back to default reactions when the custom set is empty or invalid', function () {

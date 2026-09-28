@@ -6,3 +6,6 @@
 export const DEFAULT_REACTIONS = ['👏', '❤️', '😂', '🤯', '🙌', '🔥'];
 
 export const MAX_REACTIONS = 10;
+
+/** Mirrors TalkSettings::MAX_FREE_TEXT_LENGTH. */
+export const MAX_FREE_TEXT_LENGTH = 64;

@@ -70,6 +70,8 @@ class UpdatePresentationRequest extends FormRequest
             'talk_settings.footer.showInDock' => ['sometimes', 'boolean'],
             'talk_settings.reactions' => ['sometimes', 'array', 'max:'.TalkSettings::MAX_REACTIONS],
             'talk_settings.reactions.*' => ['string', 'max:16'],
+            'talk_settings.allowFreeText' => ['sometimes', 'boolean'],
+            'talk_settings.freeTextMaxLength' => ['sometimes', 'integer', 'min:1', 'max:'.TalkSettings::MAX_FREE_TEXT_LENGTH],
         ];
     }
 }

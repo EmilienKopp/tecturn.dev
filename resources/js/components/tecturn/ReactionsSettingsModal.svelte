@@ -11,24 +11,39 @@
     } from '@/components/ui/dialog';
     import { Input } from '@/components/ui/input';
     import { Label } from '@/components/ui/label';
-    import { DEFAULT_REACTIONS, MAX_REACTIONS } from '@/lib/tecturn/reactions';
+    import {
+        DEFAULT_REACTIONS,
+        MAX_FREE_TEXT_LENGTH,
+        MAX_REACTIONS,
+    } from '@/lib/tecturn/reactions';
 
     let {
         reactions,
         showReactions,
+        allowFreeText,
+        freeTextMaxLength,
         open = $bindable(false),
         onSave,
     }: {
         reactions: string[];
         showReactions: boolean;
+        allowFreeText: boolean;
+        freeTextMaxLength: number;
         open?: boolean;
-        onSave: (next: { showReactions: boolean; reactions: string[] }) => void;
+        onSave: (next: {
+            showReactions: boolean;
+            reactions: string[];
+            allowFreeText: boolean;
+            freeTextMaxLength: number;
+        }) => void;
     } = $props();
 
     // Staged edits — only committed on Save.
     let enabled = $state(false);
     let list = $state<string[]>([]);
     let draft = $state('');
+    let freeText = $state(false);
+    let maxLength = $state(20);
 
     const atLimit = $derived(list.length >= MAX_REACTIONS);
     const trimmedDraft = $derived(draft.trim());
@@ -40,6 +55,15 @@
         enabled = showReactions;
         list = reactions.length ? [...reactions] : [...DEFAULT_REACTIONS];
         draft = '';
+        freeText = allowFreeText;
+        maxLength = freeTextMaxLength;
+    }
+
+    function clampMaxLength() {
+        maxLength = Math.max(
+            1,
+            Math.min(MAX_FREE_TEXT_LENGTH, Math.round(maxLength) || 1),
+        );
     }
 
     // Re-seed on open. The editor opens the modal by setting `open` directly
@@ -83,10 +107,13 @@
     }
 
     function save() {
+        clampMaxLength();
         onSave({
             showReactions: enabled,
             // An empty set falls back to the defaults, matching the server.
             reactions: list.length ? list : [...DEFAULT_REACTIONS],
+            allowFreeText: freeText,
+            freeTextMaxLength: maxLength,
         });
         open = false;
     }
@@ -181,6 +208,42 @@
                     another.
                 </p>
             {/if}
+
+            <div class="grid gap-3 border-t pt-4">
+                <label
+                    class="flex items-center gap-2 text-sm"
+                    for="reactions-free-text"
+                >
+                    <Checkbox
+                        id="reactions-free-text"
+                        bind:checked={freeText}
+                        data-test="reactions-free-text"
+                    />
+                    <span>
+                        Allow free-text messages
+                        <span class="block text-xs text-muted-foreground">
+                            The audience can send a short message to the screen.
+                        </span>
+                    </span>
+                </label>
+
+                {#if freeText}
+                    <div class="grid max-w-[16rem] gap-2">
+                        <Label for="reactions-max-length">
+                            Max length (up to {MAX_FREE_TEXT_LENGTH})
+                        </Label>
+                        <Input
+                            id="reactions-max-length"
+                            type="number"
+                            min="1"
+                            max={MAX_FREE_TEXT_LENGTH}
+                            bind:value={maxLength}
+                            onblur={clampMaxLength}
+                            data-test="reactions-max-length"
+                        />
+                    </div>
+                {/if}
+            </div>
         </div>
 
         <DialogFooter class="gap-2 sm:justify-between mx-3">

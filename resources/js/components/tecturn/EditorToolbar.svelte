@@ -75,6 +75,8 @@
             ? [...talkSettings.reactions]
             : [...DEFAULT_REACTIONS],
     );
+    let allowFreeText = $state(talkSettings.allowFreeText ?? false);
+    let freeTextMaxLength = $state(talkSettings.freeTextMaxLength ?? 20);
     let reactionsModalOpen = $state(false);
     let presentationPrivate = $state(isPrivate);
     let showDock = $state(talkSettings.showDock);
@@ -114,6 +116,8 @@
                     ...talkSettings,
                     showReactions,
                     reactions,
+                    allowFreeText,
+                    freeTextMaxLength,
                     showDock,
                     showTranslation,
                     autoSave,
@@ -135,17 +139,25 @@
     const saveReactions = (next: {
         showReactions: boolean;
         reactions: string[];
+        allowFreeText: boolean;
+        freeTextMaxLength: number;
     }) => {
         const previousShow = showReactions;
         const previousReactions = reactions;
+        const previousAllowFreeText = allowFreeText;
+        const previousMaxLength = freeTextMaxLength;
         persistTalkSettings(
             () => {
                 showReactions = next.showReactions;
                 reactions = next.reactions;
+                allowFreeText = next.allowFreeText;
+                freeTextMaxLength = next.freeTextMaxLength;
             },
             () => {
                 showReactions = previousShow;
                 reactions = previousReactions;
+                allowFreeText = previousAllowFreeText;
+                freeTextMaxLength = previousMaxLength;
             },
         );
     };
@@ -668,6 +680,8 @@
 <ReactionsSettingsModal
     {reactions}
     {showReactions}
+    {allowFreeText}
+    {freeTextMaxLength}
     bind:open={reactionsModalOpen}
     onSave={saveReactions}
 />

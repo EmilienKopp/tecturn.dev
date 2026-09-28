@@ -140,6 +140,8 @@ readonly durationMinutes: number | null,
 readonly autoSave: boolean,
 readonly footer: FooterSettings,
 readonly reactions: string[],
+readonly allowFreeText: boolean,
+readonly freeTextMaxLength: number,
 };
 export type Transition = {
 readonly nodeId: string | null,

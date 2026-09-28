@@ -26,6 +26,7 @@ use App\Http\Controllers\Presentations\RecordReactionsController;
 use App\Http\Controllers\Presentations\RehearsalController;
 use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
 use App\Http\Controllers\Presentations\RetryDeckController;
+use App\Http\Controllers\Presentations\SendMessageController;
 use App\Http\Controllers\Presentations\SendReactionController;
 use App\Http\Controllers\Presentations\StartSessionController;
 use App\Http\Controllers\Presentations\StartTranslationSessionController;
@@ -116,6 +117,10 @@ Route::post('present/{presentation:embed_token}/reactions', SendReactionControll
 Route::post('present/{presentation:embed_token}/reactions/batch', RecordReactionsController::class)
     ->middleware('throttle:60,1')
     ->name('presentations.reactions.batch');
+
+Route::post('present/{presentation:embed_token}/messages', SendMessageController::class)
+    ->middleware('throttle:30,1')
+    ->name('presentations.messages');
 
 Route::prefix('{current_team}')
     ->middleware(['auth', ValidateSessionWithWorkOS::class, EnsureTeamMembership::class])

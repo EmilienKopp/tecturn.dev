@@ -20,6 +20,12 @@ readonly class TalkSettings
     /** Upper bound on how many reactions an author can customise. */
     public const int MAX_REACTIONS = 10;
 
+    /** Hard ceiling for the audience free-text length the author can pick. */
+    public const int MAX_FREE_TEXT_LENGTH = 64;
+
+    /** Free-text length a presentation starts with. */
+    public const int DEFAULT_FREE_TEXT_LENGTH = 20;
+
     /**
      * @param  list<string>  $reactions
      */
@@ -32,6 +38,8 @@ readonly class TalkSettings
         public bool $autoSave = false,
         public FooterSettings $footer = new FooterSettings,
         public array $reactions = self::DEFAULT_REACTIONS,
+        public bool $allowFreeText = false,
+        public int $freeTextMaxLength = self::DEFAULT_FREE_TEXT_LENGTH,
     ) {}
 
     /**
@@ -52,7 +60,22 @@ readonly class TalkSettings
             autoSave: (bool) ($data['autoSave'] ?? false),
             footer: FooterSettings::fromArray(is_array($data['footer'] ?? null) ? $data['footer'] : []),
             reactions: self::sanitizeReactions($data['reactions'] ?? null),
+            allowFreeText: (bool) ($data['allowFreeText'] ?? false),
+            freeTextMaxLength: self::clampFreeTextLength($data['freeTextMaxLength'] ?? null),
         );
+    }
+
+    /**
+     * Clamps the author's free-text length into 1..MAX_FREE_TEXT_LENGTH, falling
+     * back to the default when it is missing or not a number.
+     */
+    private static function clampFreeTextLength(mixed $length): int
+    {
+        if (! is_numeric($length)) {
+            return self::DEFAULT_FREE_TEXT_LENGTH;
+        }
+
+        return max(1, min(self::MAX_FREE_TEXT_LENGTH, (int) $length));
     }
 
     /**
@@ -107,6 +130,8 @@ readonly class TalkSettings
             'autoSave' => $this->autoSave,
             'footer' => $this->footer->toArray(),
             'reactions' => $this->reactions,
+            'allowFreeText' => $this->allowFreeText,
+            'freeTextMaxLength' => $this->freeTextMaxLength,
         ];
     }
 }

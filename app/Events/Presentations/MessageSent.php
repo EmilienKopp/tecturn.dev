@@ -9,13 +9,13 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class ReactionSent implements ShouldBroadcastNow
+class MessageSent implements ShouldBroadcastNow
 {
     use Dispatchable, SerializesModels;
 
     public function __construct(
         public readonly string $embedToken,
-        public readonly string $emoji,
+        public readonly string $message,
         // Unique per broadcast so the presenter can ignore a duplicate delivery.
         public readonly string $id,
     ) {}
@@ -30,14 +30,14 @@ class ReactionSent implements ShouldBroadcastNow
 
     public function broadcastAs(): string
     {
-        return 'reaction.sent';
+        return 'message.sent';
     }
 
     /** @return array<string, string> */
     public function broadcastWith(): array
     {
         return [
-            'emoji' => $this->emoji,
+            'message' => $this->message,
             'id' => $this->id,
         ];
     }

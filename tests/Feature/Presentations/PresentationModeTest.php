@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Events\Presentations\MessageSent;
 use App\Events\Presentations\ReactionSent;
 use App\Models\Presentation;
 use App\Models\User;
@@ -80,6 +81,49 @@ test('a custom reaction set gates what the viewer sees and can send', function (
     $this->postJson(
         route('presentations.reactions', ['presentation' => $presentation->embed_token]),
         ['emoji' => '👏'],
+    )->assertUnprocessable();
+});
+
+test('a free-text message broadcasts when the presentation allows it', function () {
+    Event::fake([MessageSent::class]);
+
+    $presentation = Presentation::factory()->create([
+        'talk_settings' => ['allowFreeText' => true, 'freeTextMaxLength' => 20],
+    ]);
+
+    $this->postJson(
+        route('presentations.messages', ['presentation' => $presentation->embed_token]),
+        ['message' => 'Hello there'],
+    )->assertNoContent();
+
+    Event::assertDispatched(MessageSent::class, function (MessageSent $event) use ($presentation) {
+        return $event->embedToken === $presentation->embed_token && $event->message === 'Hello there';
+    });
+});
+
+test('free-text messages are forbidden when the presentation disallows them', function () {
+    Event::fake([MessageSent::class]);
+
+    $presentation = Presentation::factory()->create([
+        'talk_settings' => ['allowFreeText' => false],
+    ]);
+
+    $this->postJson(
+        route('presentations.messages', ['presentation' => $presentation->embed_token]),
+        ['message' => 'Hello'],
+    )->assertForbidden();
+
+    Event::assertNotDispatched(MessageSent::class);
+});
+
+test('a free-text message longer than the configured max is rejected', function () {
+    $presentation = Presentation::factory()->create([
+        'talk_settings' => ['allowFreeText' => true, 'freeTextMaxLength' => 10],
+    ]);
+
+    $this->postJson(
+        route('presentations.messages', ['presentation' => $presentation->embed_token]),
+        ['message' => str_repeat('a', 11)],
     )->assertUnprocessable();
 });
 

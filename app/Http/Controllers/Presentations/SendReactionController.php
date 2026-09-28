@@ -10,6 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Presentation;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class SendReactionController extends Controller
@@ -22,7 +23,7 @@ class SendReactionController extends Controller
             'emoji' => ['required', 'string', Rule::in($allowed)],
         ]);
 
-        ReactionSent::dispatch($presentation->embed_token, $validated['emoji']);
+        ReactionSent::dispatch($presentation->embed_token, $validated['emoji'], (string) Str::uuid());
 
         return response()->noContent();
     }
