@@ -36,6 +36,7 @@ class UpdatePresentationRequest extends FormRequest
             // silently dropping the title/background/config on save.
             'content.slides.*.title' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.background' => ['sometimes', 'nullable', 'string'],
+            'content.slides.*.backgroundImage' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.config' => ['sometimes', 'nullable', 'array'],
             'content.slides.*.slots' => ['sometimes', 'array'],
             'flow' => ['sometimes', 'array'],

@@ -185,7 +185,10 @@ ${styles}
         // lands on the transparent slide section and never shows.
         let backgroundAttr = '';
 
-        if (slide.background && isGradientBackground(slide.background)) {
+        if (slide.backgroundImage) {
+            // A per-slide image covers this slide only, above its own color.
+            backgroundAttr = ` image="${escapeAttribute(slide.backgroundImage)}"`;
+        } else if (slide.background && isGradientBackground(slide.background)) {
             // Gradients need Animotion's `gradient` prop; `background` only
             // accepts a solid color and is ignored for a gradient string.
             backgroundAttr = ` gradient="${escapeAttribute(slide.background)}"`;

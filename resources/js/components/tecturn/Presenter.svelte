@@ -292,18 +292,21 @@
         }}
     >
         {#each shownSlides as slide (slide.id)}
-            {@const gradient = isGradientBackground(slide.background)}
+            {@const slideImage = slide.backgroundImage}
+            {@const gradient =
+                !slideImage && isGradientBackground(slide.background)}
             <Slide
-                background={gradient
+                background={slideImage || gradient
                     ? undefined
                     : (slide.background ??
                       (content.backgroundImage ? undefined : '#ffffff'))}
                 gradient={gradient
                     ? (slide.background ?? undefined)
                     : undefined}
-                image={slide.background
-                    ? undefined
-                    : (content.backgroundImage ?? undefined)}
+                image={slideImage ??
+                    (slide.background
+                        ? undefined
+                        : (content.backgroundImage ?? undefined))}
                 class="h-full w-full"
             >
                 {#if slide.layout === 'free'}

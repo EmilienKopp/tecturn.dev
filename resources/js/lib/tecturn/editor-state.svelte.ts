@@ -79,6 +79,7 @@ export class EditorState {
             // Branding is the single source of defaults: its background slot
             // (hex or gradient) is the default slide background.
             background: currentBranding().background,
+            backgroundImage: null,
             slots: {},
             config: null,
             title: null,
@@ -150,6 +151,7 @@ export class EditorState {
             id: newSlideId,
             layout: sourceSlide.layout,
             background: sourceSlide.background,
+            backgroundImage: sourceSlide.backgroundImage,
             slots: duplicatedSlots,
             config: sourceSlide.config ? { ...sourceSlide.config } : null,
             title: sourceSlide.title ? `${sourceSlide.title} (Copy)` : null,
@@ -800,7 +802,10 @@ export class EditorState {
      * the anchor's former next. Both ends are re-enabled — hand-wiring a slide
      * into the chain always means it plays.
      */
-    private moveSlideNodeAfter(afterNodeId: string, movingNodeId: string): void {
+    private moveSlideNodeAfter(
+        afterNodeId: string,
+        movingNodeId: string,
+    ): void {
         if (afterNodeId === movingNodeId) {
             return;
         }
@@ -1447,6 +1452,12 @@ export class EditorState {
 
     setBackground(background: string | null): void {
         this.selectedSlide.background = background;
+        this.dirty = true;
+    }
+
+    /** Per-slide background image URL; covers this slide only, above its color. */
+    setSlideBackgroundImage(url: string | null): void {
+        this.selectedSlide.backgroundImage = url;
         this.dirty = true;
     }
 

@@ -184,6 +184,7 @@ test('a slide title, background and config survive a save', function () {
                 'id' => 'slide-1',
                 'layout' => 'free',
                 'background' => '#0f0f0f',
+                'backgroundImage' => 'https://cdn.example.com/slide-bg.jpg',
                 'title' => 'Introduction',
                 'config' => ['rows' => 3, 'cols' => 3],
                 'slots' => ['main' => []],
@@ -204,6 +205,7 @@ test('a slide title, background and config survive a save', function () {
 
     expect($slide['title'])->toBe('Introduction')
         ->and($slide['background'])->toBe('#0f0f0f')
+        ->and($slide['backgroundImage'])->toBe('https://cdn.example.com/slide-bg.jpg')
         ->and($slide['config'])->toBe(['rows' => 3, 'cols' => 3]);
 });
 
