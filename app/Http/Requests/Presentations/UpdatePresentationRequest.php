@@ -6,6 +6,7 @@ use App\Domain\Presentation\ValueObjects\FlowGraph;
 use App\Domain\Presentation\ValueObjects\FlowNodeType;
 use App\Domain\Presentation\ValueObjects\PresentationContent;
 use App\Domain\Presentation\ValueObjects\SlideLayout;
+use App\Domain\Presentation\ValueObjects\TalkSettings;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -35,6 +36,7 @@ class UpdatePresentationRequest extends FormRequest
             // silently dropping the title/background/config on save.
             'content.slides.*.title' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.background' => ['sometimes', 'nullable', 'string'],
+            'content.slides.*.backgroundImage' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.config' => ['sometimes', 'nullable', 'array'],
             'content.slides.*.slots' => ['sometimes', 'array'],
             'flow' => ['sometimes', 'array'],
@@ -67,6 +69,10 @@ class UpdatePresentationRequest extends FormRequest
             'talk_settings.footer.bgColor' => ['sometimes', 'string', 'max:32'],
             'talk_settings.footer.fontColor' => ['sometimes', 'string', 'max:32'],
             'talk_settings.footer.showInDock' => ['sometimes', 'boolean'],
+            'talk_settings.reactions' => ['sometimes', 'array', 'max:'.TalkSettings::MAX_REACTIONS],
+            'talk_settings.reactions.*' => ['string', 'max:16'],
+            'talk_settings.allowFreeText' => ['sometimes', 'boolean'],
+            'talk_settings.freeTextMaxLength' => ['sometimes', 'integer', 'min:1', 'max:'.TalkSettings::MAX_FREE_TEXT_LENGTH],
         ];
     }
 }

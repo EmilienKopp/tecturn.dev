@@ -236,6 +236,23 @@ it('round-trips a slide title', function () {
         ->and($content->toArray())->toEqual($data);
 });
 
+it('round-trips a per-slide background image url', function () {
+    $data = validContentArray();
+    $data['slides'][0]['backgroundImage'] = 'https://cdn.example.com/slide-bg.jpg';
+
+    $content = PresentationContent::fromArray($data);
+
+    expect($content->slides[0]->backgroundImage)->toBe('https://cdn.example.com/slide-bg.jpg')
+        ->and($content->toArray())->toEqual($data);
+});
+
+it('omits the per-slide background image key when none is set', function () {
+    $content = PresentationContent::fromArray(validContentArray());
+
+    expect($content->slides[0]->backgroundImage)->toBeNull()
+        ->and($content->toArray()['slides'][0])->not->toHaveKey('backgroundImage');
+});
+
 it('omits the title key when the slide is untitled', function () {
     $content = PresentationContent::fromArray(validContentArray());
 

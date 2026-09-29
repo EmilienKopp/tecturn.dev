@@ -1,6 +1,7 @@
 <script lang="ts">
     import { router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
+    import { SvelteSet } from 'svelte/reactivity';
     import AppHead from '@/components/AppHead.svelte';
     import ExternalPresenter from '@/components/tecturn/ExternalPresenter.svelte';
     import FloatingReactions from '@/components/tecturn/FloatingReactions.svelte';
@@ -81,13 +82,33 @@
             : 0,
     );
 
-    // Session-only override: starts from the saved setting, toggled from the
-    // dock without persisting.
+    // Session-only overrides: start from the saved settings, toggled from the
+    // dock without persisting. Messages are gated separately from emoji so the
+    // presenter can block incoming text on the fly.
     let showReactions = $state(presentation.talk_settings.showReactions);
+    let showMessages = $state(presentation.talk_settings.allowFreeText ?? false);
 
     let floatingReactions = $state<FloatingReactions>();
     let recentReactions = $state<{ id: number; emoji: string }[]>([]);
     let reactionCounter = 0;
+
+    // A broadcast can reach us more than once (reconnects, duplicate channel
+    // bindings); each carries a unique id so we handle it exactly once. Shared
+    // across handlers/effect runs so duplicate bindings dedupe against it too.
+    const seenEventIds = new SvelteSet<string>();
+    const isDuplicateEvent = (id: string): boolean => {
+        if (seenEventIds.has(id)) {
+            return true;
+        }
+
+        seenEventIds.add(id);
+
+        if (seenEventIds.size > 500) {
+            seenEventIds.clear();
+        }
+
+        return false;
+    };
 
     // Live stats shown in the dock, fed by the presentation broadcast channel.
     let viewerCount = $state(0);
@@ -97,17 +118,37 @@
         const channelName = `presentation.${presentation.embed_token}`;
         const presenceChannel = `presentation-live.${presentation.embed_token}`;
 
-        // Instant reactions still ride the public channel.
+        // Instant reactions and messages both ride the public channel. Stats
+        // always update; the dock toggles only gate what floats on screen.
         getEcho()
             .channel(channelName)
-            .listen('.reaction.sent', (event: { emoji: string }) => {
-                floatingReactions?.spawnReaction(event.emoji);
+            .listen('.reaction.sent', (event: { emoji: string; id: string }) => {
+                if (isDuplicateEvent(event.id)) {
+                    return;
+                }
+
+                if (showReactions) {
+                    floatingReactions?.spawnReaction(event.emoji);
+                }
+
                 reactionTotal += 1;
                 recentReactions = [
                     ...recentReactions,
                     { id: ++reactionCounter, emoji: event.emoji },
                 ].slice(-30);
-            });
+            })
+            .listen(
+                '.message.sent',
+                (event: { message: string; id: string }) => {
+                    if (isDuplicateEvent(event.id)) {
+                        return;
+                    }
+
+                    if (showMessages) {
+                        floatingReactions?.spawnMessage(event.message);
+                    }
+                },
+            );
 
         // "Watching now" is the count of audience members on the presence
         // channel. Reverb adds/removes members as tabs open and close, so this
@@ -205,10 +246,7 @@
                 {/if}
             </div>
 
-            <FloatingReactions
-                bind:this={floatingReactions}
-                enabled={showReactions}
-            />
+            <FloatingReactions bind:this={floatingReactions} enabled />
         </div>
 
         <!-- The footer is its own row beneath the slide area so it shrinks the
@@ -248,6 +286,7 @@
             {viewerCount}
             {reactionTotal}
             bind:showReactions
+            bind:showMessages
         />
     {/if}
 </div>

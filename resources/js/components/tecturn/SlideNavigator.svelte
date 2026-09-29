@@ -70,6 +70,50 @@
         deleteDialogOpen = false;
         slideIndexDeleting = null;
     };
+
+    // Drag-to-reorder. Dropping onto a slide moves the dragged one into its
+    // spot; editor.moveSlide keeps the flow diagram's nav chain in sync.
+    let dragIndex = $state<number | null>(null);
+    let dragOverIndex = $state<number | null>(null);
+
+    const onDragStart = (event: DragEvent, index: number) => {
+        dragIndex = index;
+
+        if (event.dataTransfer) {
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/plain', String(index));
+        }
+    };
+
+    const onDragOver = (event: DragEvent, index: number) => {
+        if (dragIndex === null) {
+            return;
+        }
+
+        event.preventDefault();
+
+        if (event.dataTransfer) {
+            event.dataTransfer.dropEffect = 'move';
+        }
+
+        dragOverIndex = index;
+    };
+
+    const onDrop = (event: DragEvent, index: number) => {
+        event.preventDefault();
+
+        if (dragIndex !== null && dragIndex !== index) {
+            editor.moveSlide(dragIndex, index);
+        }
+
+        dragIndex = null;
+        dragOverIndex = null;
+    };
+
+    const onDragEnd = () => {
+        dragIndex = null;
+        dragOverIndex = null;
+    };
 </script>
 
 <div class="flex h-full w-48 flex-col border-r">
@@ -80,11 +124,25 @@
 
             <button
                 type="button"
-                class="group relative block w-full rounded-md border p-2 text-left text-sm transition-colors hover:bg-accent {index ===
+                draggable="true"
+                class="group relative block w-full cursor-grab rounded-md border p-2 text-left text-sm transition-colors hover:bg-accent active:cursor-grabbing {index ===
                 editor.selectedSlideIndex
                     ? 'border-primary bg-accent'
-                    : ''} {disabled ? 'opacity-45' : ''}"
+                    : ''} {disabled ? 'opacity-45' : ''} {dragIndex === index
+                    ? 'opacity-50'
+                    : ''} {dragOverIndex === index && dragIndex !== index
+                    ? 'border-t-2 border-t-primary'
+                    : ''}"
                 onclick={() => editor.selectSlide(index)}
+                ondragstart={(event) => onDragStart(event, index)}
+                ondragover={(event) => onDragOver(event, index)}
+                ondragleave={() => {
+                    if (dragOverIndex === index) {
+                        dragOverIndex = null;
+                    }
+                }}
+                ondrop={(event) => onDrop(event, index)}
+                ondragend={onDragEnd}
                 data-test="slide-navigator-item"
                 data-disabled={disabled}
             >
@@ -112,7 +170,7 @@
                     <span
                         role="button"
                         tabindex="-1"
-                        class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
+                        class="cursor-default rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground"
                         onclick={(event) => {
                             event.stopPropagation();
                             editor.duplicateSlide(index);
@@ -127,7 +185,7 @@
                         <span
                             role="button"
                             tabindex="-1"
-                            class="rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive"
+                            class="cursor-default rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive"
                             onclick={(event) => {
                                 event.stopPropagation();
                                 slideIndexDeleting = index;

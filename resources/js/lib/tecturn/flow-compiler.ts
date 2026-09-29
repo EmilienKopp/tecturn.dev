@@ -260,6 +260,92 @@ export function enabledSlideIds(
 }
 
 /**
+ * Slide ids in the order the navigation chain dictates, so the flow diagram is
+ * the source of truth for deck order. Slide→slide edges form a linear chain;
+ * this walks it from the head (a slide node with no incoming nav edge, ties
+ * broken by current content order) and returns the slides in chain order.
+ *
+ * Slides that are not part of the chain (no nav edges yet, disabled, or trapped
+ * in a cycle) keep their current position: they hold their slot in the returned
+ * order while the wired slides fill the remaining slots in chain order. The
+ * result always contains every slide exactly once, so it is safe to reorder
+ * `content.slides` by it.
+ */
+export function slidesInNavOrder(
+    content: PresentationContent,
+    flow: FlowGraph,
+): string[] {
+    const currentIds = content.slides.map((slide) => slide.id);
+    const slideNodes = flow.nodes.filter(
+        (node) => node.type === 'slide' && node.data.slideId,
+    );
+    const slideIdByNode = new Map(
+        slideNodes.map((node) => [node.id, node.data.slideId as string]),
+    );
+    const nodeIdBySlide = new Map(
+        slideNodes.map((node) => [node.data.slideId as string, node.id]),
+    );
+    const slideNodeIds = new Set(slideNodes.map((node) => node.id));
+    const navEdges = flow.edges.filter(
+        (edge) =>
+            slideNodeIds.has(edge.source) && slideNodeIds.has(edge.target),
+    );
+
+    if (navEdges.length === 0) {
+        return currentIds;
+    }
+
+    const nextOf = new Map<string, string>();
+    const hasIncoming = new Set<string>();
+
+    for (const edge of navEdges) {
+        if (!nextOf.has(edge.source)) {
+            nextOf.set(edge.source, edge.target);
+        }
+
+        hasIncoming.add(edge.target);
+    }
+
+    const chainNodeIds = new Set<string>([...nextOf.keys(), ...hasIncoming]);
+
+    // Heads: chain nodes nothing points at, visited in current content order.
+    const heads = currentIds
+        .map((slideId) => nodeIdBySlide.get(slideId))
+        .filter(
+            (nodeId): nodeId is string =>
+                !!nodeId && chainNodeIds.has(nodeId) && !hasIncoming.has(nodeId),
+        );
+
+    const walkOrder: string[] = [];
+    const visited = new Set<string>();
+
+    for (const head of heads) {
+        let current: string | undefined = head;
+
+        while (current && !visited.has(current)) {
+            visited.add(current);
+
+            const slideId = slideIdByNode.get(current);
+
+            if (slideId) {
+                walkOrder.push(slideId);
+            }
+
+            current = nextOf.get(current);
+        }
+    }
+
+    // Walked slides fill their slots in chain order; every other slide (unwired
+    // or cyclic) stays exactly where it was.
+    const walked = new Set(walkOrder);
+    let walkIndex = 0;
+
+    return currentIds.map((slideId) =>
+        walked.has(slideId) ? walkOrder[walkIndex++] : slideId,
+    );
+}
+
+/**
  * Walks the flow graph into the shape Animotion renders: for each slide (in
  * content order), its ordered reveal steps and the navigation edge target for
  * future branch-aware playback.

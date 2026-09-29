@@ -22,7 +22,6 @@ class JsonPresenter implements Presenter
                 [
                     'content' => $content,
                     'name' => $name,
-                    'flowGraph' => $flowGraph,
                 ],
                 JSON_THROW_ON_ERROR
             ),

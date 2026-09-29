@@ -19,6 +19,7 @@ readonly class Slide
         public array $slots,
         public ?array $config = null,
         public ?string $title = null,
+        public ?string $backgroundImage = null,
     ) {
         if ($this->id === '') {
             throw new InvalidPresentationContent('Slide id cannot be empty.');
@@ -66,6 +67,7 @@ readonly class Slide
             slots: $slots,
             config: is_array($data['config'] ?? null) ? $data['config'] : null,
             title: isset($data['title']) && $data['title'] !== '' ? (string) $data['title'] : null,
+            backgroundImage: isset($data['backgroundImage']) && $data['backgroundImage'] !== '' ? (string) $data['backgroundImage'] : null,
         );
     }
 
@@ -97,6 +99,10 @@ readonly class Slide
 
         if ($this->title !== null) {
             $data['title'] = $this->title;
+        }
+
+        if ($this->backgroundImage !== null) {
+            $data['backgroundImage'] = $this->backgroundImage;
         }
 
         return $data;

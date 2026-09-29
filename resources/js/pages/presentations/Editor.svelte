@@ -183,23 +183,17 @@
         }
 
         const target = event.target as HTMLElement | null;
+        const isEditableTarget = !!target?.closest(
+            'input, textarea, select, [contenteditable="true"]',
+        );
 
         if (key === 'c') {
             const selection = window.getSelection();
 
+            // Copy the selected block when the caret sits in a block with no
+            // text selected; a real text selection copies natively instead.
             if (
-                !target?.closest(
-                    'input, textarea, select, [contenteditable="true"]',
-                )
-            ) {
-                console.log(
-                    'Target is an input, textarea, select, or contenteditable element.',
-                );
-
-                return;
-            }
-
-            if (
+                isEditableTarget &&
                 editor.selectedBlockId &&
                 (selection === null || selection.isCollapsed) &&
                 editor.copyBlock(editor.selectedBlockId)
@@ -210,7 +204,10 @@
             return;
         }
 
-        if (editor.pasteBlock()) {
+        // Paste the copied block only on the bare canvas. While focus is in a
+        // field or contenteditable (code box, title, inspector), native paste
+        // wins.
+        if (!isEditableTarget && editor.pasteBlock()) {
             event.preventDefault();
         }
     };

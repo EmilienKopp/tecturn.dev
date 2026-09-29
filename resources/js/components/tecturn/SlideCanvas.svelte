@@ -20,12 +20,14 @@
     const isRichText = $derived(slide.layout === 'rich-text');
     const isFree = $derived(slide.layout === 'free');
 
-    // A slide's own color wins; otherwise the deck-wide background image shows.
+    // A slide's own image wins, then its color, then the deck-wide image.
     const stageBackground = $derived(
-        slide.background ??
-            (editor.backgroundImage
-                ? `url('${editor.backgroundImage}') center / cover no-repeat`
-                : '#ffffff'),
+        slide.backgroundImage
+            ? `url('${slide.backgroundImage}') center / cover no-repeat`
+            : (slide.background ??
+                  (editor.backgroundImage
+                      ? `url('${editor.backgroundImage}') center / cover no-repeat`
+                      : '#ffffff')),
     );
 
     const richtextBlock = $derived(

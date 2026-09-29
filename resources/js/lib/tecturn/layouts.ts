@@ -24,8 +24,12 @@ export const layoutDefinitions = {
     center: {
         label: 'Center',
         slots: ['main'],
-        containerClass: 'flex h-full items-center justify-center',
-        slotClass: { main: 'text-center' },
+        // Mirror Full's full-stage slot so the editor's double-click target
+        // covers the whole canvas; content is re-centered inside via slotClass
+        // (justify-center for vertical, text-center for horizontal) instead of
+        // shrinking the slot box to fit, which left only a tiny hit area.
+        containerClass: 'grid h-full grid-cols-1',
+        slotClass: { main: 'h-full justify-center text-center' },
     },
     free: {
         label: 'Free',

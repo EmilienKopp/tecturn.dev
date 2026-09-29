@@ -62,13 +62,7 @@ export type FlowNode = {
 readonly id: string,
 readonly type: FlowNodeType,
 readonly position: NodePosition,
-readonly data: {
-slideId?: string,
-label?: string | null,
-blockId?: string,
-actionId?: string,
-disabled?: boolean,
-},
+readonly data: Record<string, any>,
 };
 export type FlowNodeType = 'slide' | 'transition' | 'code-action';
 export type FooterSettings = {
@@ -134,6 +128,7 @@ readonly background: string | null,
 readonly slots: Record<string, Block[]>,
 readonly config: Record<string, any> | null,
 readonly title: string | null,
+readonly backgroundImage: string | null,
 };
 export type SlideLayout = 'full' | 'center' | 'top-main' | 'top-main-footer' | 'left-right' | 'left-wide-right' | 'grid-2x2' | 'grid-2x3' | 'custom-grid' | 'rich-text' | 'free';
 export type SourceType = 'editor' | 'pdf' | 'google_slides';
@@ -145,6 +140,9 @@ readonly timerMode: string,
 readonly durationMinutes: number | null,
 readonly autoSave: boolean,
 readonly footer: FooterSettings,
+readonly reactions: string[],
+readonly allowFreeText: boolean,
+readonly freeTextMaxLength: number,
 };
 export type Transition = {
 readonly nodeId: string | null,

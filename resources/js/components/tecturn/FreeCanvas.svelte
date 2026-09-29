@@ -56,6 +56,19 @@
             return;
         }
 
+        // Double-clicking inside a block (text field, code box) keeps its
+        // native behavior, e.g. selecting a word, rather than opening the
+        // add-block menu.
+        const target = event.target as HTMLElement | null;
+
+        if (
+            target?.closest(
+                'input, textarea, select, [contenteditable="true"]',
+            )
+        ) {
+            return;
+        }
+
         // The dblclick's native word selection would otherwise wrap the
         // popover buttons rendered at that exact spot.
         window.getSelection()?.removeAllRanges();

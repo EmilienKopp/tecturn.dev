@@ -7,6 +7,7 @@
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import { toast } from 'svelte-sonner';
     import PresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/PresentationBackgroundController';
+    import UploadPresentationImageController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationImageController';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
@@ -79,6 +80,7 @@
     );
 
     let uploadingBackground = $state(false);
+    let uploadingSlideImage = $state(false);
     let gradientModalOpen = $state(false);
 
     let deleteBlockDialogOpen = $state(false);
@@ -122,6 +124,39 @@
             editor.setBackgroundImage(url);
         } finally {
             uploadingBackground = false;
+            input.value = '';
+        }
+    }
+
+    async function uploadSlideBackgroundImage(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+        const currentTeam = page.props.currentTeam;
+
+        if (!file || !currentTeam) {
+            return;
+        }
+
+        uploadingSlideImage = true;
+
+        try {
+            const url = await uploadImage(
+                UploadPresentationImageController({
+                    current_team: currentTeam.slug,
+                    presentation: presentationId,
+                }).url,
+                file,
+            );
+
+            if (url === null) {
+                toast.error('Slide image upload failed.');
+
+                return;
+            }
+
+            editor.setSlideBackgroundImage(url);
+        } finally {
+            uploadingSlideImage = false;
             input.value = '';
         }
     }
@@ -594,6 +629,50 @@
             current={editor.selectedSlide.background}
             onSave={(gradient) => editor.setBackground(gradient)}
         />
+
+        <div class="space-y-1">
+            <Label class="text-xs">Background image (this slide)</Label>
+            {#if editor.selectedSlide.backgroundImage}
+                <div
+                    class="h-16 w-full rounded-md border bg-cover bg-center"
+                    style="background-image: url('{editor.selectedSlide
+                        .backgroundImage}')"
+                    data-test="inspector-slide-background-image-preview"
+                ></div>
+            {/if}
+            <label
+                class="flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-xs hover:bg-accent {uploadingSlideImage
+                    ? 'pointer-events-none opacity-60'
+                    : ''}"
+            >
+                {uploadingSlideImage
+                    ? 'Uploading…'
+                    : editor.selectedSlide.backgroundImage
+                      ? 'Replace image'
+                      : 'Upload image'}
+                <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    class="hidden"
+                    onchange={uploadSlideBackgroundImage}
+                    data-test="inspector-slide-background-image-input"
+                />
+            </label>
+            {#if editor.selectedSlide.backgroundImage}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="w-full"
+                    onclick={() => editor.setSlideBackgroundImage(null)}
+                    data-test="remove-slide-background-image"
+                >
+                    Remove image
+                </Button>
+            {/if}
+            <p class="text-[11px] text-muted-foreground">
+                Covers this slide only, above its background color.
+            </p>
+        </div>
 
         <div class="space-y-1">
             <Label class="text-xs">Background image (all slides)</Label>

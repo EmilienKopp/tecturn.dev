@@ -7,7 +7,6 @@
     import FlaskConical from 'lucide-svelte/icons/flask-conical';
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
-    import LayoutPanelLeft from 'lucide-svelte/icons/layout-panel-left';
     import Lock from 'lucide-svelte/icons/lock';
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
@@ -16,7 +15,6 @@
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
     import Timer from 'lucide-svelte/icons/timer';
-    import Workflow from 'lucide-svelte/icons/workflow';
     import { toast } from 'svelte-sonner';
     import Confirm from '@/components/feedback/Confirm.svelte';
     import { Button } from '@/components/ui/button';
@@ -30,11 +28,13 @@
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
+    import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
     import { present, update } from '@/routes/presentations';
     import type { FooterSettings, TalkSettings } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
+    import ReactionsSettingsModal from './ReactionsSettingsModal.svelte';
     import TalkLengthModal from './TalkLengthModal.svelte';
 
     let {
@@ -68,6 +68,14 @@
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
+    let reactions = $state<string[]>(
+        talkSettings.reactions?.length
+            ? [...talkSettings.reactions]
+            : [...DEFAULT_REACTIONS],
+    );
+    let allowFreeText = $state(talkSettings.allowFreeText ?? false);
+    let freeTextMaxLength = $state(talkSettings.freeTextMaxLength ?? 20);
+    let reactionsModalOpen = $state(false);
     let presentationPrivate = $state(isPrivate);
     let showDock = $state(talkSettings.showDock);
     let showTranslation = $state(talkSettings.showTranslation);
@@ -105,6 +113,9 @@
                 talk_settings: {
                     ...talkSettings,
                     showReactions,
+                    reactions,
+                    allowFreeText,
+                    freeTextMaxLength,
                     showDock,
                     showTranslation,
                     autoSave,
@@ -123,11 +134,31 @@
         );
     };
 
-    const toggleReactions = () =>
+    const saveReactions = (next: {
+        showReactions: boolean;
+        reactions: string[];
+        allowFreeText: boolean;
+        freeTextMaxLength: number;
+    }) => {
+        const previousShow = showReactions;
+        const previousReactions = reactions;
+        const previousAllowFreeText = allowFreeText;
+        const previousMaxLength = freeTextMaxLength;
         persistTalkSettings(
-            () => (showReactions = !showReactions),
-            () => (showReactions = !showReactions),
+            () => {
+                showReactions = next.showReactions;
+                reactions = next.reactions;
+                allowFreeText = next.allowFreeText;
+                freeTextMaxLength = next.freeTextMaxLength;
+            },
+            () => {
+                showReactions = previousShow;
+                reactions = previousReactions;
+                allowFreeText = previousAllowFreeText;
+                freeTextMaxLength = previousMaxLength;
+            },
         );
+    };
 
     const toggleDock = () =>
         persistTalkSettings(
@@ -305,30 +336,6 @@
     />
 
     {#if !external}
-        <div class="flex items-center rounded-md border p-0.5">
-            <Button
-                variant={view === 'slides' ? 'secondary' : 'ghost'}
-                size="sm"
-                onclick={() => (view = 'slides')}
-                aria-pressed={view === 'slides'}
-                data-test="editor-view-slides"
-            >
-                <LayoutPanelLeft class="h-4 w-4" /> Slides
-            </Button>
-            <Button
-                variant={view === 'flow' ? 'secondary' : 'ghost'}
-                size="sm"
-                onclick={() => {
-                    editor.syncSlideNodes();
-                    view = 'flow';
-                }}
-                aria-pressed={view === 'flow'}
-                data-test="editor-view-flow"
-            >
-                <Workflow class="h-4 w-4" /> Flow
-            </Button>
-        </div>
-
         <div
             class="text-sm flex items-center gap-1 justify-center"
             title="Toggle auto save (every {AUTO_SAVE_INTERVAL.seconds()}s)"
@@ -463,13 +470,23 @@
                 {/snippet}
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" sideOffset={4} class="w-56">
-                {@render toggleRow(
-                    'Reactions',
-                    Heart,
-                    showReactions,
-                    toggleReactions,
-                    'editor-reactions-toggle',
-                )}
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    onclick={() => (reactionsModalOpen = true)}
+                    data-test="editor-reactions-menu-item"
+                >
+                    <Heart class="h-4 w-4" />
+                    Reactions…
+                    <span
+                        class="ml-auto text-xs {showReactions
+                            ? 'font-medium text-primary'
+                            : 'text-muted-foreground'}"
+                    >
+                        {showReactions ? 'On' : 'Off'}
+                    </span>
+                </button>
                 {@render toggleRow(
                     'Dock',
                     PanelRight,
@@ -633,6 +650,15 @@
 <Confirm bind:this={confirmModal} />
 
 <FooterSettingsModal {footer} bind:open={footerModalOpen} onSave={saveFooter} />
+
+<ReactionsSettingsModal
+    {reactions}
+    {showReactions}
+    {allowFreeText}
+    {freeTextMaxLength}
+    bind:open={reactionsModalOpen}
+    onSave={saveReactions}
+/>
 
 <TalkLengthModal
     {durationMinutes}
