@@ -36,6 +36,7 @@
         presentation,
         embed,
         viewerUrl,
+        remoteUrl,
         sourcePdfUrl = null,
     }: {
         presentation: {
@@ -53,6 +54,7 @@
             tag: string;
         };
         viewerUrl: string;
+        remoteUrl: string;
         sourcePdfUrl?: string | null;
     } = $props();
 
@@ -295,6 +297,7 @@
         onExportJSON={exportJSON}
         {embedSnippet}
         {viewerUrl}
+        {remoteUrl}
     />
 
     {#if isExternal}

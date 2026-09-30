@@ -870,6 +870,20 @@
             </p>
         </div>
 
+        <div class="space-y-1">
+            <Label for="slide-notes" class="text-xs">Speaker notes</Label>
+            <textarea
+                id="slide-notes"
+                rows="5"
+                class="w-full resize-y rounded-md border bg-transparent px-2.5 py-1.5 text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                placeholder="Only you see these — on the phone remote while presenting."
+                value={editor.selectedSlide.notes ?? ''}
+                onchange={(event) =>
+                    editor.setSlideNotes(event.currentTarget.value)}
+                data-test="inspector-slide-notes"
+            ></textarea>
+        </div>
+
         <p class="text-xs text-muted-foreground">
             Select a block on the canvas to edit its styles.
         </p>

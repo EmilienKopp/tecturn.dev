@@ -20,6 +20,11 @@ class PresentPresentationController extends Controller
         Gate::authorize('view', $presentation);
 
         return Inertia::render('presentations/Present', [
+            // The presenter screen needs the pairing secret to join the
+            // control channel; the QR itself lives in the editor toolbar.
+            'remote' => [
+                'token' => $presentation->remote_token,
+            ],
             'presentation' => $this->presentations->findForPresent($presentation->id),
             'sourcePdfUrl' => $presentation->sourcePdfUrl(),
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),

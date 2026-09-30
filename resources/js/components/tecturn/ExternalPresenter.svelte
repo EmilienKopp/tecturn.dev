@@ -145,6 +145,15 @@
     const next = (): void => goTo(pageNum + 1);
     const prev = (): void => goTo(pageNum - 1);
 
+    /** Remote-control hooks; only PDFs page programmatically. */
+    export function remoteNext(): void {
+        next();
+    }
+
+    export function remotePrev(): void {
+        prev();
+    }
+
     const onKeydown = (event: KeyboardEvent): void => {
         const forward = ['ArrowRight', 'PageDown', ' ', 'Enter'].includes(
             event.key,

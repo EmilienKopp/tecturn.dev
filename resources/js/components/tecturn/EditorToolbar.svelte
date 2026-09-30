@@ -3,6 +3,7 @@
     import { CurlyBraces } from 'lucide-svelte';
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import CodeXml from 'lucide-svelte/icons/code-xml';
+    import Copy from 'lucide-svelte/icons/copy';
     import Download from 'lucide-svelte/icons/download';
     import FlaskConical from 'lucide-svelte/icons/flask-conical';
     import Heart from 'lucide-svelte/icons/heart';
@@ -14,10 +15,17 @@
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
+    import Smartphone from 'lucide-svelte/icons/smartphone';
     import Timer from 'lucide-svelte/icons/timer';
     import { toast } from 'svelte-sonner';
     import Confirm from '@/components/feedback/Confirm.svelte';
     import { Button } from '@/components/ui/button';
+    import {
+        Dialog,
+        DialogContent,
+        DialogDescription,
+        DialogTitle,
+    } from '@/components/ui/dialog';
     import {
         DropdownMenu,
         DropdownMenuContent,
@@ -27,6 +35,7 @@
     import { Input } from '@/components/ui/input';
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
+    import { qrToSvg } from '@/lib/tecturn/CodeGeneration/qr';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
     import { present, update } from '@/routes/presentations';
@@ -50,6 +59,7 @@
         onExportJSON,
         embedSnippet,
         viewerUrl,
+        remoteUrl,
     }: {
         editor: EditorState;
         presentationId: number;
@@ -65,6 +75,9 @@
         onExportJSON: () => Promise<void>;
         embedSnippet: string;
         viewerUrl: string;
+        // Pairing URL for the phone remote, popped up as a QR from here (and
+        // only here — the editor is never projected, unlike the present view).
+        remoteUrl: string;
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
@@ -256,6 +269,19 @@
         toast.success('Reaction URL copied to clipboard.');
     };
 
+    // --- Phone remote pairing ---
+    let remoteModalOpen = $state(false);
+    const remoteQrSvg = $derived(
+        remoteModalOpen
+            ? qrToSvg(remoteUrl, { title: 'Phone remote pairing code' })
+            : null,
+    );
+
+    const copyRemoteUrl = async () => {
+        await navigator.clipboard.writeText(remoteUrl);
+        toast.success('Remote URL copied to clipboard.');
+    };
+
     let exportingWebComponent = $state(false);
 
     const exportWebComponent = async () => {
@@ -391,6 +417,17 @@
             data-test="editor-copy-viewer-url"
         >
             <QrCode class="h-4 w-4" /> Reaction URL
+        </Button>
+
+        <Button
+            variant="ghost"
+            size="sm"
+            class="text-muted-foreground"
+            onclick={() => (remoteModalOpen = true)}
+            title="Pair your phone as a remote with speaker notes"
+            data-test="editor-remote-button"
+        >
+            <Smartphone class="h-4 w-4" /> Remote
         </Button>
 
         {#if presentUrl}
@@ -666,3 +703,48 @@
     bind:open={talkLengthModalOpen}
     onSave={saveTalkLength}
 />
+
+<!-- Phone-remote pairing QR. Deliberately editor-only: this screen is not the
+     one on the projector, so the control credential never reaches the room. -->
+<Dialog
+    open={remoteModalOpen}
+    onOpenChange={(next: boolean) => (remoteModalOpen = next)}
+>
+    <DialogContent class="sm:max-w-md">
+        <div class="space-y-3">
+            <DialogTitle>Phone remote</DialogTitle>
+            <DialogDescription>
+                Scan with your phone to get slide controls, quiz buzzers and
+                your speaker notes. Pair here, then press Go Live — anyone who
+                sees this code can drive your deck.
+            </DialogDescription>
+        </div>
+        {#if remoteQrSvg}
+            <div
+                class="mx-auto w-64 max-w-full rounded-lg bg-white p-3"
+                data-test="editor-remote-qr"
+            >
+                <!-- eslint-disable-next-line svelte/no-at-html-tags -->
+                {@html remoteQrSvg}
+            </div>
+        {/if}
+        <div class="flex items-center gap-2">
+            <code
+                class="min-w-0 flex-1 truncate rounded-md border bg-muted px-2.5 py-1.5 text-xs text-muted-foreground"
+                title={remoteUrl}
+                data-test="editor-remote-url"
+            >
+                {remoteUrl}
+            </code>
+            <Button
+                variant="outline"
+                size="sm"
+                onclick={copyRemoteUrl}
+                title="Copy the remote URL"
+                data-test="editor-remote-copy-url"
+            >
+                <Copy class="h-4 w-4" /> Copy
+            </Button>
+        </div>
+    </DialogContent>
+</Dialog>

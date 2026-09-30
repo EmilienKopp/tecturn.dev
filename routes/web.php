@@ -25,6 +25,7 @@ use App\Http\Controllers\Presentations\PresentationController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
 use App\Http\Controllers\Presentations\RecordReactionsController;
 use App\Http\Controllers\Presentations\RehearsalController;
+use App\Http\Controllers\Presentations\RemoteControlController;
 use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
 use App\Http\Controllers\Presentations\RetryDeckController;
 use App\Http\Controllers\Presentations\SendMessageController;
@@ -89,6 +90,13 @@ Route::get('embed/presentations/{presentation:embed_token}.js', EmbedPresentatio
 
 Route::get('present/{presentation:embed_token}', ViewerController::class)
     ->name('presentations.viewer');
+
+// Phone remote for the presenter. Anonymous like the viewer page: the deck's
+// remote token in the URL is the credential (shown only in the editor, never
+// projected). Registered before the "{current_team}" group so "remote" is
+// never captured as a team slug.
+Route::get('remote/{presentation:remote_token}', RemoteControlController::class)
+    ->name('presentations.remote');
 
 Route::middleware(['auth', ValidateSessionWithWorkOS::class])->group(function () {
     Route::get('contacts', ContactsController::class)->name('contacts.index');

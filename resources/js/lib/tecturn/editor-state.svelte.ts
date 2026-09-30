@@ -83,6 +83,7 @@ export class EditorState {
             slots: {},
             config: null,
             title: null,
+            notes: null,
         });
         this.selectedSlideIndex = this.content.slides.length - 1;
         this.selectedBlockId = null;
@@ -155,6 +156,7 @@ export class EditorState {
             slots: duplicatedSlots,
             config: sourceSlide.config ? { ...sourceSlide.config } : null,
             title: sourceSlide.title ? `${sourceSlide.title} (Copy)` : null,
+            notes: sourceSlide.notes,
         };
 
         // Insert the duplicated slide right after the source slide
@@ -1458,6 +1460,18 @@ export class EditorState {
     /** Per-slide background image URL; covers this slide only, above its color. */
     setSlideBackgroundImage(url: string | null): void {
         this.selectedSlide.backgroundImage = url;
+        this.dirty = true;
+    }
+
+    /** Speaker notes for the current slide; shown only on the phone remote. */
+    setSlideNotes(notes: string | null): void {
+        const next = notes && notes.trim() !== '' ? notes : null;
+
+        if (this.selectedSlide.notes === next) {
+            return;
+        }
+
+        this.selectedSlide.notes = next;
         this.dirty = true;
     }
 

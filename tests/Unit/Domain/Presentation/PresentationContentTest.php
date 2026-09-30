@@ -270,6 +270,23 @@ it('treats an empty-string title as untitled', function () {
         ->and($content->toArray()['slides'][0])->not->toHaveKey('title');
 });
 
+it('round-trips slide speaker notes', function () {
+    $data = validContentArray();
+    $data['slides'][0]['notes'] = "Open with the anecdote.\nSlow down here.";
+
+    $content = PresentationContent::fromArray($data);
+
+    expect($content->slides[0]->notes)->toBe("Open with the anecdote.\nSlow down here.")
+        ->and($content->toArray())->toEqual($data);
+});
+
+it('omits the notes key when the slide has no speaker notes', function () {
+    $content = PresentationContent::fromArray(validContentArray());
+
+    expect($content->slides[0]->notes)->toBeNull()
+        ->and($content->toArray()['slides'][0])->not->toHaveKey('notes');
+});
+
 it('exposes a single main slot for the free layout', function () {
     expect(SlideLayout::Free->slots())->toBe(['main'])
         ->and(SlideLayout::Free->usesFreeformSlots())->toBeTrue();

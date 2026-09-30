@@ -154,6 +154,16 @@
         getPresentation().slides?.slide(slide, 0, step - 1);
     }
 
+    /** Advances one step (fragment or slide), same as the → key. */
+    export function next(): void {
+        getPresentation().slides?.next();
+    }
+
+    /** Steps back one step (fragment or slide), same as the ← key. */
+    export function prev(): void {
+        getPresentation().slides?.prev();
+    }
+
     const blockStyle = (block: Block): string =>
         [
             block.style.fontSize

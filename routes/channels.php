@@ -16,6 +16,26 @@ Broadcast::channel('App.Models.User.{id}', function ($user, $id) {
  * theirs with "presenter:" so the dock can count the audience without counting
  * itself.
  */
+/**
+ * Presenter ↔ phone-remote control lane. Private so client events (whispers)
+ * carry nav commands and buzzer hits without a server round trip. Knowing the
+ * deck's remote token is the credential: the presenter screen gets it from
+ * the backend, the phone from the QR in the editor. Audience members hold
+ * only the embed token, so they can't join and can't drive the deck.
+ */
+Broadcast::channel('presentation-control.{embedToken}', function (Authenticatable $user, string $embedToken): bool {
+    $token = (string) request('remote_token');
+
+    if ($token === '') {
+        return false;
+    }
+
+    return Presentation::query()
+        ->where('embed_token', $embedToken)
+        ->where('remote_token', $token)
+        ->exists();
+}, ['guards' => ['viewer']]);
+
 Broadcast::channel('presentation-live.{embedToken}', function (Authenticatable $user, string $embedToken): array|false {
     if (! Presentation::where('embed_token', $embedToken)->exists()) {
         return false;
