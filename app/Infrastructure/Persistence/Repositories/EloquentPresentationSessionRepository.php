@@ -46,6 +46,11 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
             ?->toEntity();
     }
 
+    public function deleteById(int $id): void
+    {
+        PresentationSession::query()->whereKey($id)->delete();
+    }
+
     public function findActiveByEmbedToken(string $embedToken): ?PresentationSessionEntity
     {
         $presentationId = Presentation::query()

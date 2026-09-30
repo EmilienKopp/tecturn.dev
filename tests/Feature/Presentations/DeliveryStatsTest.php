@@ -179,3 +179,37 @@ test('recording a rehearsal stores the deck word count', function () {
         'word_count' => 750,
     ]);
 });
+
+test('a session can be deleted from the dashboard', function () {
+    $user = User::factory()->create();
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
+    $session = PresentationSession::factory()->create([
+        'presentation_id' => $presentation->id,
+        'team_id' => $presentation->team_id,
+        'ended_at' => now(),
+    ]);
+
+    $this->actingAs($user)->delete(route('sessions.destroy', [
+        'current_team' => $user->currentTeam->slug,
+        'session' => $session->id,
+    ]))->assertRedirect();
+
+    $this->assertDatabaseMissing('presentation_sessions', ['id' => $session->id]);
+});
+
+test('a session of another team cannot be deleted', function () {
+    $user = User::factory()->create();
+    $foreign = Presentation::factory()->create();
+    $session = PresentationSession::factory()->create([
+        'presentation_id' => $foreign->id,
+        'team_id' => $foreign->team_id,
+        'ended_at' => now(),
+    ]);
+
+    $this->actingAs($user)->delete(route('sessions.destroy', [
+        'current_team' => $user->currentTeam->slug,
+        'session' => $session->id,
+    ]))->assertNotFound();
+
+    $this->assertDatabaseHas('presentation_sessions', ['id' => $session->id]);
+});

@@ -14,6 +14,7 @@ use App\Http\Controllers\Contacts\RejectFollowRequestController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Feedback\FeedbackController;
+use App\Http\Controllers\Presentations\DeleteSessionController;
 use App\Http\Controllers\Presentations\EmbedPresentationController;
 use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
@@ -153,6 +154,9 @@ Route::prefix('{current_team}')
         // POST (not DELETE) so the presenter's unload handler can close the
         // session via navigator.sendBeacon, which only issues POST requests.
         Route::post('presentations/{presentation}/session/close', EndSessionController::class)->name('presentations.session.end');
+        // Escape hatch for a session that went live by mistake (e.g. instead
+        // of a test run): removes the session and its analytics for good.
+        Route::delete('sessions/{session}', DeleteSessionController::class)->name('sessions.destroy');
         Route::post('presentations/{presentation}/translation-session', StartTranslationSessionController::class)->name('presentations.translation-session.start');
         Route::delete('presentations/{presentation}/translation-session', StopTranslationSessionController::class)->name('presentations.translation-session.stop');
         Route::get('presentations/{presentation}/export', ExportPresentationController::class)->name('presentations.export');

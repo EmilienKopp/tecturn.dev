@@ -18,11 +18,14 @@
     import { page, router } from '@inertiajs/svelte';
     import Presentation from 'lucide-svelte/icons/presentation';
     import Radio from 'lucide-svelte/icons/radio';
+    import Trash2 from 'lucide-svelte/icons/trash-2';
     import AppHead from '@/components/AppHead.svelte';
+    import Confirm from '@/components/feedback/Confirm.svelte';
     import Heading from '@/components/Heading.svelte';
     import PendingInvitationsModal from '@/components/PendingInvitationsModal.svelte';
     import { Button } from '@/components/ui/button';
     import { edit, index, present } from '@/routes/presentations';
+    import { destroy as destroySession } from '@/routes/sessions';
     import type { DashboardInvitation } from '@/types';
     import type { DeliveryStats } from '@/types/generated';
 
@@ -132,6 +135,26 @@
     const presentDeck = (id: number) =>
         router.visit(present({ current_team: teamSlug, presentation: id }).url);
 
+    // Escape hatch for a session that went live by mistake (instead of a test
+    // run). Deleting drops its reactions/viewers from every stat, so it asks.
+    let confirmModal: Confirm;
+
+    const deleteSession = (session: SessionRow) =>
+        confirmModal.confirm({
+            title: `Delete this session of “${session.presentation_name}”?`,
+            text: 'Its viewers, reactions and speaking time disappear from your stats. This cannot be undone.',
+            variant: 'destructive',
+            action: 'Delete session',
+            onConfirm: () =>
+                router.delete(
+                    destroySession({
+                        current_team: teamSlug,
+                        session: session.id,
+                    }).url,
+                    { preserveScroll: true },
+                ),
+        });
+
     const hasHistory = $derived(recentSessions.length > 0);
 
     // "Know yourself": what your own runs (rehearsals + live talks) measure
@@ -181,6 +204,8 @@
 {#if pendingInvitations.length > 0}
     <PendingInvitationsModal invitations={pendingInvitations} />
 {/if}
+
+<Confirm bind:this={confirmModal} />
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
     <div class="flex items-end justify-between gap-4">
@@ -294,19 +319,32 @@
                                     </p>
                                 </div>
 
-                                {#if session.is_live}
-                                    <span
-                                        class="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500"
+                                <div class="flex shrink-0 items-center gap-1">
+                                    {#if session.is_live}
+                                        <span
+                                            class="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500"
+                                        >
+                                            <Radio class="h-3 w-3" /> Live
+                                        </span>
+                                    {:else}
+                                        <span
+                                            class="font-mono text-sm tabular-nums text-muted-foreground"
+                                        >
+                                            {session.reaction_total} ⚡
+                                        </span>
+                                    {/if}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                        title="Delete this session and its stats"
+                                        aria-label="Delete session"
+                                        onclick={() => deleteSession(session)}
+                                        data-test="dashboard-delete-session"
                                     >
-                                        <Radio class="h-3 w-3" /> Live
-                                    </span>
-                                {:else}
-                                    <span
-                                        class="shrink-0 font-mono text-sm tabular-nums text-muted-foreground"
-                                    >
-                                        {session.reaction_total} ⚡
-                                    </span>
-                                {/if}
+                                        <Trash2 class="h-3.5 w-3.5" />
+                                    </Button>
+                                </div>
                             </div>
 
                             {#if session.reaction_total > 0}
