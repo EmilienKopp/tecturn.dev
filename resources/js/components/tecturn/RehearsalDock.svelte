@@ -22,6 +22,7 @@
         currentSlide = 0,
         currentStep = 0,
         saving = false,
+        notes = undefined,
         onFinish,
     }: {
         talkSettings: TalkSettings;
@@ -29,6 +30,9 @@
         currentSlide?: number;
         currentStep?: number;
         saving?: boolean;
+        // Speaker notes for the current slide. Null means the slide has none;
+        // undefined hides the panel entirely (external decks carry no notes).
+        notes?: string | null;
         onFinish: (run: RehearsalPayload) => void;
     } = $props();
 
@@ -420,4 +424,32 @@
             </div>
         {/if}
     </section>
+
+    <!-- Speaker notes for the slide on screen, so a rehearsal doubles as a
+         run-through of the narration. -->
+    {#if notes !== undefined}
+        <section
+            class="flex min-h-0 flex-1 flex-col rounded-lg bg-zinc-800 p-4"
+            data-test="rehearsal-notes"
+        >
+            <p
+                class="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-400"
+            >
+                Speaker notes
+            </p>
+            <div class="min-h-0 flex-1 overflow-y-auto">
+                {#if notes}
+                    <p
+                        class="text-sm leading-relaxed whitespace-pre-wrap text-zinc-200"
+                    >
+                        {notes}
+                    </p>
+                {:else}
+                    <p class="text-xs text-zinc-500">
+                        No notes for this slide.
+                    </p>
+                {/if}
+            </div>
+        </section>
+    {/if}
 </aside>

@@ -28,6 +28,14 @@ class EndSession
 
         $session->end($command->endedAt);
 
+        if ($command->slideTimings !== null) {
+            $session->recordSlideTimings($command->slideTimings);
+        }
+
+        if ($command->reactionSlides !== null) {
+            $session->recordReactionSlides($command->reactionSlides);
+        }
+
         return $this->sessions->save($session);
     }
 }

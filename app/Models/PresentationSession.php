@@ -22,11 +22,13 @@ use Illuminate\Support\Carbon;
  * @property array<string, int> $viewers
  * @property int $viewer_count
  * @property int|null $word_count
+ * @property list<array{slide: int, seconds: int}>|null $slide_timings
+ * @property list<array{slide: int, reactions: array<string, int>}>|null $reaction_slides
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Presentation $presentation
  */
-#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count', 'word_count'])]
+#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count', 'word_count', 'slide_timings', 'reaction_slides'])]
 class PresentationSession extends Model
 {
     /** @use HasFactory<PresentationSessionFactory> */
@@ -55,6 +57,8 @@ class PresentationSession extends Model
             viewers: $this->viewers ?? [],
             viewer_count: $this->viewer_count,
             word_count: $this->word_count,
+            slide_timings: $this->slide_timings,
+            reaction_slides: $this->reaction_slides,
             id: $this->id,
         );
     }
@@ -70,6 +74,8 @@ class PresentationSession extends Model
             'last_seen_at' => 'datetime',
             'reaction_counts' => 'array',
             'viewers' => 'array',
+            'slide_timings' => 'array',
+            'reaction_slides' => 'array',
         ];
     }
 }

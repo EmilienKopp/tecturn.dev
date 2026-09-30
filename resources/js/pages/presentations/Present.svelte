@@ -18,6 +18,11 @@
         countUnits,
         slideProseText,
     } from '@/lib/tecturn/CodeGeneration/lint';
+    import {
+        defaultFlowFromContent,
+        enabledSlideIds,
+        migrateLegacyTransitions,
+    } from '@/lib/tecturn/flow-compiler';
     import type {
         FlowGraph,
         PresentationContent,
@@ -74,6 +79,30 @@
 
                   return sum + units.words + units.cjkChars;
               }, 0)
+            : null;
+
+    // Speaker notes per shown slide, for the rehearsal dock only — the live
+    // dock stays notes-free (that's the phone remote's job). Same shown-slide
+    // pipeline as the Presenter so index N matches; snapshots because the
+    // migration structuredClones its inputs, which rejects $state proxies.
+    const rehearsalNotes: (string | null)[] | null =
+        rehearsalMode && presentation.source.type === 'editor'
+            ? (() => {
+                  const contentSnapshot = $state.snapshot(presentation.content);
+                  const flowSnapshot = $state.snapshot(presentation.flow);
+                  const compiled = migrateLegacyTransitions(
+                      contentSnapshot,
+                      flowSnapshot ?? defaultFlowFromContent(contentSnapshot),
+                  );
+                  const enabled = enabledSlideIds(
+                      compiled.content,
+                      compiled.flow,
+                  );
+
+                  return compiled.content.slides
+                      .filter((slide) => enabled.has(slide.id))
+                      .map((slide) => slide.notes ?? null);
+              })()
             : null;
 
     const saveRehearsal = (run: RehearsalPayload): void => {
@@ -239,6 +268,7 @@
                     floatingReactions?.spawnReaction(event.emoji);
                 }
 
+                tallyReactionOnSlide(event.emoji);
                 reactionTotal += 1;
                 recentReactions = [
                     ...recentReactions,
@@ -290,6 +320,68 @@
         };
     });
 
+    // Live per-slide clock — the live counterpart of the rehearsal dock's
+    // timings. Chunks fold on every slide change and the totals ship with the
+    // close beacon, so the session detail page can compare against rehearsals.
+    let liveSlideMs: Record<number, number> = {};
+    let liveChunkStartedAt = Date.now();
+    let liveChunkSlide = 0;
+    let liveTrackedSlide = $state(0);
+
+    $effect(() => {
+        if (testMode || rehearsalMode || currentSlide === liveTrackedSlide) {
+            return;
+        }
+
+        const now = Date.now();
+        liveSlideMs[liveChunkSlide] =
+            (liveSlideMs[liveChunkSlide] ?? 0) + (now - liveChunkStartedAt);
+        liveChunkSlide = currentSlide;
+        liveChunkStartedAt = now;
+        liveTrackedSlide = currentSlide;
+    });
+
+    // Which slide each reaction landed on, bucketed as broadcasts arrive —
+    // this screen is the only client that knows the current slide. Tallied
+    // from the instant stream, so counts can drift a hair from the batched
+    // session totals; close enough for "which slide landed".
+    let liveReactionSlides: Record<number, Record<string, number>> = {};
+
+    const tallyReactionOnSlide = (emoji: string): void => {
+        if (testMode || rehearsalMode) {
+            return;
+        }
+
+        const slideReactions = (liveReactionSlides[currentSlide] ??= {});
+        slideReactions[emoji] = (slideReactions[emoji] ?? 0) + 1;
+    };
+
+    const liveReactionSlidesJson = (): string =>
+        JSON.stringify(
+            Object.entries(liveReactionSlides)
+                .map(([slide, reactions]) => ({
+                    slide: Number(slide),
+                    reactions,
+                }))
+                .sort((a, b) => a.slide - b.slide),
+        );
+
+    const liveSlideTimingsJson = (): string => {
+        const now = Date.now();
+        liveSlideMs[liveChunkSlide] =
+            (liveSlideMs[liveChunkSlide] ?? 0) + (now - liveChunkStartedAt);
+        liveChunkStartedAt = now;
+
+        return JSON.stringify(
+            Object.entries(liveSlideMs)
+                .map(([slide, ms]) => ({
+                    slide: Number(slide),
+                    seconds: Math.round(ms / 1000),
+                }))
+                .sort((a, b) => a.slide - b.slide),
+        );
+    };
+
     // A live session opens while the presenter is on this page and closes when
     // they leave, so reactions and viewers are attributed to a real talk. A
     // test run or rehearsal skips this entirely: no session means the
@@ -305,7 +397,11 @@
             deckWordCount !== null ? { word_count: deckWordCount } : {},
         );
 
-        const close = (): void => beaconPost(sessionRoutes.close);
+        const close = (): void =>
+            beaconPost(sessionRoutes.close, {
+                slide_timings: liveSlideTimingsJson(),
+                reaction_slides: liveReactionSlidesJson(),
+            });
 
         window.addEventListener('pagehide', close);
 
@@ -371,7 +467,9 @@
             />
         {/if}
 
-        {#if presentation.talk_settings.showTranslation}
+        <!-- A rehearsal has no audience to translate for, so the widget stays
+             hidden there no matter what the talk settings say. -->
+        {#if presentation.talk_settings.showTranslation && !rehearsalMode}
             <YoYoTranslatePanel
                 yoyotranslate={presentation.yoyotranslate}
                 routes={translationRoutes}
@@ -387,6 +485,9 @@
             {slideCount}
             {currentSlide}
             {currentStep}
+            notes={rehearsalNotes
+                ? (rehearsalNotes[currentSlide] ?? null)
+                : undefined}
             saving={savingRehearsal}
             onFinish={saveRehearsal}
         />

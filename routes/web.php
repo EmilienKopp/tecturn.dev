@@ -31,6 +31,7 @@ use App\Http\Controllers\Presentations\RequestRehearsalReviewController;
 use App\Http\Controllers\Presentations\RetryDeckController;
 use App\Http\Controllers\Presentations\SendMessageController;
 use App\Http\Controllers\Presentations\SendReactionController;
+use App\Http\Controllers\Presentations\ShowSessionController;
 use App\Http\Controllers\Presentations\StartSessionController;
 use App\Http\Controllers\Presentations\StartTranslationSessionController;
 use App\Http\Controllers\Presentations\StopTranslationSessionController;
@@ -154,6 +155,8 @@ Route::prefix('{current_team}')
         // POST (not DELETE) so the presenter's unload handler can close the
         // session via navigator.sendBeacon, which only issues POST requests.
         Route::post('presentations/{presentation}/session/close', EndSessionController::class)->name('presentations.session.end');
+        // Session detail: how a live run went, held against the rehearsals.
+        Route::get('sessions/{session}', ShowSessionController::class)->name('sessions.show');
         // Escape hatch for a session that went live by mistake (e.g. instead
         // of a test run): removes the session and its analytics for good.
         Route::delete('sessions/{session}', DeleteSessionController::class)->name('sessions.destroy');
