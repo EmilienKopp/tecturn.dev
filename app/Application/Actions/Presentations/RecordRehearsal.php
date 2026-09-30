@@ -30,6 +30,7 @@ class RecordRehearsal
             started_at: $command->startedAt,
             ended_at: $command->endedAt,
             duration_seconds: $command->durationSeconds,
+            word_count: $command->wordCount,
             slide_timings: $command->slideTimings,
             content: $presentation->content->toArray(),
             flow: $presentation->flow?->toArray(),

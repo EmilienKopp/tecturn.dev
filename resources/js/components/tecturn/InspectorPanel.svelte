@@ -40,18 +40,27 @@
         presentationId,
         policy,
         targetMinutes = null,
+        presentationStyle = 'balanced',
         onEditCodeSequence,
     }: {
         editor: EditorState;
         presentationId: number;
         policy: LintPolicy;
         targetMinutes?: number | null;
+        presentationStyle?: string;
         onEditCodeSequence: (blockId: string) => void;
     } = $props();
 
-    const slideLint = $derived(lintSlide(editor.selectedSlide, policy));
+    const slideLint = $derived(
+        lintSlide(editor.selectedSlide, policy, presentationStyle),
+    );
     const deckLint = $derived(
-        lintDeck(editor.content.slides, policy, targetMinutes),
+        lintDeck(
+            editor.content.slides,
+            policy,
+            targetMinutes,
+            presentationStyle,
+        ),
     );
 
     const verdictMessage = $derived(

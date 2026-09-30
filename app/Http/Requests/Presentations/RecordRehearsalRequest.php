@@ -28,6 +28,7 @@ class RecordRehearsalRequest extends FormRequest
             'started_at' => ['required', 'date'],
             'ended_at' => ['required', 'date', 'after_or_equal:started_at'],
             'duration_seconds' => ['required', 'integer', 'min:0', 'max:'.self::MAX_DURATION_SECONDS],
+            'word_count' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'slide_timings' => ['present', 'array'],
             'slide_timings.*.slide' => ['required', 'integer', 'min:0'],
             'slide_timings.*.seconds' => ['required', 'integer', 'min:0', 'max:'.self::MAX_DURATION_SECONDS],

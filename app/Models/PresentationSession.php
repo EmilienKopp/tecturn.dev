@@ -21,11 +21,12 @@ use Illuminate\Support\Carbon;
  * @property int $reaction_total
  * @property array<string, int> $viewers
  * @property int $viewer_count
+ * @property int|null $word_count
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Presentation $presentation
  */
-#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count'])]
+#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count', 'word_count'])]
 class PresentationSession extends Model
 {
     /** @use HasFactory<PresentationSessionFactory> */
@@ -53,6 +54,7 @@ class PresentationSession extends Model
             reaction_total: $this->reaction_total,
             viewers: $this->viewers ?? [],
             viewer_count: $this->viewer_count,
+            word_count: $this->word_count,
             id: $this->id,
         );
     }

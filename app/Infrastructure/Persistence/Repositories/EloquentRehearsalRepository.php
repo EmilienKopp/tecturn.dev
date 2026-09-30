@@ -18,6 +18,7 @@ class EloquentRehearsalRepository implements RehearsalRepository
             'started_at' => $run->started_at,
             'ended_at' => $run->ended_at,
             'duration_seconds' => $run->duration_seconds,
+            'word_count' => $run->word_count,
             'slide_timings' => $run->slide_timings,
             'step_events' => $run->step_events,
             'content' => $run->content,

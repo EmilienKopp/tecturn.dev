@@ -27,6 +27,17 @@ readonly class TalkSettings
     public const int DEFAULT_FREE_TEXT_LENGTH = 20;
 
     /**
+     * How much of the slide text the presenter actually narrates verbatim,
+     * driving the linter's speaking-time estimate. Text-heavy means "I read
+     * every word"; sparser styles talk far longer per word on screen.
+     *
+     * @var list<string>
+     */
+    public const array PRESENTATION_STYLES = ['minimalistic', 'balanced', 'text-heavy'];
+
+    public const string DEFAULT_PRESENTATION_STYLE = 'balanced';
+
+    /**
      * @param  list<string>  $reactions
      */
     public function __construct(
@@ -35,6 +46,7 @@ readonly class TalkSettings
         public bool $showTranslation = true,
         public string $timerMode = 'elapsed',
         public ?int $durationMinutes = null,
+        public string $presentationStyle = self::DEFAULT_PRESENTATION_STYLE,
         public bool $autoSave = false,
         public FooterSettings $footer = new FooterSettings,
         public array $reactions = self::DEFAULT_REACTIONS,
@@ -57,6 +69,9 @@ readonly class TalkSettings
             durationMinutes: isset($data['durationMinutes']) && is_numeric($data['durationMinutes'])
                 ? (int) $data['durationMinutes']
                 : null,
+            presentationStyle: in_array($data['presentationStyle'] ?? null, self::PRESENTATION_STYLES, true)
+                ? (string) $data['presentationStyle']
+                : self::DEFAULT_PRESENTATION_STYLE,
             autoSave: (bool) ($data['autoSave'] ?? false),
             footer: FooterSettings::fromArray(is_array($data['footer'] ?? null) ? $data['footer'] : []),
             reactions: self::sanitizeReactions($data['reactions'] ?? null),
@@ -127,6 +142,7 @@ readonly class TalkSettings
             'showTranslation' => $this->showTranslation,
             'timerMode' => $this->timerMode,
             'durationMinutes' => $this->durationMinutes,
+            'presentationStyle' => $this->presentationStyle,
             'autoSave' => $this->autoSave,
             'footer' => $this->footer->toArray(),
             'reactions' => $this->reactions,

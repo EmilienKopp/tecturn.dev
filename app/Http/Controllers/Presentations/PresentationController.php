@@ -17,6 +17,7 @@ use App\Domain\Presentation\ValueObjects\TalkSettings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Presentations\CreatePresentationRequest;
 use App\Http\Requests\Presentations\UpdatePresentationRequest;
+use App\Infrastructure\ReadModels\DeliveryStatsReadModel;
 use App\Infrastructure\ReadModels\PresentationReadModel;
 use App\Models\Presentation;
 use App\Models\Team;
@@ -31,6 +32,7 @@ class PresentationController extends Controller
 {
     public function __construct(
         private readonly PresentationReadModel $presentations,
+        private readonly DeliveryStatsReadModel $deliveryStats,
         private readonly EmbedCache $embeds,
         private readonly CreatePresentation $createPresentation,
         private readonly UpdatePresentation $updatePresentation,
@@ -98,6 +100,7 @@ class PresentationController extends Controller
             ],
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),
             'remoteUrl' => route('presentations.remote', ['presentation' => $presentation->remote_token]),
+            'deliveryStats' => $this->deliveryStats->forPresentation($presentation->id)->toArray(),
         ]);
     }
 

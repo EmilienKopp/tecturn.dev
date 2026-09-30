@@ -47,6 +47,14 @@ prev_page_url: string | null,
 },
 };
 export type CursorPaginatorInterface<TKey, TValue> = CursorPaginator<TKey, TValue>;
+export type DeliveryStats = {
+readonly rehearsalCount: number,
+readonly sessionCount: number,
+readonly totalSpokenSeconds: number,
+readonly avgRunSeconds: number | null,
+readonly avgSecondsPerSlide: number | null,
+readonly avgWordsPerMinute: number | null,
+};
 export type FlowEdge = {
 readonly id: string,
 readonly source: string,
@@ -105,6 +113,7 @@ readonly cjkCharsGood: number,
 readonly cjkCharsMax: number,
 readonly paceUnderRatio: number,
 readonly paceOverRatio: number,
+readonly styleMultipliers: Record<string, number>,
 };
 export type NodePosition = {
 readonly x: number,
@@ -139,6 +148,7 @@ readonly showDock: boolean,
 readonly showTranslation: boolean,
 readonly timerMode: string,
 readonly durationMinutes: number | null,
+readonly presentationStyle: string,
 readonly autoSave: boolean,
 readonly footer: FooterSettings,
 readonly reactions: string[],

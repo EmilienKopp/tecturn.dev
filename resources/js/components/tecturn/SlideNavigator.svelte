@@ -24,14 +24,21 @@
         editor,
         policy,
         targetMinutes = null,
+        presentationStyle = 'balanced',
     }: {
         editor: EditorState;
         policy: LintPolicy;
         targetMinutes?: number | null;
+        presentationStyle?: string;
     } = $props();
 
     const deck = $derived(
-        lintDeck(editor.content.slides, policy, targetMinutes),
+        lintDeck(
+            editor.content.slides,
+            policy,
+            targetMinutes,
+            presentationStyle,
+        ),
     );
 
     const paceLabel = $derived(
@@ -120,7 +127,7 @@
     <div class="flex-1 space-y-2 overflow-y-auto p-3">
         {#each editor.content.slides as slide, index (slide.id)}
             {@const disabled = !editor.isSlideEnabled(slide.id)}
-            {@const lint = lintSlide(slide, policy)}
+            {@const lint = lintSlide(slide, policy, presentationStyle)}
 
             <button
                 type="button"

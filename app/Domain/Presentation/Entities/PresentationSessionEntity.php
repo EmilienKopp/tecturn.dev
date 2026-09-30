@@ -29,6 +29,7 @@ class PresentationSessionEntity extends BaseEntity
         public int $reaction_total = 0,
         public array $viewers = [],
         public int $viewer_count = 0,
+        public ?int $word_count = null,
         public ?int $id = null,
     ) {}
 
@@ -127,6 +128,7 @@ class PresentationSessionEntity extends BaseEntity
             'reaction_total' => $this->reaction_total,
             'viewers' => $this->viewers,
             'viewer_count' => $this->viewer_count,
+            'word_count' => $this->word_count,
         ];
     }
 }

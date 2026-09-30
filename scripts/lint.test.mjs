@@ -28,6 +28,11 @@ const POLICY = {
     cjkCharsMax: 170,
     paceUnderRatio: 0.85,
     paceOverRatio: 1.0,
+    styleMultipliers: {
+        minimalistic: 6,
+        balanced: 3,
+        'text-heavy': 1,
+    },
 };
 
 const block = (type, content, extra = {}) => ({
@@ -148,6 +153,31 @@ test('speakingSeconds blends both scripts', () => {
     assert.equal(
         speakingSeconds({ words: 65, cjkChars: 150, chars: 0 }, POLICY),
         60,
+    );
+});
+
+test('presentation style scales the speaking-time estimate', () => {
+    const counts = { words: 130, cjkChars: 0, chars: 0 };
+
+    // Text-heavy is the read-every-word baseline; sparser styles multiply it.
+    assert.equal(speakingSeconds(counts, POLICY, 'text-heavy'), 60);
+    assert.equal(speakingSeconds(counts, POLICY, 'balanced'), 180);
+    assert.equal(speakingSeconds(counts, POLICY, 'minimalistic'), 360);
+
+    // Unknown styles fall back to the baseline instead of zeroing out.
+    assert.equal(speakingSeconds(counts, POLICY, 'freestyle'), 60);
+
+    const linted = lintSlide(
+        slide([block('text', words(130))]),
+        POLICY,
+        'minimalistic',
+    );
+
+    assert.equal(linted.speakingSeconds, 360);
+    // Density judges on-screen fullness, so style must not change the verdict.
+    assert.equal(
+        linted.verdict,
+        lintSlide(slide([block('text', words(130))]), POLICY).verdict,
     );
 });
 

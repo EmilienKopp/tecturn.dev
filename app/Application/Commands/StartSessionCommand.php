@@ -12,5 +12,6 @@ readonly class StartSessionCommand
         public int $presentationId,
         public int $teamId,
         public DateTimeInterface $startedAt,
+        public ?int $wordCount = null,
     ) {}
 }

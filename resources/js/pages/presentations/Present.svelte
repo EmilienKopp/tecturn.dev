@@ -14,6 +14,10 @@
     import { getEcho, setControlToken, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
     import { playBuzzer, unlockBuzzerAudio } from '@/lib/tecturn/buzzer';
+    import {
+        countUnits,
+        slideProseText,
+    } from '@/lib/tecturn/CodeGeneration/lint';
     import type {
         FlowGraph,
         PresentationContent,
@@ -60,13 +64,25 @@
     // and redirects to the run's replay page.
     let savingRehearsal = $state(false);
 
+    // Narration units (words + CJK chars) of the deck as delivered, counted by
+    // the canonical lint counter and stored with each run so the dashboard can
+    // average words per minute. External decks (PDF) carry no countable text.
+    const deckWordCount =
+        presentation.source.type === 'editor'
+            ? presentation.content.slides.reduce((sum, slide) => {
+                  const units = countUnits(slideProseText(slide));
+
+                  return sum + units.words + units.cjkChars;
+              }, 0)
+            : null;
+
     const saveRehearsal = (run: RehearsalPayload): void => {
         if (!rehearsalRoutes) {
             return;
         }
 
         savingRehearsal = true;
-        router.post(rehearsalRoutes.store, run, {
+        router.post(rehearsalRoutes.store, { ...run, word_count: deckWordCount }, {
             onFinish: () => {
                 savingRehearsal = false;
             },
@@ -284,7 +300,10 @@
             return;
         }
 
-        beaconPost(sessionRoutes.start);
+        beaconPost(
+            sessionRoutes.start,
+            deckWordCount !== null ? { word_count: deckWordCount } : {},
+        );
 
         const close = (): void => beaconPost(sessionRoutes.close);
 

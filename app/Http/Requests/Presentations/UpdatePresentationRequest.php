@@ -35,6 +35,7 @@ class UpdatePresentationRequest extends FormRequest
             // Optional slide fields need a rule or validated() prunes them,
             // silently dropping the title/background/config on save.
             'content.slides.*.title' => ['sometimes', 'nullable', 'string'],
+            'content.slides.*.notes' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.background' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.backgroundImage' => ['sometimes', 'nullable', 'string'],
             'content.slides.*.config' => ['sometimes', 'nullable', 'array'],
@@ -59,6 +60,7 @@ class UpdatePresentationRequest extends FormRequest
             'talk_settings.showDock' => ['sometimes', 'boolean'],
             'talk_settings.showTranslation' => ['sometimes', 'boolean'],
             'talk_settings.timerMode' => ['sometimes', 'string', Rule::in(['elapsed', 'countdown'])],
+            'talk_settings.presentationStyle' => ['sometimes', 'string', Rule::in(TalkSettings::PRESENTATION_STYLES)],
             'talk_settings.durationMinutes' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:480'],
             'talk_settings.autoSave' => ['sometimes', 'boolean'],
             'talk_settings.footer' => ['sometimes', 'array'],
