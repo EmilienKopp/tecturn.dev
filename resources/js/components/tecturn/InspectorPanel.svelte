@@ -1,5 +1,6 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
+    import ChevronRight from 'lucide-svelte/icons/chevron-right';
     import Eye from 'lucide-svelte/icons/eye';
     import EyeOff from 'lucide-svelte/icons/eye-off';
     import ImageOff from 'lucide-svelte/icons/image-off';
@@ -279,6 +280,24 @@
         ) ?? null,
     );
 
+    // Which inspector sections are folded open. Component-level so folds
+    // survive switching slides and blocks; the rarely-used background image
+    // sections start closed to keep the panel scannable.
+    const sectionsOpen = $state({
+        transition: true,
+        code: true,
+        image: true,
+        qr: true,
+        typography: true,
+        colors: true,
+        slide: true,
+        layout: true,
+        background: true,
+        slideImage: false,
+        deckImage: false,
+        notes: true,
+    });
+
     const renameTransition = (nodeId: string, value: string) => {
         if (!editor.setTransitionLabel(nodeId, value.trim() || null)) {
             toast.error('Another step on this slide already has that name.');
@@ -302,302 +321,391 @@
     };
 </script>
 
-<div class="flex h-full w-64 flex-col gap-6 overflow-y-auto border-l p-4">
+{#snippet sectionHeader(title: string)}
+    <summary
+        class="flex cursor-pointer list-none items-center gap-1 text-xs font-semibold text-muted-foreground select-none hover:text-foreground [&::-webkit-details-marker]:hidden"
+    >
+        <ChevronRight
+            class="h-3.5 w-3.5 transition-transform group-open:rotate-90"
+        />
+        {title}
+    </summary>
+{/snippet}
+
+<div class="flex h-full w-64 flex-col gap-4 overflow-y-auto border-l p-4">
     {#if block}
         {#if block.type !== 'richtext'}
-            <div class="space-y-1">
-                <Label for="block-transition" class="text-xs">Transition</Label>
-                <select
-                    id="block-transition"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.transition?.nodeId ?? ''}
-                    onchange={(event) =>
-                        setTransition(block.id, event.currentTarget.value)}
-                    data-test="inspector-transition"
-                >
-                    <option value="">Static (always visible)</option>
-                    {#each transitions as transition (transition.nodeId)}
-                        <option value={transition.nodeId}>
-                            {editor.transitionDisplayName(transition)}
-                        </option>
-                    {/each}
-                    <option value="__new__">+ New step</option>
-                </select>
-            </div>
+            <details
+                class="group"
+                bind:open={sectionsOpen.transition}
+                data-test="inspector-section-transition"
+            >
+                {@render sectionHeader('Transition')}
+                <div class="mt-2 space-y-3">
+                    <div class="space-y-1">
+                        <Label for="block-transition" class="text-xs"
+                            >Step</Label
+                        >
+                        <select
+                            id="block-transition"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.transition?.nodeId ?? ''}
+                            onchange={(event) =>
+                                setTransition(
+                                    block.id,
+                                    event.currentTarget.value,
+                                )}
+                            data-test="inspector-transition"
+                        >
+                            <option value="">Static (always visible)</option>
+                            {#each transitions as transition (transition.nodeId)}
+                                <option value={transition.nodeId}>
+                                    {editor.transitionDisplayName(transition)}
+                                </option>
+                            {/each}
+                            <option value="__new__">+ New step</option>
+                        </select>
+                    </div>
 
-            {#if pinnedTransition}
-                <div class="space-y-1">
-                    <Label for="transition-label" class="text-xs"
-                        >Step name</Label
-                    >
-                    <input
-                        id="transition-label"
-                        type="text"
-                        class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                        placeholder="Step {pinnedTransition.index + 1}"
-                        value={pinnedTransition.label ?? ''}
-                        onchange={(event) =>
-                            renameTransition(
-                                pinnedTransition.nodeId,
-                                event.currentTarget.value,
-                            )}
-                        data-test="inspector-transition-label"
-                    />
+                    {#if pinnedTransition}
+                        <div class="space-y-1">
+                            <Label for="transition-label" class="text-xs"
+                                >Step name</Label
+                            >
+                            <input
+                                id="transition-label"
+                                type="text"
+                                class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                                placeholder="Step {pinnedTransition.index + 1}"
+                                value={pinnedTransition.label ?? ''}
+                                onchange={(event) =>
+                                    renameTransition(
+                                        pinnedTransition.nodeId,
+                                        event.currentTarget.value,
+                                    )}
+                                data-test="inspector-transition-label"
+                            />
+                        </div>
+                    {/if}
                 </div>
-            {/if}
+            </details>
         {/if}
 
         {#if block.type === 'code'}
-            <div class="space-y-1">
-                <Label for="block-lang" class="text-xs">Language</Label>
-                <select
-                    id="block-lang"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.lang ?? 'typescript'}
-                    onchange={(e) =>
-                        editor.updateBlockLang(block.id, e.currentTarget.value)}
-                    data-test="inspector-lang"
-                >
-                    {#each SUPPORTED_LANGUAGES as lang (lang)}
-                        <option value={lang}>{lang}</option>
-                    {/each}
-                </select>
-            </div>
+            <details
+                class="group"
+                bind:open={sectionsOpen.code}
+                data-test="inspector-section-code"
+            >
+                {@render sectionHeader('Code')}
+                <div class="mt-2 space-y-3">
+                    <div class="space-y-1">
+                        <Label for="block-lang" class="text-xs">Language</Label>
+                        <select
+                            id="block-lang"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.lang ?? 'typescript'}
+                            onchange={(e) =>
+                                editor.updateBlockLang(
+                                    block.id,
+                                    e.currentTarget.value,
+                                )}
+                            data-test="inspector-lang"
+                        >
+                            {#each SUPPORTED_LANGUAGES as lang (lang)}
+                                <option value={lang}>{lang}</option>
+                            {/each}
+                        </select>
+                    </div>
 
-            <div class="space-y-1">
-                <Label class="text-xs">Code sequence</Label>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    class="w-full"
-                    onclick={() => onEditCodeSequence(block.id)}
-                    data-test="inspector-edit-sequence"
-                >
-                    <SquarePen class="h-4 w-4" />
-                    {(block.actions ?? []).length > 0
-                        ? `Edit sequence (${(block.actions ?? []).length})`
-                        : 'Add sequence'}
-                </Button>
-                <p class="text-[11px] text-muted-foreground">
-                    Morph this code through pages during the talk, with optional
-                    line highlights.
-                </p>
-            </div>
+                    <div class="space-y-1">
+                        <Label class="text-xs">Code sequence</Label>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="w-full"
+                            onclick={() => onEditCodeSequence(block.id)}
+                            data-test="inspector-edit-sequence"
+                        >
+                            <SquarePen class="h-4 w-4" />
+                            {(block.actions ?? []).length > 0
+                                ? `Edit sequence (${(block.actions ?? []).length})`
+                                : 'Add sequence'}
+                        </Button>
+                        <p class="text-[11px] text-muted-foreground">
+                            Morph this code through pages during the talk, with
+                            optional line highlights.
+                        </p>
+                    </div>
+                </div>
+            </details>
         {/if}
 
         {#if block.type === 'image'}
-            <div class="space-y-1">
-                <Label class="text-xs">Image</Label>
-                {#if block.src && !blockImageBroken}
-                    <img
-                        src={block.src}
-                        alt={block.alt ?? ''}
-                        class="max-h-32 w-full rounded-md border object-contain"
-                        onerror={() => (blockImageBroken = true)}
-                        onload={() => (blockImageBroken = false)}
-                        data-test="inspector-image-preview"
-                    />
-                {:else}
-                    <div
-                        class="flex flex-col items-center gap-1 rounded-md border border-dashed p-4 text-center"
-                        data-test="inspector-image-broken"
-                    >
-                        <ImageOff class="h-6 w-6 text-muted-foreground" />
-                        <p class="text-[11px] text-muted-foreground">
-                            {block.src
-                                ? "This image couldn't be loaded. Reupload it below."
-                                : 'No image yet.'}
-                        </p>
+            <details
+                class="group"
+                bind:open={sectionsOpen.image}
+                data-test="inspector-section-image"
+            >
+                {@render sectionHeader('Image')}
+                <div class="mt-2 space-y-3">
+                    <div class="space-y-1">
+                        {#if block.src && !blockImageBroken}
+                            <img
+                                src={block.src}
+                                alt={block.alt ?? ''}
+                                class="max-h-32 w-full rounded-md border object-contain"
+                                onerror={() => (blockImageBroken = true)}
+                                onload={() => (blockImageBroken = false)}
+                                data-test="inspector-image-preview"
+                            />
+                        {:else}
+                            <div
+                                class="flex flex-col items-center gap-1 rounded-md border border-dashed p-4 text-center"
+                                data-test="inspector-image-broken"
+                            >
+                                <ImageOff
+                                    class="h-6 w-6 text-muted-foreground"
+                                />
+                                <p class="text-[11px] text-muted-foreground">
+                                    {block.src
+                                        ? "This image couldn't be loaded. Reupload it below."
+                                        : 'No image yet.'}
+                                </p>
+                            </div>
+                        {/if}
+                        <label
+                            class="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border text-xs hover:bg-accent {uploadingBlockImage
+                                ? 'pointer-events-none opacity-60'
+                                : blockImageBroken || !block.src
+                                  ? 'border-amber-500 text-amber-600'
+                                  : ''}"
+                        >
+                            {uploadingBlockImage
+                                ? 'Uploading…'
+                                : blockImageBroken || !block.src
+                                  ? 'Reupload image'
+                                  : 'Replace image'}
+                            <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                class="hidden"
+                                onchange={replaceBlockImage}
+                                data-test="inspector-image-input"
+                            />
+                        </label>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="w-full"
+                            onclick={() => openLibrary('block', block.id)}
+                            data-test="inspector-image-library"
+                        >
+                            From library
+                        </Button>
                     </div>
-                {/if}
-                <label
-                    class="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border text-xs hover:bg-accent {uploadingBlockImage
-                        ? 'pointer-events-none opacity-60'
-                        : blockImageBroken || !block.src
-                          ? 'border-amber-500 text-amber-600'
-                          : ''}"
-                >
-                    {uploadingBlockImage
-                        ? 'Uploading…'
-                        : blockImageBroken || !block.src
-                          ? 'Reupload image'
-                          : 'Replace image'}
-                    <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp,image/gif"
-                        class="hidden"
-                        onchange={replaceBlockImage}
-                        data-test="inspector-image-input"
-                    />
-                </label>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    class="w-full"
-                    onclick={() => openLibrary('block', block.id)}
-                    data-test="inspector-image-library"
-                >
-                    From library
-                </Button>
-            </div>
-            <div class="space-y-1">
-                <Label for="block-alt" class="text-xs">Alt text</Label>
-                <input
-                    id="block-alt"
-                    type="text"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.alt ?? ''}
-                    oninput={(event) =>
-                        editor.updateBlockAlt(
-                            block.id,
-                            event.currentTarget.value,
-                        )}
-                    data-test="inspector-alt"
-                />
-            </div>
+                    <div class="space-y-1">
+                        <Label for="block-alt" class="text-xs">Alt text</Label>
+                        <input
+                            id="block-alt"
+                            type="text"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.alt ?? ''}
+                            oninput={(event) =>
+                                editor.updateBlockAlt(
+                                    block.id,
+                                    event.currentTarget.value,
+                                )}
+                            data-test="inspector-alt"
+                        />
+                    </div>
+                </div>
+            </details>
         {/if}
 
         {#if block.type === 'qr'}
-            <div class="space-y-1">
-                <Label for="qr-url" class="text-xs">URL to encode</Label>
-                <input
-                    id="qr-url"
-                    type="text"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.src ?? ''}
-                    oninput={(event) =>
-                        editor.updateBlockSrc(
-                            block.id,
-                            event.currentTarget.value,
-                        )}
-                    placeholder="https://example.com"
-                    data-test="inspector-qr-url"
-                />
-            </div>
-            <div class="space-y-1">
-                <Label for="qr-size" class="text-xs">Size</Label>
-                <select
-                    id="qr-size"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.alt ?? 'medium'}
-                    onchange={(event) =>
-                        editor.updateBlockAlt(
-                            block.id,
-                            event.currentTarget.value,
-                        )}
-                    data-test="inspector-qr-size"
-                >
-                    <option value="small">Small</option>
-                    <option value="medium">Medium</option>
-                    <option value="large">Large</option>
-                </select>
-            </div>
+            <details
+                class="group"
+                bind:open={sectionsOpen.qr}
+                data-test="inspector-section-qr"
+            >
+                {@render sectionHeader('QR code')}
+                <div class="mt-2 space-y-3">
+                    <div class="space-y-1">
+                        <Label for="qr-url" class="text-xs">URL to encode</Label
+                        >
+                        <input
+                            id="qr-url"
+                            type="text"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.src ?? ''}
+                            oninput={(event) =>
+                                editor.updateBlockSrc(
+                                    block.id,
+                                    event.currentTarget.value,
+                                )}
+                            placeholder="https://example.com"
+                            data-test="inspector-qr-url"
+                        />
+                    </div>
+                    <div class="space-y-1">
+                        <Label for="qr-size" class="text-xs">Size</Label>
+                        <select
+                            id="qr-size"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.alt ?? 'medium'}
+                            onchange={(event) =>
+                                editor.updateBlockAlt(
+                                    block.id,
+                                    event.currentTarget.value,
+                                )}
+                            data-test="inspector-qr-size"
+                        >
+                            <option value="small">Small</option>
+                            <option value="medium">Medium</option>
+                            <option value="large">Large</option>
+                        </select>
+                    </div>
+                </div>
+            </details>
         {/if}
 
         {#if block.type === 'text' || block.type === 'box'}
-            <p class="text-xs text-muted-foreground">
-                Box defaults. Select text in the box to style a span
-                individually.
-            </p>
-            <div class="space-y-1">
-                <Label for="block-font-size" class="text-xs">Font size</Label>
-                <select
-                    id="block-font-size"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.style.fontSize ?? ''}
-                    onchange={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            fontSize: event.currentTarget.value || null,
-                        })}
-                    data-test="inspector-font-size"
-                >
-                    <option value="">Default</option>
-                    {#each fontSizes as size (size)}
-                        <option value={size}>{size}</option>
-                    {/each}
-                </select>
-            </div>
-
-            <div class="space-y-1">
-                <Label for="block-font-weight" class="text-xs"
-                    >Font weight</Label
-                >
-                <select
-                    id="block-font-weight"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.style.fontWeight ?? ''}
-                    onchange={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            fontWeight: event.currentTarget.value || null,
-                        })}
-                    data-test="inspector-font-weight"
-                >
-                    <option value="">Default</option>
-                    {#each fontWeights as weight (weight)}
-                        <option value={weight}>{weight}</option>
-                    {/each}
-                </select>
-            </div>
-
-            <div class="space-y-1">
-                <Label for="block-font-family" class="text-xs">Font</Label>
-                <select
-                    id="block-font-family"
-                    class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
-                    value={block.style.fontFamily ?? ''}
-                    onchange={(event) =>
-                        editor.updateBlockStyle(block.id, {
-                            fontFamily: event.currentTarget.value || null,
-                        })}
-                    data-test="inspector-font-family"
-                >
-                    <option value="">Default</option>
-                    {#each FONTS as font (font.label)}
-                        <option
-                            value={font.label}
-                            style="font-family: {font.stack}"
-                            >{font.label}</option
+            <details
+                class="group"
+                bind:open={sectionsOpen.typography}
+                data-test="inspector-section-typography"
+            >
+                {@render sectionHeader('Typography')}
+                <div class="mt-2 space-y-3">
+                    <p class="text-xs text-muted-foreground">
+                        Box defaults. Select text in the box to style a span
+                        individually.
+                    </p>
+                    <div class="space-y-1">
+                        <Label for="block-font-size" class="text-xs"
+                            >Font size</Label
                         >
-                    {/each}
-                </select>
-            </div>
+                        <select
+                            id="block-font-size"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.style.fontSize ?? ''}
+                            onchange={(event) =>
+                                editor.updateBlockStyle(block.id, {
+                                    fontSize: event.currentTarget.value || null,
+                                })}
+                            data-test="inspector-font-size"
+                        >
+                            <option value="">Default</option>
+                            {#each fontSizes as size (size)}
+                                <option value={size}>{size}</option>
+                            {/each}
+                        </select>
+                    </div>
 
-            <div class="space-y-1">
-                <Label for="block-color" class="text-xs">Text color</Label>
-                <ColorField
-                    id="block-color"
-                    value={block.style.color ?? '#000000'}
-                    onchange={(color) =>
-                        editor.updateBlockStyle(block.id, { color })}
-                    dataTest="inspector-color"
-                />
-            </div>
+                    <div class="space-y-1">
+                        <Label for="block-font-weight" class="text-xs"
+                            >Font weight</Label
+                        >
+                        <select
+                            id="block-font-weight"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.style.fontWeight ?? ''}
+                            onchange={(event) =>
+                                editor.updateBlockStyle(block.id, {
+                                    fontWeight:
+                                        event.currentTarget.value || null,
+                                })}
+                            data-test="inspector-font-weight"
+                        >
+                            <option value="">Default</option>
+                            {#each fontWeights as weight (weight)}
+                                <option value={weight}>{weight}</option>
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <Label for="block-font-family" class="text-xs"
+                            >Font</Label
+                        >
+                        <select
+                            id="block-font-family"
+                            class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+                            value={block.style.fontFamily ?? ''}
+                            onchange={(event) =>
+                                editor.updateBlockStyle(block.id, {
+                                    fontFamily:
+                                        event.currentTarget.value || null,
+                                })}
+                            data-test="inspector-font-family"
+                        >
+                            <option value="">Default</option>
+                            {#each FONTS as font (font.label)}
+                                <option
+                                    value={font.label}
+                                    style="font-family: {font.stack}"
+                                    >{font.label}</option
+                                >
+                            {/each}
+                        </select>
+                    </div>
+
+                    <div class="space-y-1">
+                        <Label for="block-color" class="text-xs"
+                            >Text color</Label
+                        >
+                        <ColorField
+                            id="block-color"
+                            value={block.style.color ?? '#000000'}
+                            onchange={(color) =>
+                                editor.updateBlockStyle(block.id, { color })}
+                            dataTest="inspector-color"
+                        />
+                    </div>
+                </div>
+            </details>
         {/if}
 
         {#if block.type === 'box'}
-            <div class="space-y-1">
-                <Label for="block-border-color" class="text-xs"
-                    >Border color</Label
-                >
-                <ColorField
-                    id="block-border-color"
-                    value={block.style.borderColor ?? '#e2e8f0'}
-                    onchange={(borderColor) =>
-                        editor.updateBlockStyle(block.id, { borderColor })}
-                    dataTest="inspector-border-color"
-                />
-            </div>
+            <details
+                class="group"
+                bind:open={sectionsOpen.colors}
+                data-test="inspector-section-colors"
+            >
+                {@render sectionHeader('Box colors')}
+                <div class="mt-2 space-y-3">
+                    <div class="space-y-1">
+                        <Label for="block-border-color" class="text-xs"
+                            >Border color</Label
+                        >
+                        <ColorField
+                            id="block-border-color"
+                            value={block.style.borderColor ?? '#e2e8f0'}
+                            onchange={(borderColor) =>
+                                editor.updateBlockStyle(block.id, {
+                                    borderColor,
+                                })}
+                            dataTest="inspector-border-color"
+                        />
+                    </div>
 
-            <div class="space-y-1">
-                <Label for="block-bg-color" class="text-xs">Background</Label>
-                <ColorField
-                    id="block-bg-color"
-                    value={block.style.backgroundColor ?? '#ffffff'}
-                    onchange={(backgroundColor) =>
-                        editor.updateBlockStyle(block.id, { backgroundColor })}
-                    dataTest="inspector-bg-color"
-                />
-            </div>
+                    <div class="space-y-1">
+                        <Label for="block-bg-color" class="text-xs"
+                            >Background</Label
+                        >
+                        <ColorField
+                            id="block-bg-color"
+                            value={block.style.backgroundColor ?? '#ffffff'}
+                            onchange={(backgroundColor) =>
+                                editor.updateBlockStyle(block.id, {
+                                    backgroundColor,
+                                })}
+                            dataTest="inspector-bg-color"
+                        />
+                    </div>
+                </div>
+            </details>
         {/if}
 
         {#if block.type === 'text' || block.type === 'box'}
@@ -624,139 +732,179 @@
             <Trash2 class="h-4 w-4" /> Delete block
         </Button>
     {:else}
-        <div class="space-y-1">
-            <Label for="slide-title" class="text-xs">Slide title</Label>
-            <input
-                id="slide-title"
-                type="text"
-                class="h-8 w-full rounded-md border bg-background px-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                placeholder="Slide {editor.selectedSlideIndex + 1}"
-                value={editor.selectedSlide.title ?? ''}
-                onchange={(event) =>
-                    editor.setSlideTitle(event.currentTarget.value)}
-                data-test="inspector-slide-title"
-            />
-        </div>
-
-        <div
-            class="space-y-1.5 rounded-md border p-2.5"
-            data-test="inspector-content-stats"
+        <details
+            class="group"
+            bind:open={sectionsOpen.slide}
+            data-test="inspector-section-slide"
         >
-            <div class="flex items-center justify-between">
-                <Label class="text-xs">Content</Label>
-                <span class="text-xs {verdictClass}">{verdictMessage}</span>
-            </div>
-            <div
-                class="flex items-center justify-between text-xs text-muted-foreground"
-            >
-                <span>
-                    {#if slideLint.words > 0}{slideLint.words} words{/if}{#if slideLint.words > 0 && slideLint.cjkChars > 0},
-                    {/if}{#if slideLint.cjkChars > 0}{slideLint.cjkChars} chars{/if}{#if slideLint.chars === 0}Empty{/if}
-                </span>
-                <span class="font-mono tabular-nums"
-                    >~{formatSpeakingTime(slideLint.speakingSeconds)}</span
-                >
-            </div>
-            <div
-                class="flex items-center justify-between border-t pt-1.5 text-xs"
-            >
-                <span class="text-muted-foreground">Whole deck</span>
-                <span class="font-mono tabular-nums">
-                    ~{formatSpeakingTime(deckLint.totalSpeakingSeconds)}
-                    {#if deckLint.targetSeconds !== null}
-                        / {formatSpeakingTime(deckLint.targetSeconds)}
-                    {/if}
-                </span>
-            </div>
-            {#if pace}
-                <p class="text-right text-[11px] {pace.class}">{pace.label}</p>
-            {/if}
-        </div>
+            {@render sectionHeader('Slide')}
+            <div class="mt-2 space-y-3">
+                <div class="space-y-1">
+                    <Label for="slide-title" class="text-xs">Title</Label>
+                    <input
+                        id="slide-title"
+                        type="text"
+                        class="h-8 w-full rounded-md border bg-background px-2 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        placeholder="Slide {editor.selectedSlideIndex + 1}"
+                        value={editor.selectedSlide.title ?? ''}
+                        onchange={(event) =>
+                            editor.setSlideTitle(event.currentTarget.value)}
+                        data-test="inspector-slide-title"
+                    />
+                </div>
 
-        {#if editor.isEntrySlide(editor.selectedSlide.id)}
-            <p class="text-xs text-muted-foreground">
-                Entry slide (always shown).
-            </p>
-        {:else}
-            {@const enabled = editor.isSlideEnabled(editor.selectedSlide.id)}
-            <div class="space-y-1">
-                <Button
-                    variant={enabled ? 'outline' : 'default'}
-                    size="sm"
-                    class="w-full"
-                    onclick={() =>
-                        editor.toggleSlideEnabled(editor.selectedSlideIndex)}
-                    data-test="inspector-toggle-slide"
+                <div
+                    class="space-y-1.5 rounded-md border p-2.5"
+                    data-test="inspector-content-stats"
                 >
-                    {#if enabled}
-                        <EyeOff class="h-4 w-4" /> Disable slide
-                    {:else}
-                        <Eye class="h-4 w-4" /> Enable slide
-                    {/if}
-                </Button>
-                {#if !enabled}
-                    <p class="text-xs text-muted-foreground">
-                        Hidden when presenting. Enabling re-links it into the
-                        flow by its order.
-                    </p>
-                {/if}
-            </div>
-        {/if}
-
-        <LayoutPicker {editor} />
-
-        <div class="space-y-1">
-            <Label for="slide-background" class="text-xs">Background</Label>
-            {#if isGradientBackground(editor.selectedSlide.background)}
-                <button
-                    type="button"
-                    class="h-8 w-full cursor-pointer rounded-md border"
-                    style="background: {editor.selectedSlide.background}"
-                    onclick={() => (gradientModalOpen = true)}
-                    aria-label="Edit gradient"
-                    data-test="inspector-background-gradient"
-                ></button>
-            {:else}
-                <ColorField
-                    id="slide-background"
-                    value={editor.selectedSlide.background ?? '#ffffff'}
-                    onchange={(color) => editor.setBackground(color)}
-                    dataTest="inspector-background"
-                />
-            {/if}
-            <div class="flex gap-1.5">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    class="flex-1"
-                    onclick={() => (gradientModalOpen = true)}
-                    data-test="inspector-background-gradient-open"
-                >
-                    {isGradientBackground(editor.selectedSlide.background)
-                        ? 'Edit gradient'
-                        : 'Gradient…'}
-                </Button>
-                {#if isGradientBackground(editor.selectedSlide.background)}
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onclick={() => editor.setBackground('#ffffff')}
-                        data-test="inspector-background-solid"
+                    <div class="flex items-center justify-between">
+                        <Label class="text-xs">Content</Label>
+                        <span class="text-xs {verdictClass}"
+                            >{verdictMessage}</span
+                        >
+                    </div>
+                    <div
+                        class="flex items-center justify-between text-xs text-muted-foreground"
                     >
-                        Solid
-                    </Button>
+                        <span>
+                            {#if slideLint.words > 0}{slideLint.words} words{/if}{#if slideLint.words > 0 && slideLint.cjkChars > 0},
+                            {/if}{#if slideLint.cjkChars > 0}{slideLint.cjkChars}
+                                chars{/if}{#if slideLint.chars === 0}Empty{/if}
+                        </span>
+                        <span class="font-mono tabular-nums"
+                            >~{formatSpeakingTime(
+                                slideLint.speakingSeconds,
+                            )}</span
+                        >
+                    </div>
+                    <div
+                        class="flex items-center justify-between border-t pt-1.5 text-xs"
+                    >
+                        <span class="text-muted-foreground">Whole deck</span>
+                        <span class="font-mono tabular-nums">
+                            ~{formatSpeakingTime(deckLint.totalSpeakingSeconds)}
+                            {#if deckLint.targetSeconds !== null}
+                                / {formatSpeakingTime(deckLint.targetSeconds)}
+                            {/if}
+                        </span>
+                    </div>
+                    {#if pace}
+                        <p class="text-right text-[11px] {pace.class}">
+                            {pace.label}
+                        </p>
+                    {/if}
+                </div>
+
+                {#if editor.isEntrySlide(editor.selectedSlide.id)}
+                    <p class="text-xs text-muted-foreground">
+                        Entry slide (always shown).
+                    </p>
+                {:else}
+                    {@const enabled = editor.isSlideEnabled(
+                        editor.selectedSlide.id,
+                    )}
+                    <div class="space-y-1">
+                        <Button
+                            variant={enabled ? 'outline' : 'default'}
+                            size="sm"
+                            class="w-full"
+                            onclick={() =>
+                                editor.toggleSlideEnabled(
+                                    editor.selectedSlideIndex,
+                                )}
+                            data-test="inspector-toggle-slide"
+                        >
+                            {#if enabled}
+                                <EyeOff class="h-4 w-4" /> Disable slide
+                            {:else}
+                                <Eye class="h-4 w-4" /> Enable slide
+                            {/if}
+                        </Button>
+                        {#if !enabled}
+                            <p class="text-xs text-muted-foreground">
+                                Hidden when presenting. Enabling re-links it
+                                into the flow by its order.
+                            </p>
+                        {/if}
+                    </div>
                 {/if}
             </div>
-            <Button
-                variant="outline"
-                size="sm"
-                class="w-full"
-                onclick={() => editor.applyBackgroundToAllSlides()}
-                data-test="apply-background-all"
-            >
-                Apply to all slides
-            </Button>
-        </div>
+        </details>
+
+        <details
+            class="group"
+            bind:open={sectionsOpen.layout}
+            data-test="inspector-section-layout"
+        >
+            {@render sectionHeader('Layout')}
+            <div class="mt-2">
+                <LayoutPicker {editor} />
+            </div>
+        </details>
+
+        <details
+            class="group"
+            bind:open={sectionsOpen.background}
+            data-test="inspector-section-background"
+        >
+            {@render sectionHeader('Background')}
+            <div class="mt-2">
+                <div class="space-y-1">
+                    {#if isGradientBackground(editor.selectedSlide.background)}
+                        <button
+                            type="button"
+                            class="h-8 w-full cursor-pointer rounded-md border"
+                            style="background: {editor.selectedSlide
+                                .background}"
+                            onclick={() => (gradientModalOpen = true)}
+                            aria-label="Edit gradient"
+                            data-test="inspector-background-gradient"
+                        ></button>
+                    {:else}
+                        <ColorField
+                            id="slide-background"
+                            value={editor.selectedSlide.background ?? '#ffffff'}
+                            onchange={(color) => editor.setBackground(color)}
+                            dataTest="inspector-background"
+                        />
+                    {/if}
+                    <div class="flex gap-1.5">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            class="flex-1"
+                            onclick={() => (gradientModalOpen = true)}
+                            data-test="inspector-background-gradient-open"
+                        >
+                            {isGradientBackground(
+                                editor.selectedSlide.background,
+                            )
+                                ? 'Edit gradient'
+                                : 'Gradient…'}
+                        </Button>
+                        {#if isGradientBackground(editor.selectedSlide.background)}
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onclick={() => editor.setBackground('#ffffff')}
+                                data-test="inspector-background-solid"
+                            >
+                                Solid
+                            </Button>
+                        {/if}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full"
+                        onclick={() => editor.applyBackgroundToAllSlides()}
+                        data-test="apply-background-all"
+                    >
+                        Apply to all slides
+                    </Button>
+                </div>
+            </div>
+        </details>
 
         <GradientModal
             bind:open={gradientModalOpen}
@@ -764,125 +912,144 @@
             onSave={(gradient) => editor.setBackground(gradient)}
         />
 
-        <div class="space-y-1">
-            <Label class="text-xs">Background image (this slide)</Label>
-            {#if editor.selectedSlide.backgroundImage}
-                <div
-                    class="h-16 w-full rounded-md border bg-cover bg-center"
-                    style="background-image: url('{editor.selectedSlide
-                        .backgroundImage}')"
-                    data-test="inspector-slide-background-image-preview"
-                ></div>
-            {/if}
-            <label
-                class="flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-xs hover:bg-accent {uploadingSlideImage
-                    ? 'pointer-events-none opacity-60'
-                    : ''}"
-            >
-                {uploadingSlideImage
-                    ? 'Uploading…'
-                    : editor.selectedSlide.backgroundImage
-                      ? 'Replace image'
-                      : 'Upload image'}
-                <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    class="hidden"
-                    onchange={uploadSlideBackgroundImage}
-                    data-test="inspector-slide-background-image-input"
-                />
-            </label>
-            <Button
-                variant="outline"
-                size="sm"
-                class="w-full"
-                onclick={() => openLibrary('slide-bg')}
-                data-test="inspector-slide-background-library"
-            >
-                From library
-            </Button>
-            {#if editor.selectedSlide.backgroundImage}
+        <details
+            class="group"
+            bind:open={sectionsOpen.slideImage}
+            data-test="inspector-section-slide-image"
+        >
+            {@render sectionHeader('Background image (this slide)')}
+            <div class="mt-2 space-y-1">
+                {#if editor.selectedSlide.backgroundImage}
+                    <div
+                        class="h-16 w-full rounded-md border bg-cover bg-center"
+                        style="background-image: url('{editor.selectedSlide
+                            .backgroundImage}')"
+                        data-test="inspector-slide-background-image-preview"
+                    ></div>
+                {/if}
+                <label
+                    class="flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-xs hover:bg-accent {uploadingSlideImage
+                        ? 'pointer-events-none opacity-60'
+                        : ''}"
+                >
+                    {uploadingSlideImage
+                        ? 'Uploading…'
+                        : editor.selectedSlide.backgroundImage
+                          ? 'Replace image'
+                          : 'Upload image'}
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        class="hidden"
+                        onchange={uploadSlideBackgroundImage}
+                        data-test="inspector-slide-background-image-input"
+                    />
+                </label>
                 <Button
                     variant="outline"
                     size="sm"
                     class="w-full"
-                    onclick={() => editor.setSlideBackgroundImage(null)}
-                    data-test="remove-slide-background-image"
+                    onclick={() => openLibrary('slide-bg')}
+                    data-test="inspector-slide-background-library"
                 >
-                    Remove image
+                    From library
                 </Button>
-            {/if}
-            <p class="text-[11px] text-muted-foreground">
-                Covers this slide only, above its background color.
-            </p>
-        </div>
+                {#if editor.selectedSlide.backgroundImage}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full"
+                        onclick={() => editor.setSlideBackgroundImage(null)}
+                        data-test="remove-slide-background-image"
+                    >
+                        Remove image
+                    </Button>
+                {/if}
+                <p class="text-[11px] text-muted-foreground">
+                    Covers this slide only, above its background color.
+                </p>
+            </div>
+        </details>
 
-        <div class="space-y-1">
-            <Label class="text-xs">Background image (all slides)</Label>
-            {#if editor.backgroundImage}
-                <div
-                    class="h-16 w-full rounded-md border bg-cover bg-center"
-                    style="background-image: url('{editor.backgroundImage}')"
-                    data-test="inspector-background-image-preview"
-                ></div>
-            {/if}
-            <label
-                class="flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-xs hover:bg-accent {uploadingBackground
-                    ? 'pointer-events-none opacity-60'
-                    : ''}"
-            >
-                {uploadingBackground
-                    ? 'Uploading…'
-                    : editor.backgroundImage
-                      ? 'Replace image'
-                      : 'Upload image'}
-                <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif"
-                    class="hidden"
-                    onchange={uploadBackgroundImage}
-                    data-test="inspector-background-image-input"
-                />
-            </label>
-            <Button
-                variant="outline"
-                size="sm"
-                class="w-full"
-                onclick={() => openLibrary('deck-bg')}
-                data-test="inspector-background-library"
-            >
-                From library
-            </Button>
-            {#if editor.backgroundImage}
+        <details
+            class="group"
+            bind:open={sectionsOpen.deckImage}
+            data-test="inspector-section-deck-image"
+        >
+            {@render sectionHeader('Background image (all slides)')}
+            <div class="mt-2 space-y-1">
+                {#if editor.backgroundImage}
+                    <div
+                        class="h-16 w-full rounded-md border bg-cover bg-center"
+                        style="background-image: url('{editor.backgroundImage}')"
+                        data-test="inspector-background-image-preview"
+                    ></div>
+                {/if}
+                <label
+                    class="flex h-8 w-full cursor-pointer items-center justify-center rounded-md border text-xs hover:bg-accent {uploadingBackground
+                        ? 'pointer-events-none opacity-60'
+                        : ''}"
+                >
+                    {uploadingBackground
+                        ? 'Uploading…'
+                        : editor.backgroundImage
+                          ? 'Replace image'
+                          : 'Upload image'}
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        class="hidden"
+                        onchange={uploadBackgroundImage}
+                        data-test="inspector-background-image-input"
+                    />
+                </label>
                 <Button
                     variant="outline"
                     size="sm"
                     class="w-full"
-                    onclick={removeBackgroundImage}
-                    data-test="remove-background-image"
+                    onclick={() => openLibrary('deck-bg')}
+                    data-test="inspector-background-library"
                 >
-                    Remove image
+                    From library
                 </Button>
-            {/if}
-            <p class="text-[11px] text-muted-foreground">
-                Shows behind every slide that has no background color of its
-                own.
-            </p>
-        </div>
+                {#if editor.backgroundImage}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        class="w-full"
+                        onclick={removeBackgroundImage}
+                        data-test="remove-background-image"
+                    >
+                        Remove image
+                    </Button>
+                {/if}
+                <p class="text-[11px] text-muted-foreground">
+                    Shows behind every slide that has no background color of its
+                    own.
+                </p>
+            </div>
+        </details>
 
-        <div class="space-y-1">
-            <Label for="slide-notes" class="text-xs">Speaker notes</Label>
-            <textarea
-                id="slide-notes"
-                rows="5"
-                class="w-full resize-y rounded-md border bg-transparent px-2.5 py-1.5 text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                placeholder="Only you see these — on the phone remote while presenting."
-                value={editor.selectedSlide.notes ?? ''}
-                onchange={(event) =>
-                    editor.setSlideNotes(event.currentTarget.value)}
-                data-test="inspector-slide-notes"
-            ></textarea>
-        </div>
+        <details
+            class="group"
+            bind:open={sectionsOpen.notes}
+            data-test="inspector-section-notes"
+        >
+            {@render sectionHeader('Speaker notes')}
+            <div class="mt-2 space-y-1">
+                <textarea
+                    aria-label="Speaker notes"
+                    id="slide-notes"
+                    rows="5"
+                    class="w-full resize-y rounded-md border bg-transparent px-2.5 py-1.5 text-xs leading-relaxed focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                    placeholder="Only you see these — on the phone remote while presenting."
+                    value={editor.selectedSlide.notes ?? ''}
+                    onchange={(event) =>
+                        editor.setSlideNotes(event.currentTarget.value)}
+                    data-test="inspector-slide-notes"
+                ></textarea>
+            </div>
+        </details>
 
         <p class="text-xs text-muted-foreground">
             Select a block on the canvas to edit its styles.
