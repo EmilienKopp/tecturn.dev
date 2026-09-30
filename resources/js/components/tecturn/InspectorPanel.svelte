@@ -2,6 +2,7 @@
     import { page } from '@inertiajs/svelte';
     import Eye from 'lucide-svelte/icons/eye';
     import EyeOff from 'lucide-svelte/icons/eye-off';
+    import ImageOff from 'lucide-svelte/icons/image-off';
     import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
     import SquarePen from 'lucide-svelte/icons/square-pen';
     import Trash2 from 'lucide-svelte/icons/trash-2';
@@ -10,6 +11,7 @@
     import UploadPresentationImageController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationImageController';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
+    import ImageLibraryModal from '@/components/tecturn/ImageLibraryModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
     import { Button } from '@/components/ui/button';
     import {
@@ -81,7 +83,15 @@
 
     let uploadingBackground = $state(false);
     let uploadingSlideImage = $state(false);
+    let uploadingBlockImage = $state(false);
+    let blockImageBroken = $state(false);
     let gradientModalOpen = $state(false);
+
+    let libraryOpen = $state(false);
+    // What a library pick should update; block picks capture the id up front so
+    // a selection change behind the modal can't retarget the write.
+    let libraryTarget = $state<'block' | 'slide-bg' | 'deck-bg' | null>(null);
+    let libraryBlockId = $state<string | null>(null);
 
     let deleteBlockDialogOpen = $state(false);
     let blockIdDeleting = $state<string | null>(null);
@@ -161,6 +171,64 @@
         }
     }
 
+    async function replaceBlockImage(event: Event) {
+        const input = event.currentTarget as HTMLInputElement;
+        const file = input.files?.[0];
+        const currentTeam = page.props.currentTeam;
+        const targetBlock = editor.selectedBlock;
+
+        if (!file || !currentTeam || !targetBlock) {
+            return;
+        }
+
+        uploadingBlockImage = true;
+
+        try {
+            const url = await uploadImage(
+                UploadPresentationImageController({
+                    current_team: currentTeam.slug,
+                    presentation: presentationId,
+                }).url,
+                file,
+            );
+
+            if (url === null) {
+                toast.error('Image upload failed.');
+
+                return;
+            }
+
+            editor.updateBlockSrc(targetBlock.id, url);
+            blockImageBroken = false;
+        } finally {
+            uploadingBlockImage = false;
+            input.value = '';
+        }
+    }
+
+    function openLibrary(
+        target: 'block' | 'slide-bg' | 'deck-bg',
+        blockId: string | null = null,
+    ) {
+        libraryTarget = target;
+        libraryBlockId = blockId;
+        libraryOpen = true;
+    }
+
+    function onLibrarySelected(url: string) {
+        if (libraryTarget === 'block' && libraryBlockId !== null) {
+            editor.updateBlockSrc(libraryBlockId, url);
+            blockImageBroken = false;
+        } else if (libraryTarget === 'slide-bg') {
+            editor.setSlideBackgroundImage(url);
+        } else if (libraryTarget === 'deck-bg') {
+            editor.setBackgroundImage(url);
+        }
+
+        libraryTarget = null;
+        libraryBlockId = null;
+    }
+
     async function removeBackgroundImage() {
         const currentTeam = page.props.currentTeam;
 
@@ -190,6 +258,18 @@
     const fontWeights = ['normal', 'medium', 'semibold', 'bold'];
 
     const block = $derived(editor.selectedBlock);
+
+    // Re-test whether the selected image loads whenever the block or its src
+    // changes; the preview's onerror/onload flips this back as needed. Reading
+    // the fields into deps is what registers the effect's dependencies.
+    $effect(() => {
+        const deps = [block?.id, block?.src];
+
+        if (deps) {
+            blockImageBroken = false;
+        }
+    });
+
     const transitions = $derived(
         editor.transitionsForSlide(editor.selectedSlide.id),
     );
@@ -306,6 +386,60 @@
         {/if}
 
         {#if block.type === 'image'}
+            <div class="space-y-1">
+                <Label class="text-xs">Image</Label>
+                {#if block.src && !blockImageBroken}
+                    <img
+                        src={block.src}
+                        alt={block.alt ?? ''}
+                        class="max-h-32 w-full rounded-md border object-contain"
+                        onerror={() => (blockImageBroken = true)}
+                        onload={() => (blockImageBroken = false)}
+                        data-test="inspector-image-preview"
+                    />
+                {:else}
+                    <div
+                        class="flex flex-col items-center gap-1 rounded-md border border-dashed p-4 text-center"
+                        data-test="inspector-image-broken"
+                    >
+                        <ImageOff class="h-6 w-6 text-muted-foreground" />
+                        <p class="text-[11px] text-muted-foreground">
+                            {block.src
+                                ? "This image couldn't be loaded. Reupload it below."
+                                : 'No image yet.'}
+                        </p>
+                    </div>
+                {/if}
+                <label
+                    class="flex h-8 w-full cursor-pointer items-center justify-center gap-1.5 rounded-md border text-xs hover:bg-accent {uploadingBlockImage
+                        ? 'pointer-events-none opacity-60'
+                        : blockImageBroken || !block.src
+                          ? 'border-amber-500 text-amber-600'
+                          : ''}"
+                >
+                    {uploadingBlockImage
+                        ? 'Uploading…'
+                        : blockImageBroken || !block.src
+                          ? 'Reupload image'
+                          : 'Replace image'}
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        class="hidden"
+                        onchange={replaceBlockImage}
+                        data-test="inspector-image-input"
+                    />
+                </label>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    class="w-full"
+                    onclick={() => openLibrary('block', block.id)}
+                    data-test="inspector-image-library"
+                >
+                    From library
+                </Button>
+            </div>
             <div class="space-y-1">
                 <Label for="block-alt" class="text-xs">Alt text</Label>
                 <input
@@ -658,6 +792,15 @@
                     data-test="inspector-slide-background-image-input"
                 />
             </label>
+            <Button
+                variant="outline"
+                size="sm"
+                class="w-full"
+                onclick={() => openLibrary('slide-bg')}
+                data-test="inspector-slide-background-library"
+            >
+                From library
+            </Button>
             {#if editor.selectedSlide.backgroundImage}
                 <Button
                     variant="outline"
@@ -701,6 +844,15 @@
                     data-test="inspector-background-image-input"
                 />
             </label>
+            <Button
+                variant="outline"
+                size="sm"
+                class="w-full"
+                onclick={() => openLibrary('deck-bg')}
+                data-test="inspector-background-library"
+            >
+                From library
+            </Button>
             {#if editor.backgroundImage}
                 <Button
                     variant="outline"
@@ -749,3 +901,5 @@
         </DialogFooter>
     </DialogContent>
 </Dialog>
+
+<ImageLibraryModal bind:open={libraryOpen} onSelect={onLibrarySelected} />

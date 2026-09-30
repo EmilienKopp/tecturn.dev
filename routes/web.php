@@ -19,6 +19,7 @@ use App\Http\Controllers\Presentations\EndSessionController;
 use App\Http\Controllers\Presentations\ExportPresentationController;
 use App\Http\Controllers\Presentations\GenerateDeckController;
 use App\Http\Controllers\Presentations\ImportPresentationController;
+use App\Http\Controllers\Presentations\ListPresentationImagesController;
 use App\Http\Controllers\Presentations\PresentationBackgroundController;
 use App\Http\Controllers\Presentations\PresentationController;
 use App\Http\Controllers\Presentations\PresentPresentationController;
@@ -150,6 +151,7 @@ Route::prefix('{current_team}')
         Route::put('presentations/{presentation}', [PresentationController::class, 'update'])->name('presentations.update');
         Route::post('presentations/{presentation}/background', [PresentationBackgroundController::class, 'store'])->name('presentations.background.store');
         Route::post('presentations/{presentation}/images', UploadPresentationImageController::class)->name('presentations.images.store');
+        Route::get('presentation-images', ListPresentationImagesController::class)->name('presentations.images.index');
         Route::delete('presentations/{presentation}/background', [PresentationBackgroundController::class, 'destroy'])->name('presentations.background.destroy');
         Route::delete('presentations/{presentation}', [PresentationController::class, 'destroy'])->name('presentations.destroy');
     });

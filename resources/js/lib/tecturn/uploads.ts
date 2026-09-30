@@ -34,3 +34,32 @@ export async function uploadImage(
 
     return data.url;
 }
+
+/** A reusable image drawn from the current team's presentations. */
+export type LibraryImage = {
+    url: string;
+    name: string;
+    presentation_id: number;
+    presentation_name: string;
+    created_at: string | null;
+};
+
+/**
+ * Fetches every content image across the current team's presentations for the
+ * reuse picker. Returns an empty list when the request fails.
+ */
+export async function fetchTeamImages(url: string): Promise<LibraryImage[]> {
+    const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: { Accept: 'application/json' },
+    });
+
+    if (!response.ok) {
+        return [];
+    }
+
+    const data = (await response.json()) as { images: LibraryImage[] };
+
+    return data.images;
+}
