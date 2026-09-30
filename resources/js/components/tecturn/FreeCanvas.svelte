@@ -5,6 +5,7 @@
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
     import CodeBlockView from '@/components/tecturn/CodeBlockView.svelte';
+    import ImageLibraryModal from '@/components/tecturn/ImageLibraryModal.svelte';
     import QRBlockView from '@/components/tecturn/QRBlockView.svelte';
     import TextBlockView from '@/components/tecturn/TextBlockView.svelte';
     import { clickOutside } from '@/lib/tecturn/click-outside';
@@ -33,6 +34,7 @@
     let imageInput = $state<HTMLInputElement | null>(null);
     let pendingImagePosition = $state<{ x: string; y: string } | null>(null);
     let uploadingImage = $state(false);
+    let libraryOpen = $state(false);
     let popoverVisible = $state(false);
     let popover = $state<{ top: number; left: number; x: number; y: number }>({
         top: 0,
@@ -109,6 +111,26 @@
         };
         popoverVisible = false;
         imageInput?.click();
+    }
+
+    function insertFromLibrary() {
+        pendingImagePosition = {
+            x: String(round2(popover.x)),
+            y: String(round2(popover.y)),
+        };
+        popoverVisible = false;
+        libraryOpen = true;
+    }
+
+    function onLibrarySelected(url: string) {
+        const position = pendingImagePosition;
+        pendingImagePosition = null;
+
+        if (!position) {
+            return;
+        }
+
+        editor.addFreeImageBlock(position.x, position.y, url);
     }
 
     async function onImageSelected(event: Event) {
@@ -363,6 +385,12 @@
             <button
                 type="button"
                 class="rounded px-2 py-1 text-xs hover:bg-accent"
+                onclick={insertFromLibrary}
+                data-test="free-image-library">Library</button
+            >
+            <button
+                type="button"
+                class="rounded px-2 py-1 text-xs hover:bg-accent"
                 onclick={() => createBlock('qr')}>QR</button
             >
         </div>
@@ -385,3 +413,5 @@
         data-test="free-image-input"
     />
 </div>
+
+<ImageLibraryModal bind:open={libraryOpen} onSelect={onLibrarySelected} />

@@ -30,6 +30,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property array<string, mixed>|null $flow
  * @property array<string, mixed>|null $source
  * @property string $embed_token
+ * @property string|null $remote_token
  * @property string|null $yoyotranslate_session_id
  * @property Carbon|null $yoyotranslate_session_started_at
  * @property list<string>|null $yoyotranslate_languages
@@ -99,6 +100,9 @@ class Presentation extends Model implements HasMedia
     {
         static::creating(function (self $presentation) {
             $presentation->embed_token ??= Str::random(32);
+            // The phone-remote pairing secret. Unlike embed_token it is never
+            // audience-facing: its QR only ever renders in the editor.
+            $presentation->remote_token ??= Str::random(32);
         });
     }
 

@@ -18,6 +18,7 @@ createInertiaApp({
             case name === 'presentations/Present':
                 return null;
             case name === 'presentations/Viewer':
+            case name === 'presentations/Remote':
                 return GuestLayout;
             case name.startsWith('admin/'):
                 return AdminLayout;

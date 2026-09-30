@@ -11,8 +11,9 @@
     import type { RehearsalPayload } from '@/components/tecturn/RehearsalDock.svelte';
     import RehearsalDock from '@/components/tecturn/RehearsalDock.svelte';
     import YoYoTranslatePanel from '@/components/tecturn/YoYoTranslatePanel.svelte';
-    import { getEcho, setPresenceIdentity } from '@/lib/echo';
+    import { getEcho, setControlToken, setPresenceIdentity } from '@/lib/echo';
     import { beaconPost } from '@/lib/tecturn/beacon';
+    import { playBuzzer, unlockBuzzerAudio } from '@/lib/tecturn/buzzer';
     import type {
         FlowGraph,
         PresentationContent,
@@ -25,6 +26,7 @@
         presentation,
         sourcePdfUrl = null,
         viewerUrl,
+        remote,
         sessionRoutes,
         translationRoutes,
         testMode = false,
@@ -44,6 +46,9 @@
         };
         sourcePdfUrl?: string | null;
         viewerUrl: string;
+        // The deck's remote-control secret, used to join the control channel.
+        // The pairing QR itself lives in the editor toolbar, never here.
+        remote: { token: string };
         sessionRoutes: { start: string; close: string };
         translationRoutes: { start: string; stop: string };
         testMode?: boolean;
@@ -114,6 +119,93 @@
     let viewerCount = $state(0);
     let reactionTotal = $state(0);
 
+    // One identity for every channel this page joins, set before each
+    // subscribe so the anonymous "viewer" guard always sees it.
+    const presenterIdentity = `presenter:${crypto.randomUUID()}`;
+
+    // Component handles so the phone remote can drive navigation.
+    let presenterRef = $state<Presenter>();
+    let externalRef = $state<ExternalPresenter>();
+
+    // The joined control channel, kept so the state-whisper effect below can
+    // publish without re-subscribing on every slide change.
+    let controlChannel = $state<{
+        whisper: (event: string, data: Record<string, unknown>) => unknown;
+    } | null>(null);
+
+    // Phone remote lane: nav commands and buzzer hits arrive as whispers, the
+    // current position goes back out so the phone shows the right notes. Test
+    // runs and rehearsals have no session (so no authorized token) — skip.
+    $effect(() => {
+        if (testMode || rehearsalMode) {
+            return;
+        }
+
+        const controlChannelName = `presentation-control.${presentation.embed_token}`;
+
+        setPresenceIdentity(presenterIdentity);
+        setControlToken(remote.token);
+
+        const channel = getEcho()
+            .private(controlChannelName)
+            .listenForWhisper(
+                'command',
+                (event: { action?: string }): void => {
+                    if (event.action === 'next') {
+                        presenterRef?.next();
+                        externalRef?.remoteNext();
+                    } else if (event.action === 'prev') {
+                        presenterRef?.prev();
+                        externalRef?.remotePrev();
+                    } else if (
+                        event.action === 'buzz' ||
+                        event.action === 'ding'
+                    ) {
+                        playBuzzer(event.action);
+                    }
+                },
+            )
+            .listenForWhisper('hello', (): void => {
+                channel.whisper('state', {
+                    slide: currentSlide,
+                    step: currentStep,
+                    total: slideCount,
+                });
+            });
+
+        controlChannel = channel;
+
+        return () => {
+            controlChannel = null;
+            getEcho().leave(controlChannelName);
+        };
+    });
+
+    // Rebroadcast the position whenever it moves, however it moved (keyboard,
+    // clicker, or the phone itself), so the remote's notes stay in step.
+    $effect(() => {
+        controlChannel?.whisper('state', {
+            slide: currentSlide,
+            step: currentStep,
+            total: slideCount,
+        });
+    });
+
+    // Buzzer playback needs an unlocked AudioContext, which browsers only
+    // grant inside a user gesture; the presenter's first interaction (a click
+    // or an arrow key) quietly provides it.
+    onMount(() => {
+        const unlock = (): void => unlockBuzzerAudio();
+
+        window.addEventListener('pointerdown', unlock, { once: true });
+        window.addEventListener('keydown', unlock, { once: true });
+
+        return () => {
+            window.removeEventListener('pointerdown', unlock);
+            window.removeEventListener('keydown', unlock);
+        };
+    });
+
     $effect(() => {
         const channelName = `presentation.${presentation.embed_token}`;
         const presenceChannel = `presentation-live.${presentation.embed_token}`;
@@ -159,7 +251,7 @@
         const isViewer = (member: { role?: string }): boolean =>
             member.role !== 'presenter';
 
-        setPresenceIdentity(`presenter:${crypto.randomUUID()}`);
+        setPresenceIdentity(presenterIdentity);
         getEcho()
             .join(presenceChannel)
             .here((members: { role?: string }[]) => {
@@ -223,6 +315,7 @@
             >
                 {#if presentation.source.type === 'editor'}
                     <Presenter
+                        bind:this={presenterRef}
                         content={presentation.content}
                         flow={presentation.flow}
                         onSlideChange={(current, total) => {
@@ -235,6 +328,7 @@
                     />
                 {:else}
                     <ExternalPresenter
+                        bind:this={externalRef}
                         source={presentation.source}
                         {sourcePdfUrl}
                         recordNavigation={rehearsalMode}

@@ -97,6 +97,7 @@ class PresentationController extends Controller
                 'tag' => $this->embeds->customElementTag($presentation->embed_token),
             ],
             'viewerUrl' => route('presentations.viewer', ['presentation' => $presentation->embed_token]),
+            'remoteUrl' => route('presentations.remote', ['presentation' => $presentation->remote_token]),
         ]);
     }
 

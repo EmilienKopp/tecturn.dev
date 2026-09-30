@@ -18,6 +18,18 @@ export function setPresenceIdentity(id: string): void {
 }
 
 /**
+ * The remote-control secret sent alongside channel auth requests. Both ends of
+ * the presentation-control channel (presenter screen and phone remote) set it
+ * before subscribing; the backend only authorizes that channel when it matches
+ * the active session. Other channels ignore the extra field.
+ */
+let controlToken = '';
+
+export function setControlToken(token: string): void {
+    controlToken = token;
+}
+
+/**
  * Lazily create the Echo connection so only pages that subscribe to
  * broadcast channels (e.g. the presenter screen) open a websocket.
  */
@@ -54,6 +66,7 @@ export function getEcho(): Echo<'reverb'> {
                             socket_id: socketId,
                             channel_name: channel.name,
                             viewer_id: presenceIdentity,
+                            remote_token: controlToken,
                         }),
                     })
                         .then((response) => {
