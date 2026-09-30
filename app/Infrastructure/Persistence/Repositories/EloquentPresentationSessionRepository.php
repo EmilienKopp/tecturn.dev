@@ -24,6 +24,18 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
             'viewers' => (object) $session->viewers,
             'viewer_count' => $session->viewer_count,
             'word_count' => $session->word_count,
+            'slide_timings' => $session->slide_timings,
+            // Inner {emoji: count} maps must stay objects through JSON; the
+            // outer level is a plain list, so no cast is needed there.
+            'reaction_slides' => $session->reaction_slides !== null
+                ? array_map(
+                    static fn (array $entry): array => [
+                        'slide' => $entry['slide'],
+                        'reactions' => (object) $entry['reactions'],
+                    ],
+                    $session->reaction_slides,
+                )
+                : null,
         ];
 
         if ($session->id === null) {

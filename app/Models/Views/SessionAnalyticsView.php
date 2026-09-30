@@ -17,6 +17,8 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property int $reaction_total
  * @property int $viewer_count
  * @property int|null $word_count
+ * @property list<array{slide: int, seconds: int}>|null $slide_timings
+ * @property list<array{slide: int, reactions: array<string, int>}>|null $reaction_slides
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -36,6 +38,8 @@ class SessionAnalyticsView extends ReadOnlyModel
             'ended_at' => 'datetime',
             'last_seen_at' => 'datetime',
             'reaction_counts' => 'array',
+            'slide_timings' => 'array',
+            'reaction_slides' => 'array',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];

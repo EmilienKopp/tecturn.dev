@@ -25,7 +25,10 @@
     import PendingInvitationsModal from '@/components/PendingInvitationsModal.svelte';
     import { Button } from '@/components/ui/button';
     import { edit, index, present } from '@/routes/presentations';
-    import { destroy as destroySession } from '@/routes/sessions';
+    import {
+        destroy as destroySession,
+        show as showSession,
+    } from '@/routes/sessions';
     import type { DashboardInvitation } from '@/types';
     import type { DeliveryStats } from '@/types/generated';
 
@@ -301,9 +304,19 @@
                             data-test="session-row"
                         >
                             <div class="flex items-start justify-between gap-3">
-                                <div class="min-w-0">
+                                <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                                <div
+                                    class="min-w-0 cursor-pointer"
+                                    onclick={() =>
+                                        router.visit(
+                                            showSession({
+                                                current_team: teamSlug,
+                                                session: session.id,
+                                            }).url,
+                                        )}
+                                >
                                     <p
-                                        class="truncate font-display font-semibold text-foreground"
+                                        class="truncate font-display font-semibold text-foreground hover:underline"
                                     >
                                         {session.presentation_name}
                                     </p>

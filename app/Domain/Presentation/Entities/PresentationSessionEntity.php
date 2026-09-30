@@ -18,6 +18,8 @@ class PresentationSessionEntity extends BaseEntity
     /**
      * @param  array<string, int>  $reaction_counts  emoji => tally
      * @param  array<string, int>  $viewers  viewerId => last-seen unix timestamp
+     * @param  list<array{slide: int, seconds: int}>|null  $slide_timings
+     * @param  list<array{slide: int, reactions: array<string, int>}>|null  $reaction_slides
      */
     public function __construct(
         public int $presentation_id,
@@ -30,6 +32,8 @@ class PresentationSessionEntity extends BaseEntity
         public array $viewers = [],
         public int $viewer_count = 0,
         public ?int $word_count = null,
+        public ?array $slide_timings = null,
+        public ?array $reaction_slides = null,
         public ?int $id = null,
     ) {}
 
@@ -99,6 +103,28 @@ class PresentationSessionEntity extends BaseEntity
         $this->last_seen_at = $at;
     }
 
+    /**
+     * Stores the per-slide active seconds the presenter screen tracked, the
+     * live counterpart of a rehearsal's timings.
+     *
+     * @param  list<array{slide: int, seconds: int}>  $timings
+     */
+    public function recordSlideTimings(array $timings): void
+    {
+        $this->slide_timings = $timings;
+    }
+
+    /**
+     * Stores which slide each reaction landed on, as tallied by the presenter
+     * screen from the instant-broadcast stream.
+     *
+     * @param  list<array{slide: int, reactions: array<string, int>}>  $reactionSlides
+     */
+    public function recordReactionSlides(array $reactionSlides): void
+    {
+        $this->reaction_slides = $reactionSlides;
+    }
+
     /** The single most-used emoji this session, or null when there were none. */
     public function topEmoji(): ?string
     {
@@ -129,6 +155,8 @@ class PresentationSessionEntity extends BaseEntity
             'viewers' => $this->viewers,
             'viewer_count' => $this->viewer_count,
             'word_count' => $this->word_count,
+            'slide_timings' => $this->slide_timings,
+            'reaction_slides' => $this->reaction_slides,
         ];
     }
 }
