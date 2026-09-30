@@ -116,6 +116,18 @@ class Team extends Model
     }
 
     /**
+     * Get all live sessions this team's presentations have opened. Also what
+     * the team route group's scoped bindings resolve {session} through, so a
+     * foreign session 404s before the controller runs.
+     *
+     * @return HasMany<PresentationSession, $this>
+     */
+    public function sessions(): HasMany
+    {
+        return $this->hasMany(PresentationSession::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
