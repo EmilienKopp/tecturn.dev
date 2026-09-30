@@ -35,11 +35,19 @@
     import { Input } from '@/components/ui/input';
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
+    import {
+        countUnits,
+        slideProseText,
+    } from '@/lib/tecturn/CodeGeneration/lint';
     import { qrToSvg } from '@/lib/tecturn/CodeGeneration/qr';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
     import { present, update } from '@/routes/presentations';
-    import type { FooterSettings, TalkSettings } from '@/types/generated';
+    import type {
+        DeliveryStats,
+        FooterSettings,
+        TalkSettings,
+    } from '@/types/generated';
     import Checkbox from '../ui/checkbox/Checkbox.svelte';
     import Label from '../ui/label/Label.svelte';
     import FooterSettingsModal from './FooterSettingsModal.svelte';
@@ -60,6 +68,7 @@
         embedSnippet,
         viewerUrl,
         remoteUrl,
+        deliveryStats,
     }: {
         editor: EditorState;
         presentationId: number;
@@ -78,6 +87,9 @@
         // Pairing URL for the phone remote, popped up as a QR from here (and
         // only here — the editor is never projected, unlike the present view).
         remoteUrl: string;
+        // Measured history (rehearsals + finished live sessions), shown in the
+        // talk-length dialog next to the linter's estimate.
+        deliveryStats: DeliveryStats;
     } = $props();
 
     let showReactions = $state(talkSettings.showReactions);
@@ -98,11 +110,23 @@
     let footerModalOpen = $state(false);
     let durationMinutes = $state<number | null>(talkSettings.durationMinutes);
     let timerMode = $state(talkSettings.timerMode);
+    let presentationStyle = $state(
+        talkSettings.presentationStyle ?? 'balanced',
+    );
     let talkLengthModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
 
     const AUTO_SAVE_INTERVAL = ms(10_000);
+
+    // Word total of the current deck, for the measured words-per-minute figure
+    // in the talk-length dialog (measured time ÷ today's text).
+    const deckWordCount = $derived(
+        editor.content.slides.reduce(
+            (sum, slide) => sum + countUnits(slideProseText(slide)).words,
+            0,
+        ),
+    );
 
     const persistTalkSettings = (
         apply: () => void,
@@ -135,6 +159,7 @@
                     footer,
                     durationMinutes,
                     timerMode,
+                    presentationStyle,
                 },
             },
             {
@@ -230,17 +255,21 @@
     const saveTalkLength = (next: {
         durationMinutes: number | null;
         timerMode: string;
+        presentationStyle: string;
     }) => {
         const previousDuration = durationMinutes;
         const previousMode = timerMode;
+        const previousStyle = presentationStyle;
         persistTalkSettings(
             () => {
                 durationMinutes = next.durationMinutes;
                 timerMode = next.timerMode;
+                presentationStyle = next.presentationStyle;
             },
             () => {
                 durationMinutes = previousDuration;
                 timerMode = previousMode;
+                presentationStyle = previousStyle;
             },
         );
     };
@@ -700,6 +729,9 @@
 <TalkLengthModal
     {durationMinutes}
     {timerMode}
+    {presentationStyle}
+    {deliveryStats}
+    deckWords={deckWordCount}
     bind:open={talkLengthModalOpen}
     onSave={saveTalkLength}
 />

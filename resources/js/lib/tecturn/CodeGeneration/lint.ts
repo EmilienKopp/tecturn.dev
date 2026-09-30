@@ -184,15 +184,26 @@ export function countUnits(text: string): UnitCounts {
     return { words, cjkChars, chars };
 }
 
+/**
+ * The speaking-time factor for a presentation style
+ * (TalkSettings.presentationStyle). The raw estimate assumes every on-screen
+ * word is narrated verbatim — the text-heavy baseline (×1); sparser styles
+ * talk much longer per word on screen. Unknown styles fall back to ×1.
+ */
+export function styleMultiplier(policy: LintPolicy, style: string): number {
+    return policy.styleMultipliers[style] ?? 1;
+}
+
 /** Speaking-time estimate for a set of counts, in whole seconds. */
 export function speakingSeconds(
     counts: UnitCounts,
     policy: LintPolicy,
+    style = 'text-heavy',
 ): number {
     const fromWords = (counts.words / policy.wordsPerMinute) * 60;
     const fromCjk = (counts.cjkChars / policy.cjkCharsPerMinute) * 60;
 
-    return Math.round(fromWords + fromCjk);
+    return Math.round((fromWords + fromCjk) * styleMultiplier(policy, style));
 }
 
 /** The density verdict for a set of counts, combining both scripts. */
@@ -216,13 +227,21 @@ function densityVerdict(
     return maxLoad <= 1 ? 'warn' : 'over';
 }
 
-/** Lint a single slide's prose against the backend-owned policy. */
-export function lintSlide(slide: Slide, policy: LintPolicy): SlideLint {
+/**
+ * Lint a single slide's prose against the backend-owned policy. `style` is
+ * the deck's presentation style and scales only the speaking-time estimate —
+ * density verdicts judge on-screen fullness and ignore it.
+ */
+export function lintSlide(
+    slide: Slide,
+    policy: LintPolicy,
+    style = 'text-heavy',
+): SlideLint {
     const counts = countUnits(slideProseText(slide));
 
     return {
         ...counts,
-        speakingSeconds: speakingSeconds(counts, policy),
+        speakingSeconds: speakingSeconds(counts, policy, style),
         verdict: densityVerdict(counts, policy),
         dominantScript: counts.cjkChars > counts.words ? 'cjk' : 'words',
     };
@@ -236,8 +255,9 @@ export function lintDeck(
     slides: Slide[],
     policy: LintPolicy,
     targetMinutes: number | null = null,
+    style = 'text-heavy',
 ): DeckLint {
-    const lintedSlides = slides.map((slide) => lintSlide(slide, policy));
+    const lintedSlides = slides.map((slide) => lintSlide(slide, policy, style));
     const totalSpeakingSeconds = lintedSlides.reduce(
         (sum, slide) => sum + slide.speakingSeconds,
         0,

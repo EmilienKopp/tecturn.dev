@@ -23,6 +23,7 @@ class EloquentPresentationSessionRepository implements PresentationSessionReposi
             'reaction_total' => $session->reaction_total,
             'viewers' => (object) $session->viewers,
             'viewer_count' => $session->viewer_count,
+            'word_count' => $session->word_count,
         ];
 
         if ($session->id === null) {

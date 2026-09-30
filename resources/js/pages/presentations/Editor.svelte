@@ -26,6 +26,7 @@
     import { lastUsedStyle } from '@/lib/tecturn/last-used-style.svelte';
     import { exportMethod, update } from '@/routes/presentations';
     import type {
+        DeliveryStats,
         FlowGraph,
         PresentationContent,
         PresentationSource,
@@ -37,6 +38,7 @@
         embed,
         viewerUrl,
         remoteUrl,
+        deliveryStats,
         sourcePdfUrl = null,
     }: {
         presentation: {
@@ -55,6 +57,7 @@
         };
         viewerUrl: string;
         remoteUrl: string;
+        deliveryStats: DeliveryStats;
         sourcePdfUrl?: string | null;
     } = $props();
 
@@ -298,6 +301,7 @@
         {embedSnippet}
         {viewerUrl}
         {remoteUrl}
+        {deliveryStats}
     />
 
     {#if isExternal}
@@ -352,6 +356,8 @@
                 {editor}
                 policy={page.props.lintPolicy}
                 targetMinutes={presentation.talk_settings.durationMinutes}
+                presentationStyle={presentation.talk_settings
+                    .presentationStyle}
             />
             <SlideCanvas {editor} presentationId={presentation.id} />
             <InspectorPanel
@@ -359,6 +365,8 @@
                 presentationId={presentation.id}
                 policy={page.props.lintPolicy}
                 targetMinutes={presentation.talk_settings.durationMinutes}
+                presentationStyle={presentation.talk_settings
+                    .presentationStyle}
                 onEditCodeSequence={(blockId) =>
                     (codeSequenceBlockId = blockId)}
             />

@@ -28,4 +28,14 @@ return [
     // before the pace reads under/over (fractions of the target).
     'paceUnderRatio' => 0.85,
     'paceOverRatio' => 1.0,
+
+    // Speaking-time multiplier per presentation style (TalkSettings). The
+    // word-count estimate assumes every on-screen word is narrated verbatim —
+    // that's the text-heavy baseline. Sparser decks carry far more talk per
+    // word on screen.
+    'styleMultipliers' => [
+        'minimalistic' => 6.0,
+        'balanced' => 3.0,
+        'text-heavy' => 1.0,
+    ],
 ];

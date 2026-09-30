@@ -31,6 +31,7 @@ class StartSession
             team_id: $command->teamId,
             started_at: $command->startedAt,
             last_seen_at: $command->startedAt,
+            word_count: $command->wordCount,
         ));
     }
 }

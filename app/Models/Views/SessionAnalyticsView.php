@@ -16,6 +16,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property array<string, int> $reaction_counts
  * @property int $reaction_total
  * @property int $viewer_count
+ * @property int|null $word_count
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */

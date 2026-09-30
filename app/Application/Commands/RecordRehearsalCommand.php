@@ -19,6 +19,7 @@ readonly class RecordRehearsalCommand
         public DateTimeInterface $endedAt,
         public int $durationSeconds,
         public array $slideTimings,
+        public ?int $wordCount = null,
         public array $stepEvents = [],
         public ?string $audioPath = null,
         public ?string $audioFileName = null,

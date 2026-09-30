@@ -51,6 +51,7 @@ it('roundtrips through fromArray and toArray', function () {
         'showTranslation' => true,
         'timerMode' => 'elapsed',
         'durationMinutes' => null,
+        'presentationStyle' => 'minimalistic',
         'autoSave' => false,
         'footer' => [
             'enabled' => false,
@@ -99,4 +100,17 @@ it('trims, dedupes, and caps custom reactions', function () {
 
     expect(TalkSettings::fromArray(['reactions' => $tooMany])->reactions)
         ->toHaveCount(TalkSettings::MAX_REACTIONS);
+});
+
+it('round-trips the presentation style', function () {
+    $settings = TalkSettings::fromArray(['presentationStyle' => 'minimalistic']);
+
+    expect($settings->presentationStyle)->toBe('minimalistic')
+        ->and($settings->toArray()['presentationStyle'])->toBe('minimalistic');
+});
+
+it('falls back to the balanced style when missing or unknown', function () {
+    expect(TalkSettings::fromArray([])->presentationStyle)->toBe('balanced')
+        ->and(TalkSettings::fromArray(['presentationStyle' => 'chaotic'])->presentationStyle)->toBe('balanced')
+        ->and(TalkSettings::fromArray(['presentationStyle' => 42])->presentationStyle)->toBe('balanced');
 });

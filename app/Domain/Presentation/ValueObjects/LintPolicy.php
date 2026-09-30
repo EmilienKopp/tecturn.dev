@@ -16,6 +16,15 @@ use Spatie\TypeScriptTransformer\Attributes\TypeScript;
 #[TypeScript]
 readonly class LintPolicy
 {
+    public const array DEFAULT_STYLE_MULTIPLIERS = [
+        'minimalistic' => 6.0,
+        'balanced' => 3.0,
+        'text-heavy' => 1.0,
+    ];
+
+    /**
+     * @param  array<string, float>  $styleMultipliers  speaking-time factor per presentation style
+     */
     public function __construct(
         public int $wordsPerMinute = 130,
         public int $cjkCharsPerMinute = 300,
@@ -25,6 +34,7 @@ readonly class LintPolicy
         public int $cjkCharsMax = 170,
         public float $paceUnderRatio = 0.85,
         public float $paceOverRatio = 1.0,
+        public array $styleMultipliers = self::DEFAULT_STYLE_MULTIPLIERS,
     ) {}
 
     /**
@@ -43,6 +53,9 @@ readonly class LintPolicy
             cjkCharsMax: (int) ($data['cjkCharsMax'] ?? $defaults->cjkCharsMax),
             paceUnderRatio: (float) ($data['paceUnderRatio'] ?? $defaults->paceUnderRatio),
             paceOverRatio: (float) ($data['paceOverRatio'] ?? $defaults->paceOverRatio),
+            styleMultipliers: is_array($data['styleMultipliers'] ?? null)
+                ? array_map(floatval(...), $data['styleMultipliers'])
+                : $defaults->styleMultipliers,
         );
     }
 
@@ -63,6 +76,7 @@ readonly class LintPolicy
             'cjkCharsMax' => $this->cjkCharsMax,
             'paceUnderRatio' => $this->paceUnderRatio,
             'paceOverRatio' => $this->paceOverRatio,
+            'styleMultipliers' => $this->styleMultipliers,
         ];
     }
 }

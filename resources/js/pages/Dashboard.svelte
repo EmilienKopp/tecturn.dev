@@ -24,6 +24,7 @@
     import { Button } from '@/components/ui/button';
     import { edit, index, present } from '@/routes/presentations';
     import type { DashboardInvitation } from '@/types';
+    import type { DeliveryStats } from '@/types/generated';
 
     type Engagement = {
         total_sessions: number;
@@ -57,11 +58,13 @@
     let {
         pendingInvitations = [],
         engagement,
+        speakingStats,
         recentSessions = [],
         recentDecks = [],
     }: {
         pendingInvitations?: DashboardInvitation[];
         engagement: Engagement;
+        speakingStats: DeliveryStats;
         recentSessions?: SessionRow[];
         recentDecks?: DeckRow[];
     } = $props();
@@ -130,6 +133,47 @@
         router.visit(present({ current_team: teamSlug, presentation: id }).url);
 
     const hasHistory = $derived(recentSessions.length > 0);
+
+    // "Know yourself": what your own runs (rehearsals + live talks) measure
+    // about how you deliver. Hidden until there's at least one run to average.
+    const measuredRuns = $derived(
+        speakingStats.rehearsalCount + speakingStats.sessionCount,
+    );
+
+    const speakingCards = $derived(
+        [
+            {
+                label: 'Time on stage',
+                value: formatDuration(speakingStats.totalSpokenSeconds),
+            },
+            {
+                label: 'Runs',
+                value: `${measuredRuns}`,
+                detail: `${speakingStats.rehearsalCount} rehearsed · ${speakingStats.sessionCount} live`,
+            },
+            speakingStats.avgRunSeconds
+                ? {
+                      label: 'Average run',
+                      value: formatDuration(speakingStats.avgRunSeconds),
+                  }
+                : null,
+            speakingStats.avgSecondsPerSlide
+                ? {
+                      label: 'Average per slide',
+                      value: formatDuration(speakingStats.avgSecondsPerSlide),
+                  }
+                : null,
+            speakingStats.avgWordsPerMinute
+                ? {
+                      label: 'Words / min',
+                      value: `${speakingStats.avgWordsPerMinute}`,
+                  }
+                : {
+                      label: 'Words / min',
+                      value: `N/A`,
+                  },
+        ].filter((card) => card !== null),
+    );
 </script>
 
 <AppHead title="Dashboard" />
@@ -187,6 +231,37 @@
             </p>
         </div>
     </section>
+
+    <!-- Know yourself: measured delivery habits across every rehearsal and
+         live talk, the numbers to hold against the linter's estimates. -->
+    {#if measuredRuns > 0}
+        <section class="flex flex-col gap-3" data-test="know-yourself">
+            <h2 class="text-sm font-semibold text-foreground">Know yourself</h2>
+            <div
+                class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3 lg:grid-cols-5"
+            >
+                {#each speakingCards as card (card.label)}
+                    <div class="bg-card p-5">
+                        <p
+                            class="font-mono text-3xl font-bold tabular-nums text-foreground"
+                        >
+                            {card.value}
+                        </p>
+                        <p
+                            class="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        >
+                            {card.label}
+                        </p>
+                        {#if card.detail}
+                            <p class="mt-0.5 text-xs text-muted-foreground">
+                                {card.detail}
+                            </p>
+                        {/if}
+                    </div>
+                {/each}
+            </div>
+        </section>
+    {/if}
 
     <div class="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
         <!-- Recent talks feed -->

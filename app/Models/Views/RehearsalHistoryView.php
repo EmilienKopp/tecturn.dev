@@ -13,6 +13,7 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property Carbon $started_at
  * @property Carbon $ended_at
  * @property int $duration_seconds
+ * @property int|null $word_count
  * @property list<array{slide: int, seconds: int}> $slide_timings
  * @property list<array{at_ms: int, slide: int, step: int}>|null $step_events
  * @property array<string, mixed> $content

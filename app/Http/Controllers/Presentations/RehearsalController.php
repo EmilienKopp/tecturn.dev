@@ -73,6 +73,9 @@ class RehearsalController extends Controller
             endedAt: $request->endedAt(),
             durationSeconds: (int) $request->validated('duration_seconds'),
             slideTimings: $request->slideTimings(),
+            wordCount: $request->validated('word_count') !== null
+                ? (int) $request->validated('word_count')
+                : null,
             stepEvents: $request->stepEvents(),
             audioPath: $audio === null ? null : ($audio->getRealPath() ?: null),
             audioFileName: $audio !== null ? 'rehearsal.'.$this->extensionForMime($audio->getMimeType() ?? '') : null,
