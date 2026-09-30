@@ -21,4 +21,10 @@ interface PresentationSessionRepository
      * no live session. Used by the anonymous viewer endpoints.
      */
     public function findActiveByEmbedToken(string $embedToken): ?PresentationSessionEntity;
+
+    /**
+     * Removes a session and its analytics for good — the escape hatch for a
+     * run that went live by mistake.
+     */
+    public function deleteById(int $id): void;
 }
