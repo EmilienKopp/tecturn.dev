@@ -37,12 +37,30 @@ class AiCredentialResolver
     {
         $provider = $credential->driver;
 
-        config(['ai.providers.'.$provider => array_filter([
+        $providerConfig = array_filter([
             'driver' => $credential->driver,
             'key' => $credential->apiKey,
             'url' => $credential->baseUrl,
-        ], static fn (mixed $value): bool => $value !== '' && $value !== null)]);
+        ], static fn (mixed $value): bool => $value !== '' && $value !== null);
+
+        // Moonshot AI requires temperature to be exactly 1. Override the agent's
+        // temperature attribute when using Moonshot models by setting it in the
+        // provider config.
+        if ($this->isMoonshotModel($credential)) {
+            $providerConfig['temperature'] = 1.0;
+        }
+
+        config(['ai.providers.'.$provider => $providerConfig]);
 
         return ['provider' => $provider, 'model' => $credential->model];
+    }
+
+    /**
+     * Check if the credential is using a Moonshot AI model.
+     */
+    private function isMoonshotModel(ResolvedAiCredential $credential): bool
+    {
+        return $credential->baseUrl === 'https://api.moonshot.ai/v1'
+            || str_starts_with($credential->model, 'kimi-');
     }
 }
