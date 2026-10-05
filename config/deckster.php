@@ -63,6 +63,23 @@ return [
             'supportsSchema' => true,
             'base_url' => env('DECKSTER_SAKANA_URL', 'https://api.sakana.ai/v1'),
         ],
+
+        // Moonshot AI (Kimi) via its OpenAI-compatible API. Always shown as the
+        // base_url is hardcoded; only needs MOONSHOT_API_KEY in environment.
+        [
+            'driver' => Lab::OpenAICompatible->value,
+            'model' => 'kimi-k2.6',
+            'label' => 'Moonshot AI (Kimi K2.6)',
+            'supportsSchema' => true,
+            'base_url' => 'https://api.moonshot.ai/v1',
+        ],
+        [
+            'driver' => Lab::OpenAICompatible->value,
+            'model' => 'kimi-k2.5',
+            'label' => 'Moonshot AI (Kimi K2.5)',
+            'supportsSchema' => true,
+            'base_url' => 'https://api.moonshot.ai/v1',
+        ],
     ],
 
     /*
