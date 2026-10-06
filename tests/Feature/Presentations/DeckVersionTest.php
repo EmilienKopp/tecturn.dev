@@ -7,6 +7,23 @@ use App\Models\Rehearsal;
 use App\Models\Talk;
 use App\Models\User;
 
+test('a newly created deck starts its own talk as 1.0', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post(
+        route('presentations.store', $user->currentTeam->slug),
+        ['name' => 'Fresh deck'],
+    );
+
+    $deck = Presentation::query()->sole();
+    $talk = Talk::query()->sole();
+
+    expect($talk->title)->toBe('Fresh deck')
+        ->and($deck->talk_id)->toBe($talk->id)
+        ->and($deck->version_major)->toBe(1)
+        ->and($deck->version_minor)->toBe(0);
+});
+
 test('the first version bump creates the talk and stamps the source deck as 1.0', function () {
     $user = User::factory()->create();
     $deck = Presentation::factory()->withSlides(2)->create([

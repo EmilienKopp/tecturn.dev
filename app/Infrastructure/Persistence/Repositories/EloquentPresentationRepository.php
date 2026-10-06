@@ -7,6 +7,7 @@ namespace App\Infrastructure\Persistence\Repositories;
 use App\Domain\Presentation\Contracts\PresentationRepository;
 use App\Domain\Presentation\Entities\PresentationEntity;
 use App\Models\Presentation;
+use App\Models\Talk;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -41,6 +42,18 @@ class EloquentPresentationRepository implements PresentationRepository
         ];
 
         if ($presentation->id === null) {
+            // Invariant: every deck belongs to a talk. Decks created without
+            // one (plain create, import, AI draft) start their own talk at
+            // 1.0; version actions pass an explicit talk instead.
+            if ($presentation->talk_id === null) {
+                $attributes['talk_id'] = Talk::create([
+                    'team_id' => $presentation->team_id,
+                    'title' => $presentation->name,
+                ])->id;
+                $attributes['version_major'] = 1;
+                $attributes['version_minor'] = 0;
+            }
+
             $model = Presentation::create($attributes);
         } else {
             $model = Presentation::findOrFail($presentation->id);

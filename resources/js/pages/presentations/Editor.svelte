@@ -51,6 +51,13 @@
             source: PresentationSource;
             updated_at: string | null;
             version: string | null;
+            versions: {
+                id: number;
+                version: string | null;
+                name: string;
+                updated_at: string | null;
+                current: boolean;
+            }[];
         };
         embed: {
             url: string;
@@ -298,6 +305,7 @@
         talkSettings={presentation.talk_settings}
         isPrivate={presentation.is_private}
         version={presentation.version}
+        versions={presentation.versions}
         external={isExternal}
         bind:name
         bind:view

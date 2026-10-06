@@ -469,7 +469,7 @@
                 <select
                     id="event-talk"
                     bind:value={formTalkId}
-                    class="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors scheme-light focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none dark:scheme-dark"
                     data-test="event-talk-select"
                 >
                     <option value="">No talk attached yet</option>
@@ -488,7 +488,7 @@
                     </p>
                 {/if}
                 <p class="text-xs text-muted-foreground">
-                    Talks appear here once a deck gets its first version.
+                    Every deck is a talk; its versions stay grouped under it.
                 </p>
             </div>
 
