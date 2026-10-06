@@ -697,21 +697,39 @@ export function migrateLegacyTransitions(
 }
 
 /**
- * Titles of the slides an audience actually sees, in shown order — the same
- * migration + enabled filter the Presenter applies, so index N here matches
- * Reveal's horizontal index N. Untitled slides yield null.
+ * The slides an audience actually sees, in shown order — the same migration +
+ * enabled filter the Presenter applies, so index N here matches Reveal's
+ * horizontal index N.
  */
-export function shownSlideTitles(
+export function shownSlides(
     content: PresentationContent,
     flow: FlowGraph | null,
-): (string | null)[] {
+): Slide[] {
     const migrated = migrateLegacyTransitions(
         content,
         flow ?? defaultFlowFromContent(content),
     );
     const enabled = enabledSlideIds(migrated.content, migrated.flow);
 
-    return migrated.content.slides
-        .filter((slide) => enabled.has(slide.id))
-        .map((slide) => (slide.title?.trim() ? slide.title : null));
+    return migrated.content.slides.filter((slide) => enabled.has(slide.id));
+}
+
+/** Shown-order slide titles; untitled slides yield null. */
+export function shownSlideTitles(
+    content: PresentationContent,
+    flow: FlowGraph | null,
+): (string | null)[] {
+    return shownSlides(content, flow).map((slide) =>
+        slide.title?.trim() ? slide.title : null,
+    );
+}
+
+/** Shown-order speaker notes; slides without notes yield null. */
+export function shownSlideNotes(
+    content: PresentationContent,
+    flow: FlowGraph | null,
+): (string | null)[] {
+    return shownSlides(content, flow).map((slide) =>
+        slide.notes?.trim() ? slide.notes : null,
+    );
 }

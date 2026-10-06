@@ -96,6 +96,19 @@
     };
 
     const canSync = $derived(audioUrl !== null && stepEvents.length > 0);
+
+    /**
+     * Jump the deck to a slide (first step). While the recording plays the
+     * sync loop wins again on the next timeupdate, same as manual browsing.
+     */
+    export function navigateToSlide(slide: number): void {
+        if (isExternal) {
+            externalIndex = slide;
+            onSlideChange?.(slide, externalTotal);
+        } else {
+            presenter?.navigateTo(slide, 0);
+        }
+    }
 </script>
 
 <div class="flex flex-col gap-3">
