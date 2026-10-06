@@ -175,7 +175,7 @@
                                 </div>
                                 {#if session.is_live}
                                     <span
-                                        class="flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500"
+                                        class="flex shrink-0 items-center gap-1.5 rounded-full bg-live/10 px-2 py-1 text-xs font-semibold text-live"
                                     >
                                         <Radio class="h-3 w-3" /> Live
                                     </span>

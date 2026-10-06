@@ -1,9 +1,13 @@
 <?php
 
 use App\Enums\TeamRole;
+use App\Models\Presentation;
+use App\Models\PresentationSession;
+use App\Models\Rehearsal;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Inertia\Testing\AssertableInertia as Assert;
 
 test('guests are redirected to the login page', function () {
@@ -23,6 +27,42 @@ test('authenticated users can visit the dashboard', function () {
         ->get(route('dashboard'));
 
     $response->assertOk();
+});
+
+test('dashboard timeline interleaves sessions and rehearsals, most recent first', function () {
+    $user = User::factory()->create();
+    $presentation = Presentation::factory()->create(['team_id' => $user->currentTeam->id]);
+
+    PresentationSession::factory()
+        ->ended()
+        ->withReactions(['🔥' => 3, '👏' => 1])
+        ->create([
+            'presentation_id' => $presentation->id,
+            'started_at' => Carbon::now()->subDays(2),
+            'viewer_count' => 7,
+        ]);
+
+    Rehearsal::factory()->create([
+        'presentation_id' => $presentation->id,
+        'started_at' => Carbon::now()->subDay(),
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Dashboard')
+        ->has('timeline', 2)
+        ->where('timeline.0.type', 'rehearsal')
+        ->where('timeline.0.presentation_name', $presentation->name)
+        ->where('timeline.1.type', 'session')
+        ->where('timeline.1.viewer_count', 7)
+        ->where('timeline.1.reaction_total', 4)
+        ->where('timeline.1.reaction_counts.🔥', 3)
+        ->has('recentDecks', 1),
+    );
 });
 
 test('dashboard includes pending invitations for the authenticated user', function () {

@@ -4,10 +4,74 @@ declare(strict_types=1);
 
 namespace App\Infrastructure\ReadModels;
 
+use App\Models\Views\RehearsalHistoryView;
 use App\Models\Views\SessionAnalyticsView;
 
 class DashboardReadModel
 {
+    /**
+     * Live talks and rehearsals interleaved into one history, most recent
+     * first, shaped for the dashboard timeline's two lanes.
+     *
+     * @return array<int, array{
+     *     type: 'session'|'rehearsal',
+     *     id: int,
+     *     presentation_id: int,
+     *     presentation_name: string,
+     *     started_at: string,
+     *     duration_seconds: int,
+     *     is_live: bool,
+     *     viewer_count: int,
+     *     reaction_total: int,
+     *     reaction_counts: array<string, int>
+     * }>
+     */
+    public function timelineForTeam(int $teamId, int $limit = 30): array
+    {
+        $sessions = SessionAnalyticsView::query()
+            ->where('team_id', $teamId)
+            ->orderByDesc('started_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (SessionAnalyticsView $session): array => [
+                'type' => 'session',
+                'id' => $session->id,
+                'presentation_id' => $session->presentation_id,
+                'presentation_name' => $session->presentation_name,
+                'started_at' => $session->started_at->toISOString(),
+                'duration_seconds' => $this->durationSeconds($session),
+                'is_live' => $session->ended_at === null,
+                'viewer_count' => $session->viewer_count,
+                'reaction_total' => $session->reaction_total,
+                'reaction_counts' => $session->reaction_counts ?? [],
+            ]);
+
+        $rehearsals = RehearsalHistoryView::query()
+            ->select(['id', 'presentation_id', 'presentation_name', 'started_at', 'duration_seconds'])
+            ->where('team_id', $teamId)
+            ->orderByDesc('started_at')
+            ->limit($limit)
+            ->get()
+            ->map(fn (RehearsalHistoryView $run): array => [
+                'type' => 'rehearsal',
+                'id' => $run->id,
+                'presentation_id' => $run->presentation_id,
+                'presentation_name' => $run->presentation_name,
+                'started_at' => $run->started_at->toISOString(),
+                'duration_seconds' => $run->duration_seconds,
+                'is_live' => false,
+                'viewer_count' => 0,
+                'reaction_total' => 0,
+                'reaction_counts' => [],
+            ]);
+
+        return $sessions->concat($rehearsals)
+            ->sortByDesc('started_at')
+            ->take($limit)
+            ->values()
+            ->all();
+    }
+
     /**
      * Recent talks given by a team, most recent first, shaped for the
      * post-talk analytics feed.

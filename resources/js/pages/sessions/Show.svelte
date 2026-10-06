@@ -138,7 +138,7 @@
             />
             {#if session.is_live}
                 <span
-                    class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500"
+                    class="mt-2 inline-flex items-center gap-1.5 rounded-full bg-live/10 px-2 py-1 text-xs font-semibold text-live"
                 >
                     <Radio class="h-3 w-3" /> Still live
                 </span>

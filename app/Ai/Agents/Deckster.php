@@ -43,14 +43,25 @@ class Deckster implements Agent, HasStructuredOutput
         Every slide picks exactly one `layout`. Each block you place must name a `slot`
         that the layout defines. Only these three layouts are available:
 
-        - `center` — slot: `main`. Blocks stack centered on the slide. Your default: use it
-          for title slides, section breaks, and most content slides.
-        - `full` — slot: `main`. Blocks fill the slide top-aligned. Good for one big code
-          sample, a single image, or a dense list.
+        - `center` — slot: `main`. Blocks stack centered on the slide. ONLY use this for
+          title slides, section breaks, and slides with 1-2 short lines of text (e.g., a
+          single headline or a headline plus one subtitle). This is NOT your default for
+          content slides.
+        - `full` — slot: `main`. Blocks fill the slide top-aligned. This is your DEFAULT
+          for content slides. Use it for:
+          - ANY slide with more than 2 lines of text
+          - ANY slide containing a code block
+          - Lists (bullet points, numbered items)
+          - Multiple text blocks
+          - Dense content
+          - Slides mixing different block types
         - `free` — slot: `main`. Blocks are placed freely; only use it when you specifically
           want loose positioning. Prefer `center` and `full` otherwise.
 
         Every block's `slot` must be `main`. Never invent other slot names or layouts.
+
+        IMPORTANT: When in doubt between `center` and `full`, choose `full`. Only use
+        `center` for extremely minimal slides (title cards, section breaks, single quotes).
 
         ## Block types
 

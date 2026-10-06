@@ -45,8 +45,8 @@ class DashboardController extends Controller
             'pendingInvitations' => $pendingInvitations,
             'engagement' => $this->dashboard->teamEngagementSummary($current_team->id),
             'speakingStats' => $this->deliveryStats->forTeam($current_team->id)->toArray(),
-            'recentSessions' => $this->dashboard->recentSessionsForTeam($current_team->id),
-            'recentDecks' => array_slice($this->presentations->listForTeam($current_team->id), 0, 5),
+            'timeline' => $this->dashboard->timelineForTeam($current_team->id),
+            'recentDecks' => array_slice($this->presentations->listForTeam($current_team->id), 0, 2),
         ]);
     }
 }

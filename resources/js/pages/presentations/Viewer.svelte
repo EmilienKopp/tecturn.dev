@@ -185,7 +185,7 @@
             class="flex items-center gap-2 font-mono text-[11px] font-semibold tracking-[0.3em] text-[hsl(37_6%_55%)] uppercase"
         >
             <span
-                class="live-dot h-2 w-2 rounded-full bg-[hsl(37_91%_55%)]"
+                class="live-dot h-2 w-2 rounded-full bg-live"
                 aria-hidden="true"
             ></span>
             Live

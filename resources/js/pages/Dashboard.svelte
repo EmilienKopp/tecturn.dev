@@ -16,6 +16,7 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
+    import Mic from 'lucide-svelte/icons/mic';
     import Presentation from 'lucide-svelte/icons/presentation';
     import Radio from 'lucide-svelte/icons/radio';
     import Trash2 from 'lucide-svelte/icons/trash-2';
@@ -25,6 +26,7 @@
     import PendingInvitationsModal from '@/components/PendingInvitationsModal.svelte';
     import { Button } from '@/components/ui/button';
     import { edit, index, present } from '@/routes/presentations';
+    import { show as showRehearsal } from '@/routes/rehearsals';
     import {
         destroy as destroySession,
         show as showSession,
@@ -40,18 +42,17 @@
         top_emoji: string | null;
     };
 
-    type SessionRow = {
+    type TimelineItem = {
+        type: 'session' | 'rehearsal';
         id: number;
         presentation_id: number;
         presentation_name: string;
         started_at: string;
-        ended_at: string | null;
         duration_seconds: number;
         is_live: boolean;
         viewer_count: number;
         reaction_total: number;
         reaction_counts: Record<string, number>;
-        top_emoji: string | null;
     };
 
     type DeckRow = {
@@ -65,13 +66,13 @@
         pendingInvitations = [],
         engagement,
         speakingStats,
-        recentSessions = [],
+        timeline = [],
         recentDecks = [],
     }: {
         pendingInvitations?: DashboardInvitation[];
         engagement: Engagement;
         speakingStats: DeliveryStats;
-        recentSessions?: SessionRow[];
+        timeline?: TimelineItem[];
         recentDecks?: DeckRow[];
     } = $props();
 
@@ -138,13 +139,21 @@
     const presentDeck = (id: number) =>
         router.visit(present({ current_team: teamSlug, presentation: id }).url);
 
+    const openItem = (item: TimelineItem) =>
+        router.visit(
+            item.type === 'session'
+                ? showSession({ current_team: teamSlug, session: item.id }).url
+                : showRehearsal({ current_team: teamSlug, rehearsal: item.id })
+                      .url,
+        );
+
     // Escape hatch for a session that went live by mistake (instead of a test
     // run). Deleting drops its reactions/viewers from every stat, so it asks.
     let confirmModal: Confirm;
 
-    const deleteSession = (session: SessionRow) =>
+    const deleteSession = (item: TimelineItem) =>
         confirmModal.confirm({
-            title: `Delete this session of “${session.presentation_name}”?`,
+            title: `Delete this session of “${item.presentation_name}”?`,
             text: 'Its viewers, reactions and speaking time disappear from your stats. This cannot be undone.',
             variant: 'destructive',
             action: 'Delete session',
@@ -152,16 +161,14 @@
                 router.delete(
                     destroySession({
                         current_team: teamSlug,
-                        session: session.id,
+                        session: item.id,
                     }).url,
                     { preserveScroll: true },
                 ),
         });
 
-    const hasHistory = $derived(recentSessions.length > 0);
-
     // "Know yourself": what your own runs (rehearsals + live talks) measure
-    // about how you deliver. Hidden until there's at least one run to average.
+    // about how you deliver, the numbers to hold against the linter's estimates.
     const measuredRuns = $derived(
         speakingStats.rehearsalCount + speakingStats.sessionCount,
     );
@@ -200,6 +207,12 @@
                   },
         ].filter((card) => card !== null),
     );
+
+    let statsTab: 'room' | 'self' = $state('room');
+
+    // The timeline's two lanes: live talks left, rehearsals right. Every row
+    // renders both cells so each lane's line stays continuous.
+    const lanes = ['session', 'rehearsal'] as const;
 </script>
 
 <AppHead title="Dashboard" />
@@ -211,72 +224,115 @@
 <Confirm bind:this={confirmModal} />
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
-    <div class="flex items-end justify-between gap-4">
+    <div class="flex flex-wrap items-end justify-between gap-4">
         <Heading
             variant="small"
             title="Dashboard"
             description="How your talks landed with the room"
         />
-        <Button
-            variant="outline"
-            onclick={() => router.visit(index(teamSlug).url)}
-        >
-            All presentations
-        </Button>
+        <div class="flex items-center gap-1.5">
+            <!-- Quick access to the two most recently edited decks. -->
+            {#each recentDecks as deck (deck.id)}
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    class="max-w-44 text-muted-foreground"
+                    title={`Edit “${deck.name}”`}
+                    onclick={() => openDeck(deck.id)}
+                >
+                    <Presentation class="h-3.5 w-3.5 shrink-0" />
+                    <span class="truncate">{deck.name}</span>
+                </Button>
+            {/each}
+            <Button
+                variant="outline"
+                onclick={() => router.visit(index(teamSlug).url)}
+            >
+                All presentations
+            </Button>
+        </div>
     </div>
 
-    <!-- Engagement strip. The loudest reaction is the signature: the room's own
-         voice, sized up, instead of another number tile. -->
-    <section
-        class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3 lg:grid-cols-5"
-    >
-        {#each stats as stat (stat.label)}
-            <div class="bg-card p-5">
-                <p
-                    class="font-mono text-3xl font-bold tabular-nums text-foreground"
-                >
-                    {numberFormatter.format(stat.value)}
-                </p>
-                <p
-                    class="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
-                >
-                    {stat.label}
-                </p>
-            </div>
-        {/each}
-
+    <!-- Stats, tabbed: the room's verdict on one side, your own delivery
+         habits on the other. -->
+    <section class="flex flex-col gap-3">
         <div
-            class="flex flex-col justify-between bg-card p-5"
-            data-test="loudest-reaction"
+            class="flex items-center gap-4 border-b border-border"
+            role="tablist"
         >
-            <span class="text-3xl leading-none" aria-hidden="true">
-                {engagement.top_emoji ?? '—'}
-            </span>
-            <p
-                class="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            <button
+                type="button"
+                role="tab"
+                aria-selected={statsTab === 'room'}
+                class="-mb-px border-b-2 pb-2 text-sm font-semibold transition-colors {statsTab ===
+                'room'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                onclick={() => (statsTab = 'room')}
             >
-                Loudest reaction
-            </p>
+                How the talks landed
+            </button>
+            <button
+                type="button"
+                role="tab"
+                aria-selected={statsTab === 'self'}
+                class="-mb-px border-b-2 pb-2 text-sm font-semibold transition-colors {statsTab ===
+                'self'
+                    ? 'border-primary text-foreground'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'}"
+                onclick={() => (statsTab = 'self')}
+            >
+                Know yourself
+            </button>
         </div>
-    </section>
 
-    <!-- Know yourself: measured delivery habits across every rehearsal and
-         live talk, the numbers to hold against the linter's estimates. -->
-    {#if measuredRuns > 0}
-        <section class="flex flex-col gap-3" data-test="know-yourself">
-            <h2 class="text-sm font-semibold text-foreground">Know yourself</h2>
+        {#if statsTab === 'room'}
             <div
                 class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3 lg:grid-cols-5"
             >
-                {#each speakingCards as card (card.label)}
-                    <div class="bg-card p-5">
+                {#each stats as stat (stat.label)}
+                    <div class="bg-card p-3">
                         <p
-                            class="font-mono text-3xl font-bold tabular-nums text-foreground"
+                            class="font-mono text-xl font-bold tabular-nums text-foreground"
+                        >
+                            {numberFormatter.format(stat.value)}
+                        </p>
+                        <p
+                            class="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                        >
+                            {stat.label}
+                        </p>
+                    </div>
+                {/each}
+
+                <div
+                    class="flex flex-col justify-between bg-card p-3"
+                    data-test="loudest-reaction"
+                >
+                    <span class="text-xl leading-none" aria-hidden="true">
+                        {engagement.top_emoji ?? '—'}
+                    </span>
+                    <p
+                        class="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
+                        Loudest reaction
+                    </p>
+                </div>
+            </div>
+        {:else if measuredRuns > 0}
+            <div
+                class="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-3 lg:grid-cols-5"
+                data-test="know-yourself"
+            >
+                {#each speakingCards as card (card.label)}
+                    <div class="bg-card p-3">
+                        <p
+                            class="font-mono text-xl font-bold tabular-nums text-foreground"
                         >
                             {card.value}
                         </p>
                         <p
-                            class="mt-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                            class="mt-0.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
                         >
                             {card.label}
                         </p>
@@ -288,169 +344,192 @@
                     </div>
                 {/each}
             </div>
-        </section>
-    {/if}
+        {:else}
+            <p
+                class="rounded-xl border border-dashed border-border bg-card px-4 py-6 text-center text-sm text-muted-foreground"
+            >
+                Rehearse or present a deck and your delivery stats appear here.
+            </p>
+        {/if}
+    </section>
 
-    <div class="grid gap-8 lg:grid-cols-[1.6fr_1fr]">
-        <!-- Recent talks feed -->
-        <section class="flex flex-col gap-3">
-            <h2 class="text-sm font-semibold text-foreground">Recent talks</h2>
+    <!-- The timeline: live talks and rehearsals on two parallel lanes,
+         interleaved chronologically. -->
+    <section class="flex flex-col gap-3">
+        <h2 class="text-sm font-semibold text-foreground">Timeline</h2>
 
-            {#if hasHistory}
-                <ul class="flex flex-col gap-2">
-                    {#each recentSessions as session (session.id)}
-                        <li
-                            class="rounded-xl border border-border bg-card p-4"
-                            data-test="session-row"
-                        >
-                            <div class="flex items-start justify-between gap-3">
-                                <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                                <div
-                                    class="min-w-0 cursor-pointer"
-                                    onclick={() =>
-                                        router.visit(
-                                            showSession({
-                                                current_team: teamSlug,
-                                                session: session.id,
-                                            }).url,
-                                        )}
-                                >
-                                    <p
-                                        class="truncate font-display font-semibold text-foreground hover:underline"
-                                    >
-                                        {session.presentation_name}
-                                    </p>
-                                    <p
-                                        class="mt-0.5 text-xs text-muted-foreground"
-                                    >
-                                        {formatWhen(session.started_at)} · {formatDuration(
-                                            session.duration_seconds,
-                                        )} · {session.viewer_count}
-                                        {session.viewer_count === 1
-                                            ? 'viewer'
-                                            : 'viewers'}
-                                    </p>
-                                </div>
-
-                                <div class="flex shrink-0 items-center gap-1">
-                                    {#if session.is_live}
-                                        <span
-                                            class="flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-1 text-xs font-semibold text-emerald-500"
-                                        >
-                                            <Radio class="h-3 w-3" /> Live
-                                        </span>
-                                    {:else}
-                                        <span
-                                            class="font-mono text-sm tabular-nums text-muted-foreground"
-                                        >
-                                            {session.reaction_total} ⚡
-                                        </span>
-                                    {/if}
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                        title="Delete this session and its stats"
-                                        aria-label="Delete session"
-                                        onclick={() => deleteSession(session)}
-                                        data-test="dashboard-delete-session"
-                                    >
-                                        <Trash2 class="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-
-                            {#if session.reaction_total > 0}
-                                <div class="mt-3 flex flex-wrap gap-1.5">
-                                    {#each sortedReactions(session.reaction_counts) as [emoji, count] (emoji)}
-                                        <span
-                                            class="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-sm"
-                                        >
-                                            <span aria-hidden="true"
-                                                >{emoji}</span
-                                            >
-                                            <span
-                                                class="font-mono text-xs tabular-nums text-muted-foreground"
-                                                >{count}</span
-                                            >
-                                        </span>
-                                    {/each}
-                                </div>
-                            {/if}
-                        </li>
-                    {/each}
-                </ul>
-            {:else}
-                <div
-                    class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card px-6 py-14 text-center"
-                >
-                    <Radio class="h-6 w-6 text-muted-foreground" />
-                    <p class="text-sm text-muted-foreground">
-                        No talks yet. Present a deck and the room's reactions
-                        land here.
+        {#if timeline.length > 0}
+            <div>
+                <div class="grid grid-cols-2 gap-x-6 pb-3">
+                    <p
+                        class="flex items-center gap-1.5 pl-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
+                        <Radio class="h-3 w-3" /> Talks
                     </p>
-                    {#if recentDecks.length > 0}
-                        <Button onclick={() => presentDeck(recentDecks[0].id)}>
-                            Present “{recentDecks[0].name}”
-                        </Button>
-                    {/if}
+                    <p
+                        class="flex items-center gap-1.5 pl-8 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
+                        <Mic class="h-3 w-3" /> Rehearsals
+                    </p>
                 </div>
-            {/if}
-        </section>
 
-        <!-- Jump back into a deck -->
-        <section class="flex flex-col gap-3">
-            <h2 class="text-sm font-semibold text-foreground">Your decks</h2>
+                <ol>
+                    {#each timeline as item, i (`${item.type}-${item.id}`)}
+                        <li class="grid grid-cols-2 gap-x-6">
+                            {#each lanes as lane (lane)}
+                                <div
+                                    class="relative pl-8 {i ===
+                                    timeline.length - 1
+                                        ? ''
+                                        : 'pb-4'}"
+                                >
+                                    <!-- Lane line segment; segments stack into a
+                                         continuous vertical line. -->
+                                    <span
+                                        class="absolute bottom-0 left-2 top-0 w-px bg-border"
+                                        aria-hidden="true"
+                                    ></span>
 
-            {#if recentDecks.length > 0}
-                <ul class="flex flex-col gap-2">
-                    {#each recentDecks as deck (deck.id)}
-                        <li
-                            class="group flex items-center justify-between gap-2 rounded-xl border border-border bg-card p-3"
-                        >
-                            <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                            <div
-                                class="flex min-w-0 flex-1 cursor-pointer items-center gap-3"
-                                onclick={() => openDeck(deck.id)}
-                            >
-                                <Presentation
-                                    class="h-4 w-4 shrink-0 text-muted-foreground"
-                                />
-                                <div class="min-w-0">
-                                    <p
-                                        class="truncate text-sm font-medium text-foreground"
-                                    >
-                                        {deck.name}
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        {deck.slide_count}
-                                        {deck.slide_count === 1
-                                            ? 'slide'
-                                            : 'slides'}
-                                    </p>
+                                    {#if item.type === lane}
+                                        <span
+                                            class="absolute left-[4.5px] top-2 h-2 w-2 rounded-full {item.is_live
+                                                ? 'animate-pulse bg-live'
+                                                : lane === 'session'
+                                                  ? 'bg-primary'
+                                                  : 'border border-muted-foreground bg-card'}"
+                                            aria-hidden="true"
+                                        ></span>
+
+                                        <div
+                                            class="rounded-xl border border-border bg-card p-3"
+                                            data-test={lane === 'session'
+                                                ? 'session-row'
+                                                : 'rehearsal-row'}
+                                        >
+                                            <div
+                                                class="flex items-start justify-between gap-3"
+                                            >
+                                                <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
+                                                <div
+                                                    class="min-w-0 cursor-pointer"
+                                                    onclick={() =>
+                                                        openItem(item)}
+                                                >
+                                                    <p
+                                                        class="truncate font-display text-sm font-semibold text-foreground hover:underline"
+                                                    >
+                                                        {item.presentation_name}
+                                                    </p>
+                                                    <p
+                                                        class="mt-0.5 text-xs text-muted-foreground"
+                                                    >
+                                                        {formatWhen(
+                                                            item.started_at,
+                                                        )} · {formatDuration(
+                                                            item.duration_seconds,
+                                                        )}{#if lane === 'session'}
+                                                            · {item.viewer_count}
+                                                            {item.viewer_count ===
+                                                            1
+                                                                ? 'viewer'
+                                                                : 'viewers'}
+                                                        {/if}
+                                                    </p>
+                                                </div>
+
+                                                <div
+                                                    class="flex shrink-0 items-center gap-1"
+                                                >
+                                                    {#if item.is_live}
+                                                        <span
+                                                            class="flex items-center gap-1.5 rounded-full bg-live/10 px-2 py-1 text-xs font-semibold text-live"
+                                                        >
+                                                            <Radio
+                                                                class="h-3 w-3"
+                                                            /> Live
+                                                        </span>
+                                                    {:else if lane === 'session'}
+                                                        <!-- Total reactions; the
+                                                             per-emoji detail pops
+                                                             on hover. -->
+                                                        <span
+                                                            class="group relative font-mono text-sm tabular-nums text-muted-foreground"
+                                                        >
+                                                            {item.reaction_total}
+                                                            ⚡
+                                                            {#if item.reaction_total > 0}
+                                                                <span
+                                                                    class="pointer-events-none absolute right-0 top-full z-10 mt-1 hidden max-w-64 flex-wrap justify-end gap-1.5 rounded-lg border border-border bg-popover p-2 shadow-md group-hover:flex"
+                                                                    data-test="reaction-detail"
+                                                                >
+                                                                    {#each sortedReactions(item.reaction_counts) as [emoji, count] (emoji)}
+                                                                        <span
+                                                                            class="flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-sm"
+                                                                        >
+                                                                            <span
+                                                                                aria-hidden="true"
+                                                                                >{emoji}</span
+                                                                            >
+                                                                            <span
+                                                                                class="font-mono text-xs tabular-nums text-muted-foreground"
+                                                                                >{count}</span
+                                                                            >
+                                                                        </span>
+                                                                    {/each}
+                                                                </span>
+                                                            {/if}
+                                                        </span>
+                                                    {/if}
+                                                    {#if lane === 'session'}
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            class="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                                            title="Delete this session and its stats"
+                                                            aria-label="Delete session"
+                                                            onclick={() =>
+                                                                deleteSession(
+                                                                    item,
+                                                                )}
+                                                            data-test="dashboard-delete-session"
+                                                        >
+                                                            <Trash2
+                                                                class="h-3.5 w-3.5"
+                                                            />
+                                                        </Button>
+                                                    {/if}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {/if}
                                 </div>
-                            </div>
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onclick={() => presentDeck(deck.id)}
-                            >
-                                Present
-                            </Button>
+                            {/each}
                         </li>
                     {/each}
-                </ul>
-            {:else}
-                <p
-                    class="rounded-xl border border-dashed border-border bg-card px-4 py-8 text-center text-sm text-muted-foreground"
-                >
-                    No decks yet.
-                    <a class="text-primary" href={index(teamSlug).url}>
-                        Create one
-                    </a>
-                    to get started.
+                </ol>
+            </div>
+        {:else}
+            <div
+                class="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border bg-card px-6 py-14 text-center"
+            >
+                <Radio class="h-6 w-6 text-muted-foreground" />
+                <p class="text-sm text-muted-foreground">
+                    No talks or rehearsals yet. Present a deck and the room's
+                    reactions land here.
                 </p>
-            {/if}
-        </section>
-    </div>
+                {#if recentDecks.length > 0}
+                    <Button onclick={() => presentDeck(recentDecks[0].id)}>
+                        Present “{recentDecks[0].name}”
+                    </Button>
+                {:else}
+                    <Button
+                        variant="outline"
+                        onclick={() => router.visit(index(teamSlug).url)}
+                    >
+                        Create a deck
+                    </Button>
+                {/if}
+            </div>
+        {/if}
+    </section>
 </div>
