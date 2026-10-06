@@ -35,6 +35,9 @@ class EloquentPresentationRepository implements PresentationRepository
             'draft_completed_at' => $presentation->draftCompletedAt,
             'draft_failed_at' => $presentation->draftFailedAt,
             'draft_error' => $presentation->draftError,
+            'talk_id' => $presentation->talk_id,
+            'version_major' => $presentation->version_major,
+            'version_minor' => $presentation->version_minor,
         ];
 
         if ($presentation->id === null) {

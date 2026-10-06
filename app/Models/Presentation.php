@@ -39,11 +39,15 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @property Carbon|null $draft_completed_at
  * @property Carbon|null $draft_failed_at
  * @property string|null $draft_error
+ * @property int|null $talk_id
+ * @property int|null $version_major
+ * @property int|null $version_minor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Team $team
+ * @property-read Talk|null $talk
  */
-#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages', 'draft_plan', 'draft_requested_at', 'draft_completed_at', 'draft_failed_at', 'draft_error'])]
+#[Fillable(['team_id', 'name', 'is_private', 'content', 'talk_settings', 'flow', 'source', 'yoyotranslate_session_id', 'yoyotranslate_session_started_at', 'yoyotranslate_languages', 'draft_plan', 'draft_requested_at', 'draft_completed_at', 'draft_failed_at', 'draft_error', 'talk_id', 'version_major', 'version_minor'])]
 #[UsePolicy(PresentationPolicy::class)]
 class Presentation extends Model implements HasMedia
 {
@@ -114,6 +118,14 @@ class Presentation extends Model implements HasMedia
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * @return BelongsTo<Talk, $this>
+     */
+    public function talk(): BelongsTo
+    {
+        return $this->belongsTo(Talk::class);
+    }
+
     public function toEntity(): PresentationEntity
     {
         return new PresentationEntity(
@@ -135,6 +147,9 @@ class Presentation extends Model implements HasMedia
             draftCompletedAt: $this->draft_completed_at?->toDateTimeImmutable(),
             draftFailedAt: $this->draft_failed_at?->toDateTimeImmutable(),
             draftError: $this->draft_error,
+            talk_id: $this->talk_id,
+            version_major: $this->version_major,
+            version_minor: $this->version_minor,
         );
     }
 

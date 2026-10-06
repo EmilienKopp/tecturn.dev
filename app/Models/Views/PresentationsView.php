@@ -22,6 +22,9 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property Carbon|null $draft_completed_at
  * @property Carbon|null $draft_failed_at
  * @property string|null $draft_error
+ * @property int|null $talk_id
+ * @property int|null $version_major
+ * @property int|null $version_minor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */

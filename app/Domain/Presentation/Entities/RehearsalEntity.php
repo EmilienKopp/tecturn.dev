@@ -29,6 +29,8 @@ class RehearsalEntity extends BaseEntity
         public ?int $word_count = null,
         public ?array $flow = null,
         public ?array $step_events = null,
+        public ?int $version_major = null,
+        public ?int $version_minor = null,
         public ?int $id = null,
     ) {}
 
@@ -47,6 +49,8 @@ class RehearsalEntity extends BaseEntity
             'content' => $this->content,
             'flow' => $this->flow,
             'step_events' => $this->step_events,
+            'version_major' => $this->version_major,
+            'version_minor' => $this->version_minor,
         ];
     }
 }

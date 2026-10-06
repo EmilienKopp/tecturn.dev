@@ -26,9 +26,11 @@ use Illuminate\Support\Carbon;
  * @property list<array{slide: int, reactions: array<string, int>}>|null $reaction_slides
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
+ * @property int|null $talk_event_id
  * @property-read Presentation $presentation
+ * @property-read TalkEvent|null $talkEvent
  */
-#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count', 'word_count', 'slide_timings', 'reaction_slides'])]
+#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'last_seen_at', 'reaction_counts', 'reaction_total', 'viewers', 'viewer_count', 'word_count', 'slide_timings', 'reaction_slides', 'talk_event_id'])]
 class PresentationSession extends Model
 {
     /** @use HasFactory<PresentationSessionFactory> */
@@ -42,6 +44,14 @@ class PresentationSession extends Model
     public function presentation(): BelongsTo
     {
         return $this->belongsTo(Presentation::class, 'presentation_id');
+    }
+
+    /**
+     * @return BelongsTo<TalkEvent, $this>
+     */
+    public function talkEvent(): BelongsTo
+    {
+        return $this->belongsTo(TalkEvent::class);
     }
 
     public function toEntity(): PresentationSessionEntity

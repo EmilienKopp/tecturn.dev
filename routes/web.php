@@ -8,12 +8,15 @@ use App\Http\Controllers\Admin\AdminUsersController;
 use App\Http\Controllers\Admin\ApproveBetaRequestController;
 use App\Http\Controllers\Admin\RejectBetaRequestController;
 use App\Http\Controllers\Beta\BetaRequestController;
+use App\Http\Controllers\Calendar\TalkEventController;
 use App\Http\Controllers\Contacts\AcceptFollowRequestController;
 use App\Http\Controllers\Contacts\FollowController;
 use App\Http\Controllers\Contacts\RejectFollowRequestController;
 use App\Http\Controllers\ContactsController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Feedback\FeedbackController;
+use App\Http\Controllers\Presentations\CreateDeckFromSnapshotController;
+use App\Http\Controllers\Presentations\CreateDeckVersionController;
 use App\Http\Controllers\Presentations\DeleteSessionController;
 use App\Http\Controllers\Presentations\EmbedPresentationController;
 use App\Http\Controllers\Presentations\EndSessionController;
@@ -142,6 +145,13 @@ Route::prefix('{current_team}')
         Route::get('rehearsals', [RehearsalController::class, 'index'])->name('rehearsals.index');
         Route::get('rehearsals/{rehearsal}', [RehearsalController::class, 'show'])->name('rehearsals.show');
         Route::post('rehearsals/{rehearsal}/reviews', RequestRehearsalReviewController::class)->name('rehearsals.reviews.store');
+        // Materializes the run's frozen deck as the next major version of its talk.
+        Route::post('rehearsals/{rehearsal}/deck', CreateDeckFromSnapshotController::class)->name('rehearsals.deck.store');
+
+        Route::get('calendar', [TalkEventController::class, 'index'])->name('calendar.index');
+        Route::post('calendar/events', [TalkEventController::class, 'store'])->name('talk-events.store');
+        Route::put('calendar/events/{talk_event}', [TalkEventController::class, 'update'])->name('talk-events.update');
+        Route::delete('calendar/events/{talk_event}', [TalkEventController::class, 'destroy'])->name('talk-events.destroy');
 
         Route::get('presentations', [PresentationController::class, 'index'])->name('presentations.index');
         Route::post('presentations', [PresentationController::class, 'store'])->name('presentations.store');
@@ -151,6 +161,7 @@ Route::prefix('{current_team}')
         Route::get('presentations/{presentation}', [PresentationController::class, 'edit'])->name('presentations.edit');
         Route::get('presentations/{presentation}/present', PresentPresentationController::class)->name('presentations.present');
         Route::post('presentations/{presentation}/rehearsals', [RehearsalController::class, 'store'])->name('presentations.rehearsal.store');
+        Route::post('presentations/{presentation}/versions', CreateDeckVersionController::class)->name('presentations.versions.store');
         Route::post('presentations/{presentation}/session', StartSessionController::class)->name('presentations.session.start');
         // POST (not DELETE) so the presenter's unload handler can close the
         // session via navigator.sendBeacon, which only issues POST requests.

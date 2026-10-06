@@ -57,6 +57,8 @@
         status: PresentationStatus;
         draft_error: string | null;
         updated_at: string | null;
+        talk_id: number | null;
+        version: string | null;
     };
 
     type AiCredentialOption = {
@@ -693,6 +695,13 @@
                                     class="h-4 w-4 text-muted-foreground"
                                 />
                                 {presentation.name}
+                                {#if presentation.version}
+                                    <span
+                                        class="rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground"
+                                    >
+                                        v{presentation.version}
+                                    </span>
+                                {/if}
                                 {#if presentation.is_private}
                                     <span
                                         class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"

@@ -23,6 +23,7 @@ class AppNavigation
                     ->add('Dashboard', route('dashboard', $team->slug), attributes: ['icon' => 'layout-grid'])
                     ->add('Presentations', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
                     ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer'])
+                    ->add('Calendar', route('calendar.index', $team->slug), attributes: ['icon' => 'calendar-days'])
                     ->add('Reviews', route('reviews.index'), attributes: ['icon' => 'message-square'])
                     ->add('Contacts', route('contacts.index'), attributes: ['icon' => 'book-user']);
             })

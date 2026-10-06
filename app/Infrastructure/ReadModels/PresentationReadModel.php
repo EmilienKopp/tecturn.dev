@@ -11,7 +11,7 @@ use App\Models\Views\PresentationsView;
 class PresentationReadModel
 {
     /**
-     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, status: 'ready'|'generating'|'failed', draft_error: string|null, updated_at: string|null}>
+     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, status: 'ready'|'generating'|'failed', draft_error: string|null, updated_at: string|null, talk_id: int|null, version: string|null}>
      */
     public function listForTeam(int $teamId): array
     {
@@ -27,6 +27,8 @@ class PresentationReadModel
                 'status' => $this->draftStatus($presentation),
                 'draft_error' => $presentation->draft_error,
                 'updated_at' => $presentation->updated_at?->toISOString(),
+                'talk_id' => $presentation->talk_id,
+                'version' => $this->versionLabel($presentation),
             ])
             ->all();
     }
@@ -121,7 +123,7 @@ class PresentationReadModel
     }
 
     /**
-     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, source: array<string, mixed>, updated_at: string|null}
+     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, source: array<string, mixed>, updated_at: string|null, version: string|null}
      */
     public function findForEditor(int $presentationId): array
     {
@@ -136,6 +138,17 @@ class PresentationReadModel
             'flow' => $presentation->flow,
             'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'updated_at' => $presentation->updated_at?->toISOString(),
+            'version' => $this->versionLabel($presentation),
         ];
+    }
+
+    /** "2.1"-style label, or null for decks that never joined a talk. */
+    private function versionLabel(PresentationsView $presentation): ?string
+    {
+        if ($presentation->version_major === null || $presentation->version_minor === null) {
+            return null;
+        }
+
+        return $presentation->version_major.'.'.$presentation->version_minor;
     }
 }

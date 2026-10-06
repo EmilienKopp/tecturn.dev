@@ -35,6 +35,8 @@ class RecordRehearsal
             content: $presentation->content->toArray(),
             flow: $presentation->flow?->toArray(),
             step_events: $command->stepEvents,
+            version_major: $presentation->version_major,
+            version_minor: $presentation->version_minor,
         ));
 
         if ($command->audioPath !== null && $command->audioFileName !== null && $run->id !== null) {

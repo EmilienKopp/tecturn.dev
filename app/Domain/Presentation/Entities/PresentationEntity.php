@@ -36,7 +36,35 @@ class PresentationEntity extends BaseEntity
         public ?DateTimeInterface $draftCompletedAt = null,
         public ?DateTimeInterface $draftFailedAt = null,
         public ?string $draftError = null,
+        public ?int $talk_id = null,
+        public ?int $version_major = null,
+        public ?int $version_minor = null,
     ) {}
+
+    /**
+     * Attaches the deck to a talk as a specific major.minor version. Versioning
+     * is opt-in: decks stay unversioned until their first version action.
+     */
+    public function assignVersion(int $talkId, int $major, int $minor): void
+    {
+        if ($major < 1 || $minor < 0) {
+            throw new InvalidPresentationContent('Deck versions start at 1.0.');
+        }
+
+        $this->talk_id = $talkId;
+        $this->version_major = $major;
+        $this->version_minor = $minor;
+    }
+
+    /** "2.1"-style label, or null for unversioned decks. */
+    public function versionLabel(): ?string
+    {
+        if ($this->version_major === null || $this->version_minor === null) {
+            return null;
+        }
+
+        return $this->version_major.'.'.$this->version_minor;
+    }
 
     /**
      * Marks the deck as an in-progress AI draft. The plan is kept so a stalled
@@ -167,6 +195,9 @@ class PresentationEntity extends BaseEntity
             'draft_completed_at' => $this->draftCompletedAt,
             'draft_failed_at' => $this->draftFailedAt,
             'draft_error' => $this->draftError,
+            'talk_id' => $this->talk_id,
+            'version_major' => $this->version_major,
+            'version_minor' => $this->version_minor,
         ];
     }
 }
