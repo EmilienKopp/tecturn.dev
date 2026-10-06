@@ -98,85 +98,85 @@
 }
 
 /*
-  On Air theme — the app is a broadcast studio. Light mode is the studio with
-  the lights up: cool white surfaces, graphite text, signal teal for anything
-  actionable. Red belongs to --live alone (the ON AIR lamp): live badges and
-  dots only, never decoration — that scarcity is what makes going live loud.
+  Stage Light v2 — the tungsten bulb kept, the beige stripped out. Surfaces
+  are true neutrals (porcelain light mode, neutral charcoal dark mode) so the
+  amber primary is the only warm thing on screen and reads like a filament
+  instead of blending in. Live states glow emerald via --live.
 */
 :root {
-    --background: hsl(210 25% 97%);
-    --foreground: hsl(215 25% 10%);
+    --background: hsl(240 10% 99%);
+    --foreground: hsl(240 6% 10%);
     --card: hsl(0 0% 100%);
-    --card-foreground: hsl(215 25% 10%);
+    --card-foreground: hsl(240 6% 10%);
     --popover: hsl(0 0% 100%);
-    --popover-foreground: hsl(215 25% 10%);
-    --primary: hsl(188 85% 30%);
-    --primary-foreground: hsl(195 60% 98%);
-    --secondary: hsl(211 22% 92%);
-    --secondary-foreground: hsl(215 25% 12%);
-    --muted: hsl(211 24% 94%);
-    --muted-foreground: hsl(213 10% 42%);
-    --accent: hsl(191 32% 91%);
-    --accent-foreground: hsl(215 25% 12%);
+    --popover-foreground: hsl(240 6% 10%);
+    --primary: hsl(33 92% 44%);
+    --primary-foreground: hsl(40 40% 98%);
+    --secondary: hsl(240 5% 93%);
+    --secondary-foreground: hsl(240 6% 12%);
+    --muted: hsl(240 6% 95%);
+    --muted-foreground: hsl(240 4% 44%);
+    --accent: hsl(38 30% 92%);
+    --accent-foreground: hsl(240 6% 12%);
     --destructive: hsl(4 74% 46%);
-    --destructive-foreground: hsl(210 40% 98%);
-    --live: hsl(4 86% 52%);
-    --border: hsl(212 18% 88%);
-    --input: hsl(212 16% 84%);
-    --ring: hsl(188 85% 32%);
-    --chart-1: hsl(188 80% 38%);
-    --chart-2: hsl(4 80% 55%);
-    --chart-3: hsl(38 90% 50%);
+    --destructive-foreground: hsl(40 40% 98%);
+    --live: hsl(160 84% 30%);
+    --border: hsl(240 6% 89%);
+    --input: hsl(240 6% 85%);
+    --ring: hsl(33 92% 44%);
+    --chart-1: hsl(33 92% 50%);
+    --chart-2: hsl(14 80% 55%);
+    --chart-3: hsl(185 50% 40%);
     --chart-4: hsl(260 45% 58%);
-    --chart-5: hsl(150 45% 42%);
+    --chart-5: hsl(48 85% 52%);
     --radius: 0.625rem;
-    --sidebar-background: hsl(212 24% 94%);
-    --sidebar-foreground: hsl(214 12% 30%);
-    --sidebar-primary: hsl(188 85% 30%);
-    --sidebar-primary-foreground: hsl(195 60% 98%);
-    --sidebar-accent: hsl(211 20% 89%);
-    --sidebar-accent-foreground: hsl(215 22% 18%);
-    --sidebar-border: hsl(212 16% 87%);
-    --sidebar-ring: hsl(188 85% 32%);
-    --sidebar: hsl(212 24% 94%);
+    --sidebar-background: hsl(240 6% 95%);
+    --sidebar-foreground: hsl(240 5% 30%);
+    --sidebar-primary: hsl(33 92% 42%);
+    --sidebar-primary-foreground: hsl(40 40% 98%);
+    --sidebar-accent: hsl(240 5% 90%);
+    --sidebar-accent-foreground: hsl(240 6% 18%);
+    --sidebar-border: hsl(240 6% 88%);
+    --sidebar-ring: hsl(33 92% 44%);
+    --sidebar: hsl(240 6% 95%);
 }
 
-/* On Air dark mode — the control room: blue-graphite, never pure black. */
+/* Stage Light v2 dark mode — neutral charcoal house, no brown cast. */
 .dark {
-    --background: hsl(217 24% 9%);
-    --foreground: hsl(210 25% 95%);
-    --card: hsl(218 23% 13%);
-    --card-foreground: hsl(210 25% 95%);
-    --popover: hsl(218 23% 12%);
-    --popover-foreground: hsl(210 25% 95%);
-    --primary: hsl(186 72% 50%);
-    --primary-foreground: hsl(200 70% 8%);
-    --secondary: hsl(217 18% 17%);
-    --secondary-foreground: hsl(210 20% 90%);
-    --muted: hsl(217 18% 16%);
-    --muted-foreground: hsl(214 12% 58%);
-    --accent: hsl(217 20% 19%);
-    --accent-foreground: hsl(210 22% 93%);
+    --background: hsl(240 5% 8%);
+    --foreground: hsl(40 10% 95%);
+    --card: hsl(240 4% 12%);
+    --card-foreground: hsl(40 10% 95%);
+    --popover: hsl(240 4% 11%);
+    --popover-foreground: hsl(40 10% 95%);
+    --primary: hsl(38 91% 55%);
+    --primary-foreground: hsl(36 45% 10%);
+    --secondary: hsl(240 4% 16%);
+    --secondary-foreground: hsl(40 8% 90%);
+    --muted: hsl(240 4% 15%);
+    --muted-foreground: hsl(240 4% 56%);
+    --accent: hsl(240 4% 18%);
+    --accent-foreground: hsl(40 8% 93%);
     --destructive: hsl(4 72% 55%);
-    --destructive-foreground: hsl(210 25% 96%);
-    --live: hsl(4 90% 58%);
-    --border: hsl(217 18% 18%);
-    --input: hsl(217 16% 22%);
-    --ring: hsl(186 72% 50%);
-    --chart-1: hsl(186 72% 52%);
-    --chart-2: hsl(4 85% 60%);
-    --chart-3: hsl(38 90% 55%);
+    --destructive-foreground: hsl(40 10% 96%);
+    --live: hsl(160 84% 42%);
+    --border: hsl(240 4% 17%);
+    --input: hsl(240 4% 21%);
+    --ring: hsl(38 91% 55%);
+    --chart-1: hsl(38 91% 55%);
+    --chart-2: hsl(14 80% 58%);
+    --chart-3: hsl(185 50% 45%);
     --chart-4: hsl(260 45% 62%);
-    --chart-5: hsl(150 45% 48%);
-    --sidebar-background: hsl(219 26% 7%);
-    --sidebar-foreground: hsl(213 15% 75%);
-    --sidebar-primary: hsl(186 72% 50%);
-    --sidebar-primary-foreground: hsl(200 70% 8%);
-    --sidebar-accent: hsl(217 20% 14%);
-    --sidebar-accent-foreground: hsl(210 22% 92%);
-    --sidebar-border: hsl(217 20% 15%);
-    --sidebar-ring: hsl(186 72% 50%);
-    --sidebar: hsl(219 26% 7%);
+    --chart-5: hsl(48 85% 60%);
+    --sidebar-background: hsl(240 5% 6%);
+    --sidebar-foreground: hsl(240 5% 76%);
+    --sidebar-primary: hsl(38 91% 55%);
+    --sidebar-primary-foreground: hsl(36 45% 10%);
+    --sidebar-accent: hsl(240 4% 14%);
+    --sidebar-accent-foreground: hsl(40 8% 92%);
+    --sidebar-border: hsl(240 4% 15%);
+    --sidebar-ring: hsl(38 91% 55%);
+    --sidebar: hsl(240 5% 6%);
 }
 
 @layer base {
@@ -218,15 +218,16 @@
 }
 
 @utility stage-canvas {
-    /* The monitor look: cool screen light spilling off the canvas edges. */
+    /* The projected-slide look: tungsten light spilling off the canvas edges
+       onto a neutral house. */
     box-shadow:
-        0 0 0 1px hsl(217 18% 19% / 0.6),
-        0 0 24px hsl(186 72% 50% / 0.06),
-        0 12px 48px -12px hsl(218 45% 4% / 0.5);
+        0 0 0 1px hsl(240 4% 18% / 0.6),
+        0 0 24px hsl(38 91% 55% / 0.07),
+        0 12px 48px -12px hsl(240 10% 3% / 0.5);
 
     :root:not(.dark) & {
         box-shadow:
-            0 0 0 1px hsl(212 18% 86%),
-            0 12px 32px -12px hsl(214 20% 30% / 0.25);
+            0 0 0 1px hsl(240 6% 86%),
+            0 12px 32px -12px hsl(240 8% 30% / 0.25);
     }
 }
