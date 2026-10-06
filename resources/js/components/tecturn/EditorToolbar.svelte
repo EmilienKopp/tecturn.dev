@@ -466,7 +466,7 @@
                         <Button
                             {...props}
                             size="sm"
-                            class="bg-emerald-600 text-white shadow hover:bg-emerald-500"
+                            class="bg-primary text-primary-foreground shadow hover:bg-primary/90"
                             data-test="editor-present-menu"
                         >
                             <Play class="h-4 w-4" /> Present
