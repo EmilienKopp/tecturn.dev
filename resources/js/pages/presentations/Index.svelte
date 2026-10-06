@@ -3,7 +3,6 @@
     import ChevronDown from 'lucide-svelte/icons/chevron-down';
     import ClipboardPaste from 'lucide-svelte/icons/clipboard-paste';
     import Plus from 'lucide-svelte/icons/plus';
-    import Presentation from 'lucide-svelte/icons/presentation';
     import RotateCw from 'lucide-svelte/icons/rotate-cw';
     import Sparkles from 'lucide-svelte/icons/sparkles';
     import Trash2 from 'lucide-svelte/icons/trash-2';
@@ -13,13 +12,6 @@
     import Heading from '@/components/Heading.svelte';
     import Select from '@/components/input/Select.svelte';
     import { Button } from '@/components/ui/button';
-    import {
-        Card,
-        CardDescription,
-        CardFooter,
-        CardHeader,
-        CardTitle,
-    } from '@/components/ui/card';
     import {
         Dialog,
         DialogContent,
@@ -57,6 +49,10 @@
         status: PresentationStatus;
         draft_error: string | null;
         updated_at: string | null;
+        talk_id: number | null;
+        version: string | null;
+        background: string | null;
+        background_image: string | null;
     };
 
     type AiCredentialOption = {
@@ -109,6 +105,55 @@
     );
 
     const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
+
+    type TalkGroup = {
+        key: string;
+        latest: PresentationListItem;
+        versions: PresentationListItem[];
+    };
+
+    // The talk is the unit of the index: one card per talk, fronted by its
+    // most recently updated version, with the other versions expandable.
+    const talkGroups = $derived.by((): TalkGroup[] => {
+        const groups: Record<string, PresentationListItem[]> = {};
+
+        for (const deck of presentations) {
+            const key =
+                deck.talk_id !== null
+                    ? `talk-${deck.talk_id}`
+                    : `deck-${deck.id}`;
+
+            (groups[key] ??= []).push(deck);
+        }
+
+        return Object.entries(groups).map(([key, decks]) => {
+            const versions = [...decks].sort((a, b) =>
+                (b.updated_at ?? '').localeCompare(a.updated_at ?? ''),
+            );
+
+            return { key, latest: versions[0], versions };
+        });
+    });
+
+    let expandedTalks = $state<Record<string, boolean>>({});
+
+    const toggleTalk = (key: string): void => {
+        expandedTalks[key] = !expandedTalks[key];
+    };
+
+    // Pure-CSS slide thumbnail: first slide's background image or color
+    // (which may be a gradient), falling back to the muted surface.
+    const thumbnailStyle = (deck: PresentationListItem): string => {
+        if (deck.background_image) {
+            return `background: center / cover no-repeat url('${deck.background_image.replace(/'/g, '')}')`;
+        }
+
+        if (deck.background) {
+            return `background: ${deck.background}`;
+        }
+
+        return 'background: var(--muted)';
+    };
 
     const triggerFileImport = () => {
         importError = null;
@@ -624,40 +669,53 @@
         </p>
     {/if}
 
-    <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {#each presentations as presentation (presentation.id)}
+    <ul class="flex flex-col gap-2">
+        {#each talkGroups as group (group.key)}
+            {@const presentation = group.latest}
             {#if presentation.status === 'generating'}
-                <div class="relative" data-test="presentation-skeleton">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <Sparkles
-                                    class="h-4 w-4 animate-pulse text-muted-foreground"
-                                />
+                <li
+                    class="rounded-xl border border-border bg-card p-4"
+                    data-test="presentation-skeleton"
+                >
+                    <div class="flex items-center gap-3">
+                        <Sparkles
+                            class="h-4 w-4 shrink-0 animate-pulse text-muted-foreground"
+                        />
+                        <div class="min-w-0">
+                            <p
+                                class="truncate font-display font-semibold text-foreground"
+                            >
                                 {presentation.name}
-                            </CardTitle>
-                            <CardDescription>
-                                <Skeleton class="mt-1 h-3 w-28" />
-                            </CardDescription>
-                        </CardHeader>
-                    </Card>
-                </div>
+                            </p>
+                            <Skeleton class="mt-1.5 h-3 w-28" />
+                        </div>
+                    </div>
+                </li>
             {:else if presentation.status === 'failed'}
-                <div class="relative" data-test="presentation-failed">
-                    <Card class="border-destructive/40">
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <TriangleAlert
-                                    class="h-4 w-4 text-destructive"
-                                />
-                                {presentation.name}
-                            </CardTitle>
-                            <CardDescription>
-                                {presentation.draft_error ??
-                                    "We couldn't build this deck."}
-                            </CardDescription>
-                        </CardHeader>
-                        <CardFooter class="gap-2">
+                <li
+                    class="rounded-xl border border-destructive/40 bg-card p-4"
+                    data-test="presentation-failed"
+                >
+                    <div
+                        class="flex flex-wrap items-center justify-between gap-3"
+                    >
+                        <div class="flex min-w-0 items-center gap-3">
+                            <TriangleAlert
+                                class="h-4 w-4 shrink-0 text-destructive"
+                            />
+                            <div class="min-w-0">
+                                <p
+                                    class="truncate font-display font-semibold text-foreground"
+                                >
+                                    {presentation.name}
+                                </p>
+                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                    {presentation.draft_error ??
+                                        "We couldn't build this deck."}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex shrink-0 items-center gap-2">
                             <Button
                                 variant="outline"
                                 size="sm"
@@ -676,32 +734,54 @@
                             >
                                 Dismiss
                             </Button>
-                        </CardFooter>
-                    </Card>
-                </div>
+                        </div>
+                    </div>
+                </li>
             {:else}
-                <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
-                <div
-                    class="group relative cursor-pointer"
-                    onclick={() => openEditor(presentation)}
+                <li
+                    class="group rounded-xl border border-border bg-card"
                     data-test="presentation-card"
                 >
-                    <Card class="transition-shadow group-hover:shadow-md">
-                        <CardHeader>
-                            <CardTitle class="flex items-center gap-2">
-                                <Presentation
-                                    class="h-4 w-4 text-muted-foreground"
-                                />
+                    <div class="flex items-center gap-3 p-4">
+                        <div
+                            class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-border p-1"
+                            style={thumbnailStyle(presentation)}
+                            aria-hidden="true"
+                            data-test="presentation-thumbnail"
+                        >
+                            <span
+                                class="line-clamp-3 text-center text-[7px] leading-tight font-semibold break-words text-white/90 [text-shadow:0_1px_2px_rgba(0,0,0,0.7)]"
+                            >
                                 {presentation.name}
+                            </span>
+                        </div>
+                        <button
+                            type="button"
+                            class="min-w-0 flex-1 cursor-pointer text-left"
+                            onclick={() => openEditor(presentation)}
+                        >
+                            <p class="flex min-w-0 items-center gap-2">
+                                <span
+                                    class="truncate font-display font-semibold text-foreground"
+                                >
+                                    {presentation.name}
+                                </span>
+                                {#if presentation.version}
+                                    <span
+                                        class="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-xs font-medium text-muted-foreground"
+                                    >
+                                        v{presentation.version}
+                                    </span>
+                                {/if}
                                 {#if presentation.is_private}
                                     <span
-                                        class="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
+                                        class="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground"
                                     >
                                         Private
                                     </span>
                                 {/if}
-                            </CardTitle>
-                            <CardDescription>
+                            </p>
+                            <p class="mt-0.5 text-xs text-muted-foreground">
                                 {presentation.slide_count}
                                 {presentation.slide_count === 1
                                     ? 'slide'
@@ -709,27 +789,99 @@
                                 · updated {formatUpdatedAt(
                                     presentation.updated_at,
                                 )}
-                            </CardDescription>
-                        </CardHeader>
-                    </Card>
-
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        class="absolute top-2 right-2 hidden text-muted-foreground group-hover:flex hover:text-destructive"
-                        onclick={(event: MouseEvent) => {
-                            event.stopPropagation();
-                            presentationDeleting = presentation;
-                            deleteDialogOpen = true;
-                        }}
-                        data-test="presentation-delete-button"
-                    >
-                        <Trash2 class="h-4 w-4" />
-                    </Button>
-                </div>
+                            </p>
+                        </button>
+                        <div class="flex shrink-0 items-center gap-2">
+                            {#if group.versions.length > 1}
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    class="text-muted-foreground"
+                                    aria-expanded={expandedTalks[group.key] ??
+                                        false}
+                                    onclick={() => toggleTalk(group.key)}
+                                    data-test="talk-versions-toggle"
+                                >
+                                    {group.versions.length} versions
+                                    <ChevronDown
+                                        class="h-3.5 w-3.5 transition-transform {expandedTalks[
+                                            group.key
+                                        ]
+                                            ? 'rotate-180'
+                                            : ''}"
+                                    />
+                                </Button>
+                            {/if}
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onclick={() => openEditor(presentation)}
+                                data-test="presentation-open-button"
+                            >
+                                Open
+                            </Button>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                class="text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive focus-visible:opacity-100"
+                                onclick={() => {
+                                    presentationDeleting = presentation;
+                                    deleteDialogOpen = true;
+                                }}
+                                data-test="presentation-delete-button"
+                            >
+                                <Trash2 class="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                    {#if expandedTalks[group.key] && group.versions.length > 1}
+                        <ul class="border-t border-border/60 px-4 py-2">
+                            {#each group.versions as deck (deck.id)}
+                                <li>
+                                    <button
+                                        type="button"
+                                        class="flex w-full cursor-pointer items-center gap-3 rounded-md px-2 py-1.5 pl-8 text-left hover:bg-accent"
+                                        onclick={() => openEditor(deck)}
+                                        data-test="talk-version-row"
+                                    >
+                                        <span
+                                            class="font-mono text-xs {deck.id ===
+                                            presentation.id
+                                                ? 'font-medium text-primary'
+                                                : 'text-foreground'}"
+                                        >
+                                            v{deck.version ?? '?'}
+                                        </span>
+                                        <span
+                                            class="text-xs text-muted-foreground"
+                                        >
+                                            updated {formatUpdatedAt(
+                                                deck.updated_at,
+                                            )}
+                                        </span>
+                                        {#if deck.is_private}
+                                            <span
+                                                class="rounded-full bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground"
+                                            >
+                                                Private
+                                            </span>
+                                        {/if}
+                                        {#if deck.id === presentation.id}
+                                            <span
+                                                class="ml-auto text-[10px] tracking-wide text-primary uppercase"
+                                            >
+                                                latest
+                                            </span>
+                                        {/if}
+                                    </button>
+                                </li>
+                            {/each}
+                        </ul>
+                    {/if}
+                </li>
             {/if}
         {/each}
-    </div>
+    </ul>
 
     {#if presentations.length === 0}
         <p class="py-12 text-center text-muted-foreground">

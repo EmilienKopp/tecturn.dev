@@ -25,11 +25,13 @@ use Spatie\MediaLibrary\InteractsWithMedia;
  * @property list<array{at_ms: int, slide: int, step: int}>|null $step_events
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $flow
+ * @property int|null $version_major
+ * @property int|null $version_minor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property-read Presentation $presentation
  */
-#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'word_count', 'slide_timings', 'step_events', 'content', 'flow'])]
+#[Fillable(['presentation_id', 'team_id', 'started_at', 'ended_at', 'duration_seconds', 'word_count', 'slide_timings', 'step_events', 'content', 'flow', 'version_major', 'version_minor'])]
 class Rehearsal extends Model implements HasMedia
 {
     /** @use HasFactory<RehearsalFactory> */
@@ -77,6 +79,8 @@ class Rehearsal extends Model implements HasMedia
             word_count: $this->word_count,
             flow: $this->flow,
             step_events: $this->step_events,
+            version_major: $this->version_major,
+            version_minor: $this->version_minor,
             id: $this->id,
         );
     }

@@ -11,7 +11,7 @@ use App\Models\Views\PresentationsView;
 class PresentationReadModel
 {
     /**
-     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, status: 'ready'|'generating'|'failed', draft_error: string|null, updated_at: string|null}>
+     * @return array<int, array{id: int, name: string, is_private: bool, slide_count: int, status: 'ready'|'generating'|'failed', draft_error: string|null, updated_at: string|null, talk_id: int|null, version: string|null, background: string|null, background_image: string|null}>
      */
     public function listForTeam(int $teamId): array
     {
@@ -27,6 +27,15 @@ class PresentationReadModel
                 'status' => $this->draftStatus($presentation),
                 'draft_error' => $presentation->draft_error,
                 'updated_at' => $presentation->updated_at?->toISOString(),
+                'talk_id' => $presentation->talk_id,
+                'version' => $this->versionLabel($presentation),
+                // CSS thumbnail sources: the first slide's background (color
+                // or gradient) and its image, falling back to the deck-wide
+                // background image.
+                'background' => $presentation->content['slides'][0]['background'] ?? null,
+                'background_image' => $presentation->content['slides'][0]['backgroundImage']
+                    ?? $presentation->content['backgroundImage']
+                    ?? null,
             ])
             ->all();
     }
@@ -121,7 +130,7 @@ class PresentationReadModel
     }
 
     /**
-     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, source: array<string, mixed>, updated_at: string|null}
+     * @return array{id: int, name: string, is_private: bool, content: array<string, mixed>, talk_settings: array<string, mixed>, flow: array<string, mixed>|null, source: array<string, mixed>, updated_at: string|null, version: string|null, versions: array<int, array{id: int, version: string|null, name: string, updated_at: string|null, current: bool}>}
      */
     public function findForEditor(int $presentationId): array
     {
@@ -136,6 +145,45 @@ class PresentationReadModel
             'flow' => $presentation->flow,
             'source' => PresentationSource::fromArray($presentation->source ?? [])->toArray(),
             'updated_at' => $presentation->updated_at?->toISOString(),
+            'version' => $this->versionLabel($presentation),
+            'versions' => $this->versionsOfTalk($presentation),
         ];
+    }
+
+    /**
+     * Every version of the deck's talk, newest first, for the editor's
+     * version switcher.
+     *
+     * @return array<int, array{id: int, version: string|null, name: string, updated_at: string|null, current: bool}>
+     */
+    private function versionsOfTalk(PresentationsView $presentation): array
+    {
+        if ($presentation->talk_id === null) {
+            return [];
+        }
+
+        return PresentationsView::query()
+            ->where('talk_id', $presentation->talk_id)
+            ->orderByDesc('version_major')
+            ->orderByDesc('version_minor')
+            ->get()
+            ->map(fn (PresentationsView $deck): array => [
+                'id' => $deck->id,
+                'version' => $this->versionLabel($deck),
+                'name' => $deck->name,
+                'updated_at' => $deck->updated_at?->toISOString(),
+                'current' => $deck->id === $presentation->id,
+            ])
+            ->all();
+    }
+
+    /** "2.1"-style label, or null for decks that never joined a talk. */
+    private function versionLabel(PresentationsView $presentation): ?string
+    {
+        if ($presentation->version_major === null || $presentation->version_minor === null) {
+            return null;
+        }
+
+        return $presentation->version_major.'.'.$presentation->version_minor;
     }
 }

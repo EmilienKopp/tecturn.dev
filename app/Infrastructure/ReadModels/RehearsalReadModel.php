@@ -19,7 +19,8 @@ class RehearsalReadModel
      *     started_at: string,
      *     duration_seconds: int,
      *     slide_count: int,
-     *     slide_timings: list<array{slide: int, seconds: int}>
+     *     slide_timings: list<array{slide: int, seconds: int}>,
+     *     version: string|null
      * }>
      */
     public function listForTeam(int $teamId): array
@@ -36,6 +37,7 @@ class RehearsalReadModel
                 'duration_seconds' => $run->duration_seconds,
                 'slide_count' => count($run->content['slides'] ?? []),
                 'slide_timings' => $run->slideTimings(),
+                'version' => $this->versionLabel($run),
             ])
             ->all();
     }
@@ -54,7 +56,8 @@ class RehearsalReadModel
      *     step_events: list<array{at_ms: int, slide: int, step: int}>,
      *     has_recording: bool,
      *     content: array<string, mixed>,
-     *     flow: array<string, mixed>|null
+     *     flow: array<string, mixed>|null,
+     *     version: string|null
      * }
      */
     public function findForReplay(int $runId): array
@@ -73,6 +76,17 @@ class RehearsalReadModel
             'has_recording' => $run->has_recording,
             'content' => $run->content,
             'flow' => $run->flow,
+            'version' => $this->versionLabel($run),
         ];
+    }
+
+    /** The deck's "2.1"-style version at the moment of the run, or null. */
+    private function versionLabel(RehearsalHistoryView $run): ?string
+    {
+        if ($run->version_major === null || $run->version_minor === null) {
+            return null;
+        }
+
+        return $run->version_major.'.'.$run->version_minor;
     }
 }

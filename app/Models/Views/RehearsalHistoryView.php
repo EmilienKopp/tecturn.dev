@@ -18,6 +18,8 @@ use Splitstack\Rome\Models\ReadOnlyModel;
  * @property list<array{at_ms: int, slide: int, step: int}>|null $step_events
  * @property array<string, mixed> $content
  * @property array<string, mixed>|null $flow
+ * @property int|null $version_major
+ * @property int|null $version_minor
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property bool $has_recording

@@ -25,7 +25,7 @@
         shownSlideNotes,
         shownSlideTitles,
     } from '@/lib/tecturn/flow-compiler';
-    import { importJson } from '@/routes/presentations';
+    import { store as storeDeckFromSnapshot } from '@/routes/rehearsals/deck';
     import { store as storeReviewRequest } from '@/routes/rehearsals/reviews';
     import { index as reviewsIndex } from '@/routes/reviews';
     import type {
@@ -46,6 +46,7 @@
         has_recording: boolean;
         content: PresentationContent;
         flow: FlowGraph | null;
+        version: string | null;
     };
 
     type ReviewComment = {
@@ -180,13 +181,14 @@
 
     let restoring = $state(false);
 
-    // Feeds the snapshot straight into the existing import flow, which
-    // creates the new deck and redirects to its editor.
+    // The server materializes the frozen deck as the next major version of
+    // the talk, then redirects to the new deck's editor.
     const restoreAsNewDeck = (): void => {
         restoring = true;
         router.post(
-            importJson(teamSlug).url,
-            { json: snapshotEnvelope() },
+            storeDeckFromSnapshot({ current_team: teamSlug, rehearsal: run.id })
+                .url,
+            {},
             {
                 onFinish: () => {
                     restoring = false;
@@ -256,9 +258,16 @@
     >
         <div class="min-w-0">
             <h1
-                class="truncate font-display text-sm font-semibold text-foreground"
+                class="flex min-w-0 items-center gap-2 font-display text-sm font-semibold text-foreground"
             >
-                {run.presentation_name}
+                <span class="truncate">{run.presentation_name}</span>
+                {#if run.version}
+                    <span
+                        class="shrink-0 rounded-full bg-muted px-2 py-0.5 font-mono text-[10px] font-medium text-muted-foreground"
+                    >
+                        v{run.version}
+                    </span>
+                {/if}
             </h1>
             <p class="text-xs text-muted-foreground">
                 Rehearsed {when}, with the slides as they were then
@@ -322,8 +331,7 @@
                                     <div
                                         class="h-full rounded-full bg-primary"
                                         style="width: {Math.round(
-                                            (timing.seconds /
-                                                maxSlideSeconds) *
+                                            (timing.seconds / maxSlideSeconds) *
                                                 100,
                                         )}%"
                                     ></div>
@@ -399,7 +407,9 @@
                 >
                     Run stats
                 </h2>
-                <dl class="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border">
+                <dl
+                    class="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-border bg-border"
+                >
                     {#each stats as stat (stat.label)}
                         <div class="bg-card px-3 py-2">
                             <dd
@@ -509,9 +519,7 @@
                         class="flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:bg-accent"
                         data-test="rehearsal-reviews-link"
                     >
-                        <MessageSquare
-                            class="h-4 w-4 text-muted-foreground"
-                        />
+                        <MessageSquare class="h-4 w-4 text-muted-foreground" />
                         {reviews.length === 1
                             ? '1 review on this rehearsal'
                             : `${reviews.length} reviews on this rehearsal`}

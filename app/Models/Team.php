@@ -128,6 +128,28 @@ class Team extends Model
     }
 
     /**
+     * Get all talks (versioned deck groups) belonging to this team.
+     *
+     * @return HasMany<Talk, $this>
+     */
+    public function talks(): HasMany
+    {
+        return $this->hasMany(Talk::class);
+    }
+
+    /**
+     * Get all scheduled talk events for this team. Also what the team route
+     * group's scoped bindings resolve {talk_event} through, so a foreign
+     * event 404s before the controller runs.
+     *
+     * @return HasMany<TalkEvent, $this>
+     */
+    public function talkEvents(): HasMany
+    {
+        return $this->hasMany(TalkEvent::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>

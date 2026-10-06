@@ -6,12 +6,14 @@
     import Copy from 'lucide-svelte/icons/copy';
     import Download from 'lucide-svelte/icons/download';
     import FlaskConical from 'lucide-svelte/icons/flask-conical';
+    import GitBranch from 'lucide-svelte/icons/git-branch';
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
     import Lock from 'lucide-svelte/icons/lock';
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
     import Play from 'lucide-svelte/icons/play';
+    import Plus from 'lucide-svelte/icons/plus';
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
     import Settings2 from 'lucide-svelte/icons/settings-2';
@@ -30,6 +32,7 @@
         DropdownMenu,
         DropdownMenuContent,
         DropdownMenuItem,
+        DropdownMenuSeparator,
         DropdownMenuTrigger,
     } from '@/components/ui/dropdown-menu';
     import { Input } from '@/components/ui/input';
@@ -42,7 +45,8 @@
     import { qrToSvg } from '@/lib/tecturn/CodeGeneration/qr';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
-    import { present, update } from '@/routes/presentations';
+    import { edit, present, update } from '@/routes/presentations';
+    import { store as storeVersion } from '@/routes/presentations/versions';
     import type {
         DeliveryStats,
         FooterSettings,
@@ -59,6 +63,8 @@
         presentationId,
         talkSettings,
         isPrivate,
+        version = null,
+        versions = [],
         external = false,
         name = $bindable(),
         view = $bindable(),
@@ -74,6 +80,16 @@
         presentationId: number;
         talkSettings: TalkSettings;
         isPrivate: boolean;
+        // "2.1"-style label, or null for decks that never joined a talk.
+        version?: string | null;
+        // Every version of the deck's talk, newest first.
+        versions?: {
+            id: number;
+            version: string | null;
+            name: string;
+            updated_at: string | null;
+            current: boolean;
+        }[];
         // External decks bring their own slides (PDF / Google Slides), so the
         // view toggle, auto-save and export make no sense for them.
         external?: boolean;
@@ -116,6 +132,47 @@
     let talkLengthModalOpen = $state(false);
     let saving = $state(promise());
     let confirmModal: Confirm;
+    let creatingVersion = $state(false);
+
+    // Duplicates the deck as the next major/minor version of its talk and
+    // lands in the new copy's editor. The first bump also creates the talk
+    // and stamps this deck as 1.0.
+    const switchVersion = (deckId: number): void => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam || deckId === presentationId) {
+            return;
+        }
+
+        router.visit(
+            edit({
+                current_team: currentTeam.slug,
+                presentation: deckId,
+            }).url,
+        );
+    };
+
+    const createVersion = (bump: 'major' | 'minor'): void => {
+        const currentTeam = page.props.currentTeam;
+
+        if (!currentTeam || creatingVersion) {
+            return;
+        }
+
+        creatingVersion = true;
+        router.post(
+            storeVersion({
+                current_team: currentTeam.slug,
+                presentation: presentationId,
+            }).url,
+            { bump },
+            {
+                onFinish: () => {
+                    creatingVersion = false;
+                },
+            },
+        );
+    };
 
     const AUTO_SAVE_INTERVAL = ms(10_000);
 
@@ -528,6 +585,75 @@
                         {...props}
                         variant="outline"
                         size="sm"
+                        data-test="editor-versions-menu"
+                    >
+                        <GitBranch class="h-4 w-4" />
+                        <span class="font-mono text-xs"
+                            >{version ? `v${version}` : 'Versions'}</span
+                        >
+                        <ChevronDown class="h-3.5 w-3.5 opacity-60" />
+                    </Button>
+                {/snippet}
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={4} class="w-64">
+                {#each versions as deck (deck.id)}
+                    <button
+                        type="button"
+                        role="menuitem"
+                        class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground {deck.current
+                            ? 'font-medium text-primary'
+                            : ''}"
+                        onclick={() => switchVersion(deck.id)}
+                        data-test="editor-version-row"
+                    >
+                        <span class="font-mono text-xs"
+                            >{deck.version ? `v${deck.version}` : '—'}</span
+                        >
+                        <span class="truncate">{deck.name}</span>
+                        {#if deck.current}
+                            <span
+                                class="ml-auto text-[10px] tracking-wide uppercase"
+                            >
+                                current
+                            </span>
+                        {/if}
+                    </button>
+                {/each}
+                {#if versions.length > 0}
+                    <DropdownMenuSeparator />
+                {/if}
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    disabled={creatingVersion}
+                    onclick={() => createVersion('minor')}
+                    data-test="editor-new-minor-version-menu-item"
+                >
+                    <Plus class="h-4 w-4" />
+                    New minor version
+                </button>
+                <button
+                    type="button"
+                    role="menuitem"
+                    class="flex w-full cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none hover:bg-accent hover:text-accent-foreground"
+                    disabled={creatingVersion}
+                    onclick={() => createVersion('major')}
+                    data-test="editor-new-major-version-menu-item"
+                >
+                    <Plus class="h-4 w-4" />
+                    New major version
+                </button>
+            </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                {#snippet children(props)}
+                    <Button
+                        {...props}
+                        variant="outline"
+                        size="sm"
                         data-test="editor-settings-menu"
                     >
                         <Settings2 class="h-4 w-4" /> Settings
@@ -613,85 +739,85 @@
 
         {#if !external}
             <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                {#snippet children(props)}
-                    <Button
-                        {...props}
-                        variant="outline"
-                        size="sm"
-                        data-test="editor-export-menu"
-                    >
-                        <Download class="h-4 w-4" /> Export
-                        <ChevronDown class="h-3.5 w-3.5 opacity-60" />
-                    </Button>
-                {/snippet}
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" sideOffset={4} class="w-60">
-                <DropdownMenuItem asChild>
+                <DropdownMenuTrigger asChild>
                     {#snippet children(props)}
-                        <button
-                            type="button"
-                            class={props.class}
-                            onclick={() => {
-                                props.onClick?.();
-                                onExport();
-                            }}
-                            data-test="editor-export-button"
+                        <Button
+                            {...props}
+                            variant="outline"
+                            size="sm"
+                            data-test="editor-export-menu"
                         >
-                            <Download class="mr-2 h-4 w-4" /> Export Svelte
-                        </button>
+                            <Download class="h-4 w-4" /> Export
+                            <ChevronDown class="h-3.5 w-3.5 opacity-60" />
+                        </Button>
                     {/snippet}
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    {#snippet children(props)}
-                        <button
-                            type="button"
-                            class={props.class}
-                            disabled={exportingWebComponent}
-                            onclick={() => {
-                                props.onClick?.();
-                                exportWebComponent();
-                            }}
-                            data-test="editor-export-web-component-button"
-                        >
-                            <Download class="mr-2 h-4 w-4" />
-                            {exportingWebComponent
-                                ? 'Exporting…'
-                                : 'Export Web Component'}
-                        </button>
-                    {/snippet}
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    {#snippet children(props)}
-                        <button
-                            type="button"
-                            class={props.class}
-                            onclick={() => {
-                                props.onClick?.();
-                                onExportJSON();
-                            }}
-                            data-test="editor-export-json-button"
-                        >
-                            <CurlyBraces class="mr-2 h-4 w-4" /> Export JSON
-                        </button>
-                    {/snippet}
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                    {#snippet children(props)}
-                        <button
-                            type="button"
-                            class={props.class}
-                            onclick={() => {
-                                props.onClick?.();
-                                copyEmbedSnippet();
-                            }}
-                            data-test="editor-copy-embed-button"
-                        >
-                            <CodeXml class="mr-2 h-4 w-4" /> Copy Embed
-                        </button>
-                    {/snippet}
-                </DropdownMenuItem>
-            </DropdownMenuContent>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" sideOffset={4} class="w-60">
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <button
+                                type="button"
+                                class={props.class}
+                                onclick={() => {
+                                    props.onClick?.();
+                                    onExport();
+                                }}
+                                data-test="editor-export-button"
+                            >
+                                <Download class="mr-2 h-4 w-4" /> Export Svelte
+                            </button>
+                        {/snippet}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <button
+                                type="button"
+                                class={props.class}
+                                disabled={exportingWebComponent}
+                                onclick={() => {
+                                    props.onClick?.();
+                                    exportWebComponent();
+                                }}
+                                data-test="editor-export-web-component-button"
+                            >
+                                <Download class="mr-2 h-4 w-4" />
+                                {exportingWebComponent
+                                    ? 'Exporting…'
+                                    : 'Export Web Component'}
+                            </button>
+                        {/snippet}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <button
+                                type="button"
+                                class={props.class}
+                                onclick={() => {
+                                    props.onClick?.();
+                                    onExportJSON();
+                                }}
+                                data-test="editor-export-json-button"
+                            >
+                                <CurlyBraces class="mr-2 h-4 w-4" /> Export JSON
+                            </button>
+                        {/snippet}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                        {#snippet children(props)}
+                            <button
+                                type="button"
+                                class={props.class}
+                                onclick={() => {
+                                    props.onClick?.();
+                                    copyEmbedSnippet();
+                                }}
+                                data-test="editor-copy-embed-button"
+                            >
+                                <CodeXml class="mr-2 h-4 w-4" /> Copy Embed
+                            </button>
+                        {/snippet}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
             </DropdownMenu>
         {/if}
 

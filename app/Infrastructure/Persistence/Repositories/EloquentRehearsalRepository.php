@@ -23,6 +23,8 @@ class EloquentRehearsalRepository implements RehearsalRepository
             'step_events' => $run->step_events,
             'content' => $run->content,
             'flow' => $run->flow,
+            'version_major' => $run->version_major,
+            'version_minor' => $run->version_minor,
         ];
 
         if ($run->id === null) {

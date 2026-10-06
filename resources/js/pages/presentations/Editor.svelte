@@ -50,6 +50,14 @@
             flow: FlowGraph | null;
             source: PresentationSource;
             updated_at: string | null;
+            version: string | null;
+            versions: {
+                id: number;
+                version: string | null;
+                name: string;
+                updated_at: string | null;
+                current: boolean;
+            }[];
         };
         embed: {
             url: string;
@@ -68,7 +76,9 @@
 
     // Manual slide count for external decks: persisted so the dock can show the
     // slide number (a Google Slides iframe can't be counted automatically).
-    let slideCount = $state<number | null>(presentation.source.slideCount ?? null);
+    let slideCount = $state<number | null>(
+        presentation.source.slideCount ?? null,
+    );
     let savingSlideCount = $state(false);
 
     const saveSlideCount = (): void => {
@@ -80,8 +90,10 @@
 
         savingSlideCount = true;
         router.put(
-            update({ current_team: currentTeam.slug, presentation: presentation.id })
-                .url,
+            update({
+                current_team: currentTeam.slug,
+                presentation: presentation.id,
+            }).url,
             { source_slide_count: slideCount },
             {
                 preserveScroll: true,
@@ -292,6 +304,8 @@
         presentationId={presentation.id}
         talkSettings={presentation.talk_settings}
         isPrivate={presentation.is_private}
+        version={presentation.version}
+        versions={presentation.versions}
         external={isExternal}
         bind:name
         bind:view
@@ -356,8 +370,7 @@
                 {editor}
                 policy={page.props.lintPolicy}
                 targetMinutes={presentation.talk_settings.durationMinutes}
-                presentationStyle={presentation.talk_settings
-                    .presentationStyle}
+                presentationStyle={presentation.talk_settings.presentationStyle}
             />
             <SlideCanvas {editor} presentationId={presentation.id} />
             <InspectorPanel
@@ -365,8 +378,7 @@
                 presentationId={presentation.id}
                 policy={page.props.lintPolicy}
                 targetMinutes={presentation.talk_settings.durationMinutes}
-                presentationStyle={presentation.talk_settings
-                    .presentationStyle}
+                presentationStyle={presentation.talk_settings.presentationStyle}
                 onEditCodeSequence={(blockId) =>
                     (codeSequenceBlockId = blockId)}
             />
