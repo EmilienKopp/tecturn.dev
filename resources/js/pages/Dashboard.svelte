@@ -24,7 +24,7 @@
     import Confirm from '@/components/feedback/Confirm.svelte';
     import Heading from '@/components/Heading.svelte';
     import PendingInvitationsModal from '@/components/PendingInvitationsModal.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import { edit, index, present } from '@/routes/presentations';
     import { show as showRehearsal } from '@/routes/rehearsals';
     import {
@@ -245,7 +245,8 @@
                 </Button>
             {/each}
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 onclick={() => router.visit(index(teamSlug).url)}
             >
                 All presentations
@@ -523,7 +524,8 @@
                     </Button>
                 {:else}
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         onclick={() => router.visit(index(teamSlug).url)}
                     >
                         Create a deck

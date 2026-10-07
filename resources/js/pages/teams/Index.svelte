@@ -21,8 +21,7 @@
     import CreateTeamModal from '@/components/CreateTeamModal.svelte';
     import Heading from '@/components/Heading.svelte';
     import LeaveTeamModal from '@/components/LeaveTeamModal.svelte';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
+    import { Badge, Button } from 'daisy-svelte';
     import {
         Tooltip,
         TooltipContent,
@@ -134,22 +133,14 @@
                             <Tooltip>
                                 <TooltipTrigger>
                                     {#snippet child({ props })}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
+                                        <Link
                                             {...props}
+                                            class="btn btn-ghost btn-sm"
+                                            href={edit(team.slug)}
+                                            data-test="team-view-button"
                                         >
-                                            {#snippet children(buttonProps)}
-                                                <Link
-                                                    {...buttonProps}
-                                                    href={edit(team.slug)}
-                                                    data-test="team-view-button"
-                                                >
-                                                    <Eye class="h-4 w-4" />
-                                                </Link>
-                                            {/snippet}
-                                        </Button>
+                                            <Eye class="h-4 w-4" />
+                                        </Link>
                                     {/snippet}
                                 </TooltipTrigger>
                                 <TooltipContent>
@@ -160,22 +151,14 @@
                             <Tooltip>
                                 <TooltipTrigger>
                                     {#snippet child({ props })}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            asChild
+                                        <Link
                                             {...props}
+                                            class="btn btn-ghost btn-sm"
+                                            href={edit(team.slug)}
+                                            data-test="team-edit-button"
                                         >
-                                            {#snippet children(buttonProps)}
-                                                <Link
-                                                    {...buttonProps}
-                                                    href={edit(team.slug)}
-                                                    data-test="team-edit-button"
-                                                >
-                                                    <Pencil class="h-4 w-4" />
-                                                </Link>
-                                            {/snippet}
-                                        </Button>
+                                            <Pencil class="h-4 w-4" />
+                                        </Link>
                                     {/snippet}
                                 </TooltipTrigger>
                                 <TooltipContent>

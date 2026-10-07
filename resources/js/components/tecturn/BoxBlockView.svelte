@@ -49,8 +49,8 @@
         ? 'ring-1 ring-primary'
         : ''}"
     style="border-color: {block.style.borderColor ??
-        'hsl(var(--border))'}; background-color: {block.style.backgroundColor ??
-        'transparent'}; color: {block.style.color ??
+        'var(--border-color)'}; background-color: {block.style
+        .backgroundColor ?? 'transparent'}; color: {block.style.color ??
         'inherit'}; font-size: {scaleFontSize(block.style.fontSize) ??
         ''}; font-weight: {block.style.fontWeight ??
         ''}; font-family: {fontStack(block.style.fontFamily) ?? 'inherit'};"

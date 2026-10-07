@@ -11,7 +11,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import RehearsalReplay from '@/components/tecturn/RehearsalReplay.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import UserAvatar from '@/components/UserAvatar.svelte';
     import { shownSlideTitles } from '@/lib/tecturn/flow-compiler';
     import { complete as completeRoute } from '@/routes/reviews';

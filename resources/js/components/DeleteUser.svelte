@@ -2,16 +2,9 @@
     import { Form } from '@inertiajs/svelte';
     import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogClose,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-        DialogTrigger,
-    } from '@/components/ui/dialog';
+    import { Button, Modal } from 'daisy-svelte';
+
+    let open = $state(false);
 </script>
 
 <div class="space-y-6">
@@ -29,53 +22,47 @@
                 Please proceed with caution, this cannot be undone.
             </p>
         </div>
-        <Dialog>
-            <DialogTrigger>
-                <Button variant="destructive" data-test="delete-user-button"
-                    >Delete account</Button
-                >
-            </DialogTrigger>
-            <DialogContent>
-                <Form
-                    {...ProfileController.destroy.form()}
-                    class="space-y-6"
-                    options={{ preserveScroll: true }}
-                >
-                    {#snippet children({ processing, resetAndClearErrors })}
-                        <div class="space-y-3">
-                            <DialogTitle
-                                >Are you sure you want to delete your account?</DialogTitle
-                            >
-                            <DialogDescription>
-                                Once your account is deleted, all of its
-                                resources and data will also be permanently
-                                deleted. Please confirm you would like to
-                                permanently delete your account.
-                            </DialogDescription>
-                        </div>
+        <Button
+            variant="destructive"
+            data-test="delete-user-button"
+            onclick={() => (open = true)}>Delete account</Button
+        >
+        <Modal bind:open>
+            {#snippet title()}Are you sure you want to delete your account?{/snippet}
+            <Form
+                {...ProfileController.destroy.form()}
+                class="space-y-6"
+                options={{ preserveScroll: true }}
+            >
+                {#snippet children({ processing, resetAndClearErrors })}
+                    <p class="text-muted-foreground text-sm">
+                        Once your account is deleted, all of its resources and
+                        data will also be permanently deleted. Please confirm
+                        you would like to permanently delete your account.
+                    </p>
 
-                        <DialogFooter class="gap-2">
-                            <DialogClose>
-                                <Button
-                                    variant="secondary"
-                                    onclick={() => resetAndClearErrors()}
-                                >
-                                    Cancel
-                                </Button>
-                            </DialogClose>
+                    <div class="modal-action gap-2">
+                        <Button
+                            variant="secondary"
+                            onclick={() => {
+                                resetAndClearErrors();
+                                open = false;
+                            }}
+                        >
+                            Cancel
+                        </Button>
 
-                            <Button
-                                type="submit"
-                                variant="destructive"
-                                disabled={processing}
-                                data-test="confirm-delete-user-button"
-                            >
-                                Delete account
-                            </Button>
-                        </DialogFooter>
-                    {/snippet}
-                </Form>
-            </DialogContent>
-        </Dialog>
+                        <Button
+                            type="submit"
+                            variant="destructive"
+                            disabled={processing}
+                            data-test="confirm-delete-user-button"
+                        >
+                            Delete account
+                        </Button>
+                    </div>
+                {/snippet}
+            </Form>
+        </Modal>
     </div>
 </div>

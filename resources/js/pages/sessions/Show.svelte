@@ -20,7 +20,7 @@
     import Radio from 'lucide-svelte/icons/radio';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import { edit } from '@/routes/presentations';
 
     type SessionDetail = {
@@ -145,7 +145,8 @@
             {/if}
         </div>
         <Button
-            variant="outline"
+            variant="base"
+            outline
             onclick={() =>
                 router.visit(
                     edit({
@@ -221,7 +222,9 @@
                         class="rounded-xl border border-border bg-card p-3"
                         data-test="session-slide-timing"
                     >
-                        <div class="flex items-baseline justify-between text-sm">
+                        <div
+                            class="flex items-baseline justify-between text-sm"
+                        >
                             <span class="font-medium text-foreground">
                                 Slide {timing.slide + 1}
                             </span>

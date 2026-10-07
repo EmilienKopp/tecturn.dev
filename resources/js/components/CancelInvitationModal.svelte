@@ -1,14 +1,6 @@
 <script lang="ts">
     import { router } from '@inertiajs/svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogClose,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
+    import { Button, Modal } from 'daisy-svelte';
     import { destroy as destroyInvitation } from '@/routes/teams/invitations';
     import type { Team, TeamInvitation } from '@/types';
 
@@ -39,28 +31,24 @@
     };
 </script>
 
-<Dialog bind:open>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Cancel invitation</DialogTitle>
-            <DialogDescription class="mb-3">
-                Are you sure you want to cancel the invitation for <strong
-                    >{invitation?.email}</strong
-                >?
-            </DialogDescription>
-        </div>
+<Modal bind:open>
+    {#snippet title()}Cancel invitation{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Are you sure you want to cancel the invitation for <strong
+            >{invitation?.email}</strong
+        >?
+    </p>
 
-        <DialogFooter class="gap-2">
-            <DialogClose>
-                <Button variant="secondary">Keep invitation</Button>
-            </DialogClose>
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}
+            >Keep invitation</Button
+        >
 
-            <Button
-                variant="destructive"
-                disabled={processing}
-                onclick={cancelInvitation}
-                data-test="cancel-invitation-confirm">Cancel invitation</Button
-            >
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        <Button
+            variant="destructive"
+            disabled={processing}
+            onclick={cancelInvitation}
+            data-test="cancel-invitation-confirm">Cancel invitation</Button
+        >
+    {/snippet}
+</Modal>

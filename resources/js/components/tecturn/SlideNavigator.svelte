@@ -3,14 +3,7 @@
     import EyeOff from 'lucide-svelte/icons/eye-off';
     import Plus from 'lucide-svelte/icons/plus';
     import Trash2 from 'lucide-svelte/icons/trash-2';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
+    import { Button, Modal } from 'daisy-svelte';
     import {
         formatSpeakingTime,
         lintDeck,
@@ -224,7 +217,8 @@
             </span>
         </div>
         <Button
-            variant="outline"
+            variant="base"
+            outline
             size="sm"
             class="w-full"
             onclick={() => editor.addSlide()}
@@ -235,29 +229,26 @@
     </div>
 </div>
 
-<Dialog bind:open={deleteDialogOpen}>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Delete slide</DialogTitle>
-            <DialogDescription>
-                Delete "{slideNameDeleting}"? Its blocks and flow connections go
-                with it. This cannot be undone.
-            </DialogDescription>
-        </div>
-        <DialogFooter>
-            <Button
-                variant="outline"
-                onclick={() => (deleteDialogOpen = false)}
-            >
-                Cancel
-            </Button>
-            <Button
-                variant="destructive"
-                onclick={confirmDeleteSlide}
-                data-test="slide-delete-confirm"
-            >
-                Delete
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+<Modal bind:open={deleteDialogOpen}>
+    {#snippet title()}Delete slide{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Delete "{slideNameDeleting}"? Its blocks and flow connections go with
+        it. This cannot be undone.
+    </p>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (deleteDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            variant="destructive"
+            onclick={confirmDeleteSlide}
+            data-test="slide-delete-confirm"
+        >
+            Delete
+        </Button>
+    {/snippet}
+</Modal>

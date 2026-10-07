@@ -16,9 +16,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Input } from 'daisy-svelte';
     import {
         store,
         test,
@@ -228,7 +226,8 @@
     <div class="flex gap-2">
         <Button
             type="button"
-            variant={mode === 'curated' ? 'default' : 'outline'}
+            variant={mode === 'curated' ? 'primary' : 'base'}
+            outline={mode !== 'curated'}
             size="sm"
             onclick={() => {
                 mode = 'curated';
@@ -239,7 +238,8 @@
         </Button>
         <Button
             type="button"
-            variant={mode === 'custom' ? 'default' : 'outline'}
+            variant={mode === 'custom' ? 'primary' : 'base'}
+            outline={mode !== 'custom'}
             size="sm"
             onclick={() => {
                 mode = 'custom';
@@ -255,7 +255,7 @@
     <div class="grid gap-4">
         {#if mode === 'curated'}
             <div class="grid gap-2">
-                <Label for="curated-model">Model</Label>
+                <label class="label" for="curated-model">Model</label>
                 <select
                     id="curated-model"
                     class="rounded-md border bg-background px-3 py-2 text-sm"
@@ -271,7 +271,7 @@
             </div>
         {:else}
             <div class="grid gap-2">
-                <Label for="custom-driver">Provider</Label>
+                <label class="label" for="custom-driver">Provider</label>
                 <select
                     id="custom-driver"
                     class="rounded-md border bg-background px-3 py-2 text-sm"
@@ -288,69 +288,48 @@
                 <InputError message={form.errors.driver} />
             </div>
 
-            <div class="grid gap-2">
-                <Label for="custom-model">Model id</Label>
-                <Input
-                    id="custom-model"
-                    bind:value={form.model}
-                    placeholder="e.g. gpt-4o, claude-sonnet-4-6"
-                    data-test="custom-model"
-                />
-                <InputError message={form.errors.model} />
-            </div>
+            <Input
+                label="Model id"
+                id="custom-model"
+                bind:value={form.model}
+                placeholder="e.g. gpt-4o, claude-sonnet-4-6"
+                error={form.errors.model}
+                data-test="custom-model"
+            />
         {/if}
 
         {#if needsBaseUrl || mode === 'custom'}
-            <div class="grid gap-2">
-                <Label for="base-url">
-                    Base URL
-                    {#if needsBaseUrl}
-                        <span class="text-xs text-muted-foreground"
-                            >· required</span
-                        >
-                    {:else}
-                        <span class="text-xs text-muted-foreground"
-                            >· optional</span
-                        >
-                    {/if}
-                </Label>
-                <Input
-                    id="base-url"
-                    bind:value={form.base_url}
-                    placeholder="https://api.example.com/v1"
-                    data-test="base-url"
-                />
-                <InputError message={form.errors.base_url} />
-            </div>
+            <Input
+                label="Base URL"
+                id="base-url"
+                bind:value={form.base_url}
+                placeholder="https://api.example.com/v1"
+                hint={needsBaseUrl ? 'Required' : 'Optional'}
+                error={form.errors.base_url}
+                data-test="base-url"
+            />
         {/if}
 
-        <div class="grid gap-2">
-            <Label for="api-key">API key</Label>
-            <Input
-                id="api-key"
-                type="password"
-                bind:value={form.api_key}
-                autocomplete="off"
-                placeholder="sk-…"
-                data-test="api-key"
-            />
-            <InputError message={form.errors.api_key} />
-        </div>
+        <Input
+            label="API key"
+            id="api-key"
+            type="password"
+            bind:value={form.api_key}
+            autocomplete="off"
+            placeholder="sk-…"
+            error={form.errors.api_key}
+            data-test="api-key"
+        />
 
-        <div class="grid gap-2">
-            <Label for="label"
-                >Label <span class="text-xs text-muted-foreground"
-                    >· optional</span
-                ></Label
-            >
-            <Input
-                id="label"
-                bind:value={form.label}
-                placeholder="My OpenAI key"
-                data-test="label"
-            />
-            <InputError message={form.errors.label} />
-        </div>
+        <Input
+            label="Label"
+            id="label"
+            bind:value={form.label}
+            placeholder="My OpenAI key"
+            hint="Optional"
+            error={form.errors.label}
+            data-test="label"
+        />
 
         <label class="flex items-center gap-2 text-sm">
             <input
@@ -400,7 +379,8 @@
             >
             <Button
                 type="button"
-                variant="outline"
+                variant="base"
+                outline
                 onclick={runTest}
                 disabled={testState.status === 'running'}
                 data-test="test-credential">Test connection</Button

@@ -14,6 +14,16 @@ export const BRANDING_KEYS = [
 
 export type BrandingKey = (typeof BRANDING_KEYS)[number];
 
+/** The daisyUI theme variable that feeds each branding slot. */
+const THEME_COLOR_VARS: Record<BrandingKey, string> = {
+    background: '--color-base-100',
+    primary: '--color-primary',
+    secondary: '--color-secondary',
+    accent: '--color-accent',
+    success: '--color-success',
+    danger: '--color-error',
+};
+
 export const BRANDING_LABELS: Record<BrandingKey, string> = {
     background: 'Background',
     primary: 'Primary',
@@ -60,6 +70,48 @@ export const BRANDING_FALLBACK: BrandingColors = {
     fontSize: null,
     fontWeight: null,
 };
+
+/**
+ * Branding colors read from a daisyUI theme's CSS variables. With no
+ * argument, reads the theme currently active on the document root; given a
+ * theme name, resolves that theme through a hidden probe element. Reads the
+ * daisy tokens directly (not the legacy shadcn aliases) because those are
+ * the only variables scoped to `[data-theme]` and thus probe-safe.
+ * Typography slots stay at their fallback defaults.
+ */
+export function brandingColorsFromTheme(theme?: string): BrandingColors {
+    const colors = { ...BRANDING_FALLBACK };
+
+    if (typeof document === 'undefined') {
+        return colors;
+    }
+
+    let element: HTMLElement = document.documentElement;
+    let probe: HTMLElement | null = null;
+
+    if (theme && theme !== document.documentElement.dataset.theme) {
+        probe = document.createElement('div');
+        probe.dataset.theme = theme;
+        probe.style.position = 'fixed';
+        probe.style.visibility = 'hidden';
+        document.body.appendChild(probe);
+        element = probe;
+    }
+
+    const styles = getComputedStyle(element);
+
+    for (const key of BRANDING_KEYS) {
+        const value = styles.getPropertyValue(THEME_COLOR_VARS[key]).trim();
+
+        if (value) {
+            colors[key] = value;
+        }
+    }
+
+    probe?.remove();
+
+    return colors;
+}
 
 export interface BrandingSwatch {
     key: BrandingKey;

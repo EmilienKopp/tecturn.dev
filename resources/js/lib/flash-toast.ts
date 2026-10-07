@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/svelte';
-import { toast } from 'svelte-sonner';
+import { toast } from 'daisy-svelte';
 import type { FlashToast } from '@/types/ui';
 
 export function initializeFlashToast(): void {

@@ -1,13 +1,7 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import ListPresentationImagesController from '@/actions/App/Http/Controllers/Presentations/ListPresentationImagesController';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogTitle,
-    } from '@/components/ui/dialog';
+    import { Button, Modal } from 'daisy-svelte';
     import { fetchTeamImages } from '@/lib/tecturn/uploads';
     import type { LibraryImage } from '@/lib/tecturn/uploads';
 
@@ -56,16 +50,13 @@
     }
 </script>
 
-<Dialog {open} onOpenChange={(value) => (open = value)}>
-    <DialogContent class="sm:max-w-2xl">
-        <div class="space-y-1">
-            <DialogTitle>Choose an image</DialogTitle>
-            <DialogDescription>
-                Reuse an image from any of your team's presentations.
-            </DialogDescription>
-        </div>
+<Modal bind:open class="sm:max-w-2xl">
+    {#snippet title()}Choose an image{/snippet}
+    <p class="text-muted-foreground mb-4 text-sm">
+        Reuse an image from any of your team's presentations.
+    </p>
 
-        {#if loading}
+    {#if loading}
             <div
                 class="grid grid-cols-2 gap-3 sm:grid-cols-3"
                 data-test="image-library-loading"
@@ -115,10 +106,9 @@
             </div>
         {/if}
 
-        <div class="flex justify-end">
-            <Button variant="secondary" onclick={() => (open = false)}>
-                Cancel
-            </Button>
-        </div>
-    </DialogContent>
-</Dialog>
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}>
+            Cancel
+        </Button>
+    {/snippet}
+</Modal>

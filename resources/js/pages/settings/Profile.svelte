@@ -17,10 +17,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import DeleteUser from '@/components/DeleteUser.svelte';
     import Heading from '@/components/Heading.svelte';
-    import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Input } from 'daisy-svelte';
 
     const user = $derived(page.props.auth.user);
 </script>
@@ -42,83 +39,63 @@
         options={{ preserveScroll: true }}
     >
         {#snippet children({ errors, processing })}
-            <div class="grid gap-2">
-                <Label for="name">Name</Label>
-                <Input
-                    id="name"
-                    name="name"
-                    class="mt-1 block w-full"
-                    value={user.name}
-                    required
-                    autocomplete="name"
-                    placeholder="Full name"
-                />
-                <InputError class="mt-2" message={errors.name} />
-            </div>
+            <Input
+                label="Name"
+                id="name"
+                name="name"
+                value={user.name}
+                required
+                autocomplete="name"
+                placeholder="Full name"
+                error={errors.name}
+            />
 
-            <div class="grid gap-2">
-                <Label for="handle">Public handle</Label>
-                <Input
-                    id="handle"
-                    name="handle"
-                    class="mt-1 block w-full"
-                    value={user.handle ?? ''}
-                    autocomplete="off"
-                    placeholder="yourname"
-                    data-test="profile-handle"
-                />
-                <p class="text-sm text-muted-foreground">
-                    This is how people can find you in Contacts.
-                </p>
-                <InputError class="mt-2" message={errors.handle} />
-            </div>
+            <Input
+                label="Public handle"
+                id="handle"
+                name="handle"
+                value={user.handle ?? ''}
+                autocomplete="off"
+                placeholder="yourname"
+                hint="This is how people can find you in Contacts."
+                error={errors.handle}
+                data-test="profile-handle"
+            />
 
-            <div class="grid gap-2">
-                <Label for="email">Email address</Label>
-                <Input
-                    id="email"
-                    type="email"
-                    name="email"
-                    class="mt-1 block w-full"
-                    value={user.email}
-                    required
-                    autocomplete="username"
-                    placeholder="Email address"
-                    disabled
-                />
-                <InputError class="mt-2" message={errors.email} />
-            </div>
+            <Input
+                label="Email address"
+                id="email"
+                type="email"
+                name="email"
+                value={user.email}
+                required
+                autocomplete="username"
+                placeholder="Email address"
+                disabled
+                error={errors.email}
+            />
 
-            <div class="grid gap-2">
-                <Label for="social_x_handle">X handle</Label>
-                <Input
-                    id="social_x_handle"
-                    name="social_x_handle"
-                    class="mt-1 block w-full"
-                    value={user.social_x_handle ?? ''}
-                    autocomplete="off"
-                    placeholder="yourhandle"
-                    data-test="profile-x-handle"
-                />
-                <InputError class="mt-2" message={errors.social_x_handle} />
-            </div>
+            <Input
+                label="X handle"
+                id="social_x_handle"
+                name="social_x_handle"
+                value={user.social_x_handle ?? ''}
+                autocomplete="off"
+                placeholder="yourhandle"
+                error={errors.social_x_handle}
+                data-test="profile-x-handle"
+            />
 
-            <div class="grid gap-2">
-                <Label for="social_github_handle">GitHub handle</Label>
-                <Input
-                    id="social_github_handle"
-                    name="social_github_handle"
-                    class="mt-1 block w-full"
-                    value={user.social_github_handle ?? ''}
-                    autocomplete="off"
-                    placeholder="yourhandle"
-                    data-test="profile-github-handle"
-                />
-                <InputError
-                    class="mt-2"
-                    message={errors.social_github_handle}
-                />
-            </div>
+            <Input
+                label="GitHub handle"
+                id="social_github_handle"
+                name="social_github_handle"
+                value={user.social_github_handle ?? ''}
+                autocomplete="off"
+                placeholder="yourhandle"
+                error={errors.social_github_handle}
+                data-test="profile-github-handle"
+            />
 
             <div class="flex items-center gap-4">
                 <Button

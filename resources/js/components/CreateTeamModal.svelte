@@ -1,19 +1,7 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
-    import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogClose,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-        DialogTrigger,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Input, Modal } from 'daisy-svelte';
     import { store } from '@/routes/teams';
 
     type TriggerProps = {
@@ -30,68 +18,47 @@
     let open = $state(false);
     let formKey = $state(0);
 
-    function handleOpenChange(value: boolean) {
-        open = value;
-
-        if (!value) {
-            formKey++;
-        }
+    function handleClose() {
+        formKey++;
     }
 </script>
 
-<Dialog {open} onOpenChange={handleOpenChange}>
-    <DialogTrigger asChild>
-        {#snippet children(props)}
-            {@render trigger?.(props)}
-        {/snippet}
-    </DialogTrigger>
-    <DialogContent>
-        {#key formKey}
-            <Form
-                {...store.form()}
-                class="space-y-6"
-                onSuccess={() => (open = false)}
-            >
-                {#snippet children({ errors, processing })}
-                    <div class="space-y-3">
-                        <DialogTitle>Create a new team</DialogTitle>
-                        <DialogDescription>
-                            Create a new team to collaborate with others.
-                        </DialogDescription>
-                    </div>
+{@render trigger?.({ onClick: () => (open = true) })}
 
-                    <div class="grid gap-2">
-                        <Label for="name">Team name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            placeholder="My team"
-                            required
-                            data-test="create-team-name"
-                        />
-                        <InputError message={errors.name} />
-                    </div>
+<Modal bind:open onclose={handleClose}>
+    {#snippet title()}Create a new team{/snippet}
+    {#key formKey}
+        <Form
+            {...store.form()}
+            class="space-y-6"
+            onSuccess={() => (open = false)}
+        >
+            {#snippet children({ errors, processing })}
+                <p class="text-muted-foreground text-sm">
+                    Create a new team to collaborate with others.
+                </p>
 
-                    <DialogFooter class="gap-2">
-                        <DialogClose asChild>
-                            {#snippet children(props)}
-                                <Button
-                                    variant="secondary"
-                                    onclick={props.onClick}
-                                >
-                                    Cancel
-                                </Button>
-                            {/snippet}
-                        </DialogClose>
+                <Input
+                    label="Team name"
+                    name="name"
+                    placeholder="My team"
+                    required
+                    error={errors.name}
+                    data-test="create-team-name"
+                />
 
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            data-test="create-team-submit">Create team</Button
-                        >
-                    </DialogFooter>
-                {/snippet}
-            </Form>
-        {/key}
-    </DialogContent>
-</Dialog>
+                <div class="modal-action gap-2">
+                    <Button variant="secondary" onclick={() => (open = false)}>
+                        Cancel
+                    </Button>
+
+                    <Button
+                        type="submit"
+                        disabled={processing}
+                        data-test="create-team-submit">Create team</Button
+                    >
+                </div>
+            {/snippet}
+        </Form>
+    {/key}
+</Modal>

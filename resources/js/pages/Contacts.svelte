@@ -17,16 +17,7 @@
     import Users from 'lucide-svelte/icons/users';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
+    import { Badge, Button, Modal } from 'daisy-svelte';
     import UserAvatar from '@/components/UserAvatar.svelte';
     import { useFeatures } from '@/lib/features.svelte';
     import { index as contactsIndex } from '@/routes/contacts';
@@ -240,16 +231,17 @@
                     <Search
                         class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                     />
-                    <Input
+                    <input
                         bind:value={searchTerm}
-                        class="pl-9"
+                        class="input w-full pl-9"
                         placeholder="Search by name, @handle, GitHub, or X"
                         data-test="contacts-search-input"
                     />
                 </div>
                 <Button
                     type="submit"
-                    variant="outline"
+                    variant="base"
+                    outline
                     data-test="contacts-search-button"
                 >
                     Search
@@ -307,8 +299,10 @@
                                             size="sm"
                                             variant={contact.follow_status ===
                                             'none'
-                                                ? 'default'
-                                                : 'outline'}
+                                                ? 'primary'
+                                                : 'base'}
+                                            outline={contact.follow_status !==
+                                                'none' || undefined}
                                             onclick={() =>
                                                 toggleFollow(contact)}
                                             data-test="contact-follow-button"
@@ -538,7 +532,8 @@
                                     </Button>
                                     <Button
                                         size="sm"
-                                        variant="outline"
+                                        variant="base"
+                                        outline
                                         onclick={() =>
                                             respondToRequest(
                                                 requester.id,
@@ -646,29 +641,26 @@
     </div>
 </div>
 
-<Dialog bind:open={unfollowDialogOpen}>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Unfollow {unfollowTarget?.name}</DialogTitle>
-            <DialogDescription>
-                You'll stop seeing their talks, and you'll need to send a new
-                follow request to follow them again.
-            </DialogDescription>
-        </div>
-        <DialogFooter>
-            <Button
-                variant="outline"
-                onclick={() => (unfollowDialogOpen = false)}
-            >
-                Cancel
-            </Button>
-            <Button
-                variant="destructive"
-                onclick={confirmUnfollow}
-                data-test="contact-unfollow-confirm"
-            >
-                Unfollow
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+<Modal bind:open={unfollowDialogOpen}>
+    {#snippet title()}Unfollow {unfollowTarget?.name}{/snippet}
+    <p class="text-sm text-muted-foreground">
+        You'll stop seeing their talks, and you'll need to send a new follow
+        request to follow them again.
+    </p>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (unfollowDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            variant="destructive"
+            onclick={confirmUnfollow}
+            data-test="contact-unfollow-confirm"
+        >
+            Unfollow
+        </Button>
+    {/snippet}
+</Modal>

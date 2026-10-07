@@ -13,7 +13,7 @@
     import { router } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import { approve, reject } from '@/routes/admin/beta-requests';
 
     type BetaRequestRow = {
@@ -144,7 +144,6 @@
                                 <div class="flex justify-end gap-2">
                                     <Button
                                         size="sm"
-                                        variant="default"
                                         disabled={request.registered ||
                                             request.status === 'approved' ||
                                             processing.includes(request.id)}
@@ -156,7 +155,8 @@
                                     </Button>
                                     <Button
                                         size="sm"
-                                        variant="outline"
+                                        variant="base"
+                                        outline
                                         disabled={request.registered ||
                                             request.status === 'rejected' ||
                                             processing.includes(request.id)}

@@ -14,12 +14,7 @@
         AvatarFallback,
         AvatarImage,
     } from '@/components/ui/avatar';
-    import { Button } from '@/components/ui/button';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
+    import { Button, Dropdown } from 'daisy-svelte';
     import {
         NavigationMenu,
         NavigationMenuItem,
@@ -232,39 +227,30 @@
                     </div>
                 </div>
 
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        {#snippet children(props)}
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                class="relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
-                                onclick={props.onclick}
-                                aria-expanded={props['aria-expanded']}
-                                data-state={props['data-state']}
-                            >
-                                <Avatar
-                                    class="size-8 overflow-hidden rounded-full"
+                <Dropdown align="end" class="w-56">
+                    {#snippet trigger()}
+                        <span
+                            class="btn btn-ghost btn-square relative size-10 w-auto rounded-full p-1 focus-within:ring-2 focus-within:ring-primary"
+                        >
+                            <Avatar class="size-8 overflow-hidden rounded-full">
+                                {#if auth.user.avatar}
+                                    <AvatarImage
+                                        src={auth.user.avatar}
+                                        alt={auth.user.name}
+                                    />
+                                {/if}
+                                <AvatarFallback
+                                    class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
                                 >
-                                    {#if auth.user.avatar}
-                                        <AvatarImage
-                                            src={auth.user.avatar}
-                                            alt={auth.user.name}
-                                        />
-                                    {/if}
-                                    <AvatarFallback
-                                        class="rounded-lg bg-neutral-200 font-semibold text-black dark:bg-neutral-700 dark:text-white"
-                                    >
-                                        {getInitials(auth.user?.name)}
-                                    </AvatarFallback>
-                                </Avatar>
-                            </Button>
-                        {/snippet}
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" class="w-56">
-                        <UserMenuContent user={auth.user} />
-                    </DropdownMenuContent>
-                </DropdownMenu>
+                                    {getInitials(auth.user?.name)}
+                                </AvatarFallback>
+                            </Avatar>
+                        </span>
+                    {/snippet}
+                    {#snippet children({ close })}
+                        <UserMenuContent user={auth.user} {close} />
+                    {/snippet}
+                </Dropdown>
 
                 <TeamSwitcher inHeader={true} />
             </div>

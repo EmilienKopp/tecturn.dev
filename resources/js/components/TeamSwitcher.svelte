@@ -6,15 +6,7 @@
     import Users from 'lucide-svelte/icons/users';
     import { onMount } from 'svelte';
     import CreateTeamModal from '@/components/CreateTeamModal.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuLabel,
-        DropdownMenuSeparator,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
+    import { Dropdown } from 'daisy-svelte';
     import { switchMethod } from '@/routes/teams';
     import type { Team } from '@/types';
 
@@ -70,102 +62,91 @@
     };
 </script>
 
-<DropdownMenu>
-    <DropdownMenuTrigger asChild>
-        {#snippet children(props)}
-            <Button
-                variant="ghost"
-                class={inHeader
-                    ? 'h-8 gap-1 px-2'
-                    : 'has-[>svg]:px-2 w-full justify-start px-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'}
-                onclick={props.onclick}
-                aria-expanded={props['aria-expanded']}
-                data-state={props['data-state']}
-                data-test="team-switcher-trigger"
-            >
-                <Users
-                    class={inHeader
-                        ? 'hidden'
-                        : 'hidden size-4 shrink-0 group-data-[collapsible=icon]:block'}
-                />
-                <div
-                    class={inHeader
-                        ? 'grid flex-1 text-left text-sm leading-tight'
-                        : 'grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'}
-                >
-                    <span
-                        class={inHeader
-                            ? 'max-w-[120px] truncate font-medium'
-                            : 'truncate font-semibold'}
-                    >
-                        {currentTeam?.name ?? 'Select team'}
-                    </span>
-                </div>
-                <ChevronsUpDown
-                    class={inHeader
-                        ? 'size-4 opacity-50'
-                        : 'ml-auto size-4 group-data-[collapsible=icon]:hidden'}
-                />
-            </Button>
-        {/snippet}
-    </DropdownMenuTrigger>
-    <DropdownMenuContent
-        class={inHeader
-            ? 'w-56'
-            : 'w-(--reka-dropdown-menu-trigger-width) min-w-56 rounded-lg'}
-        side={inHeader ? undefined : isMobile ? 'bottom' : 'right'}
-        align={inHeader ? 'end' : 'start'}
-        sideOffset={inHeader ? undefined : 4}
-    >
-        <DropdownMenuLabel class="text-xs text-muted-foreground"
-            >Teams</DropdownMenuLabel
+<!-- The Dropdown lives inside CreateTeamModal's trigger snippet so the modal
+     content sits outside the <details> and survives the dropdown closing. -->
+<CreateTeamModal>
+    {#snippet children(triggerProps)}
+        <Dropdown
+            position={inHeader ? 'bottom' : isMobile ? 'bottom' : 'right'}
+            align={inHeader ? 'end' : 'start'}
+            class={inHeader ? 'w-56' : 'min-w-56 rounded-lg'}
         >
-
-        {#each teams as team (team.id)}
-            <DropdownMenuItem asChild>
-                {#snippet children(props)}
-                    <button
-                        type="button"
-                        class="{props.class} gap-2 {inHeader ? '' : 'p-2'}"
-                        data-test="team-switcher-item"
-                        onclick={() => {
-                            props.onClick?.();
-                            switchTeam(team);
-                        }}
+            {#snippet trigger()}
+                <span
+                    class="btn btn-ghost {inHeader
+                        ? 'h-8 gap-1 px-2'
+                        : 'has-[>svg]:px-2 w-full justify-start px-2'}"
+                    data-test="team-switcher-trigger"
+                >
+                    <Users
+                        class={inHeader
+                            ? 'hidden'
+                            : 'hidden size-4 shrink-0 group-data-[collapsible=icon]:block'}
+                    />
+                    <div
+                        class={inHeader
+                            ? 'grid flex-1 text-left text-sm leading-tight'
+                            : 'grid flex-1 text-left text-sm leading-tight group-data-[collapsible=icon]:hidden'}
                     >
-                        {team.name}
-                        {#if currentTeam?.id === team.id}
-                            <Check
-                                class={inHeader
-                                    ? 'ml-auto size-4'
-                                    : 'ml-auto h-4 w-4'}
-                            />
-                        {/if}
-                    </button>
-                {/snippet}
-            </DropdownMenuItem>
-        {/each}
+                        <span
+                            class={inHeader
+                                ? 'max-w-[120px] truncate font-medium'
+                                : 'truncate font-semibold'}
+                        >
+                            {currentTeam?.name ?? 'Select team'}
+                        </span>
+                    </div>
+                    <ChevronsUpDown
+                        class={inHeader
+                            ? 'size-4 opacity-50'
+                            : 'ml-auto size-4 group-data-[collapsible=icon]:hidden'}
+                    />
+                </span>
+            {/snippet}
 
-        <DropdownMenuSeparator />
+            {#snippet children({ close })}
+                <li class="menu-title text-xs text-muted-foreground">Teams</li>
 
-        <CreateTeamModal>
-            {#snippet children(triggerProps)}
-                <DropdownMenuItem asChild>
-                    {#snippet children(props)}
+                {#each teams as team (team.id)}
+                    <li>
                         <button
                             type="button"
-                            class="{props.class} gap-2 {inHeader ? '' : 'p-2'}"
-                            data-test="team-switcher-new-team"
-                            onclick={(event) => {
-                                callClickHandler(triggerProps.onClick, event);
+                            class="gap-2 {inHeader ? '' : 'p-2'}"
+                            data-test="team-switcher-item"
+                            onclick={() => {
+                                close();
+                                switchTeam(team);
                             }}
                         >
-                            <Plus class={inHeader ? 'size-4' : 'h-4 w-4'} />
-                            <span class="text-muted-foreground">New team</span>
+                            {team.name}
+                            {#if currentTeam?.id === team.id}
+                                <Check
+                                    class={inHeader
+                                        ? 'ml-auto size-4'
+                                        : 'ml-auto h-4 w-4'}
+                                />
+                            {/if}
                         </button>
-                    {/snippet}
-                </DropdownMenuItem>
+                    </li>
+                {/each}
+
+                <li class="border-base-300 my-1 border-t"></li>
+
+                <li>
+                    <button
+                        type="button"
+                        class="gap-2 {inHeader ? '' : 'p-2'}"
+                        data-test="team-switcher-new-team"
+                        onclick={(event) => {
+                            close();
+                            callClickHandler(triggerProps.onClick, event);
+                        }}
+                    >
+                        <Plus class={inHeader ? 'size-4' : 'h-4 w-4'} />
+                        <span class="text-muted-foreground">New team</span>
+                    </button>
+                </li>
             {/snippet}
-        </CreateTeamModal>
-    </DropdownMenuContent>
-</DropdownMenu>
+        </Dropdown>
+    {/snippet}
+</CreateTeamModal>

@@ -1,16 +1,6 @@
 <script lang="ts">
     import X from 'lucide-svelte/icons/x';
-    import { Button } from '@/components/ui/button';
-    import { Checkbox } from '@/components/ui/checkbox';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Checkbox, Input, Modal } from 'daisy-svelte';
     import {
         DEFAULT_REACTIONS,
         MAX_FREE_TEXT_LENGTH,
@@ -78,10 +68,6 @@
         wasOpen = open;
     });
 
-    function handleOpenChange(value: boolean) {
-        open = value;
-    }
-
     function addReaction() {
         if (!canAdd) {
             return;
@@ -119,17 +105,14 @@
     }
 </script>
 
-<Dialog {open} onOpenChange={handleOpenChange}>
-    <DialogContent class="sm:max-w-lg">
-        <div class="space-y-3">
-            <DialogTitle>Reactions</DialogTitle>
-            <DialogDescription>
-                The emojis the audience can tap. Keep the defaults or set your
-                own — up to {MAX_REACTIONS}.
-            </DialogDescription>
-        </div>
+<Modal bind:open class="sm:max-w-lg">
+    {#snippet title()}Reactions{/snippet}
+    <p class="text-muted-foreground text-sm">
+        The emojis the audience can tap. Keep the defaults or set your own — up
+        to {MAX_REACTIONS}.
+    </p>
 
-        <div class="grid gap-4 my-4">
+    <div class="grid gap-4 my-4">
             <label
                 class="flex items-center gap-2 text-sm"
                 for="reactions-enabled"
@@ -144,7 +127,7 @@
 
             <div class="grid gap-2">
                 <div class="flex items-baseline justify-between">
-                    <Label>Reactions</Label>
+                    <span class="label">Reactions</span>
                     <span class="text-xs text-muted-foreground tabular-nums">
                         {list.length} / {MAX_REACTIONS}
                     </span>
@@ -180,18 +163,17 @@
             </div>
 
             <div class="flex items-end gap-2">
-                <div class="grid flex-1 gap-2">
-                    <Label for="reaction-add">Add a reaction</Label>
-                    <Input
-                        id="reaction-add"
-                        bind:value={draft}
-                        onkeydown={onDraftKeydown}
-                        maxlength={2}
-                        autocomplete="off"
-                        disabled={atLimit}
-                        data-test="reaction-input"
-                    />
-                </div>
+                <Input
+                    label="Add a reaction"
+                    id="reaction-add"
+                    fieldsetClass="flex-1"
+                    bind:value={draft}
+                    onkeydown={onDraftKeydown}
+                    maxlength={2}
+                    autocomplete="off"
+                    disabled={atLimit}
+                    data-test="reaction-input"
+                />
                 <Button
                     variant="secondary"
                     onclick={addReaction}
@@ -228,25 +210,23 @@
                 </label>
 
                 {#if freeText}
-                    <div class="grid max-w-[16rem] gap-2">
-                        <Label for="reactions-max-length">
-                            Max length (up to {MAX_FREE_TEXT_LENGTH})
-                        </Label>
-                        <Input
-                            id="reactions-max-length"
-                            type="number"
-                            min="1"
-                            max={MAX_FREE_TEXT_LENGTH}
-                            bind:value={maxLength}
-                            onblur={clampMaxLength}
-                            data-test="reactions-max-length"
-                        />
-                    </div>
+                    <Input
+                        label="Max length (up to {MAX_FREE_TEXT_LENGTH})"
+                        id="reactions-max-length"
+                        fieldsetClass="max-w-[16rem]"
+                        type="number"
+                        min="1"
+                        max={MAX_FREE_TEXT_LENGTH}
+                        bind:value={maxLength}
+                        onblur={clampMaxLength}
+                        data-test="reactions-max-length"
+                    />
                 {/if}
             </div>
         </div>
 
-        <DialogFooter class="gap-2 sm:justify-between mx-3">
+    {#snippet actions()}
+        <div class="flex w-full items-center justify-between gap-2">
             <Button
                 variant="ghost"
                 onclick={resetToDefaults}
@@ -260,6 +240,6 @@
                 </Button>
                 <Button onclick={save} data-test="reactions-save">Save</Button>
             </div>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        </div>
+    {/snippet}
+</Modal>

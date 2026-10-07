@@ -1,16 +1,11 @@
 <script lang="ts">
-    import { Button } from '@/components/ui/button';
-    import type { Variant } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogTitle,
-        DialogDescription,
-        DialogFooter,
-    } from '@/components/ui/dialog';
+    import type { ComponentProps } from 'svelte';
+    import { Button, Modal } from 'daisy-svelte';
+
+    type Variant = NonNullable<ComponentProps<typeof Button>['variant']>;
 
     let deleteDialogOpen = $state(false);
-    let title = $state('');
+    let modalTitle = $state('');
     let text = $state('');
     let onConfirm = $state(() => {});
     let variant = $state<Variant>('default');
@@ -29,7 +24,7 @@
         variant?: Variant;
         action?: string;
     }) {
-        title = confirmTitle;
+        modalTitle = confirmTitle;
         text = confirmText;
         onConfirm = () => {
             callback?.();
@@ -42,28 +37,21 @@
     }
 </script>
 
-<Dialog bind:open={deleteDialogOpen}>
-    <DialogContent class="space-y-5">
-        <div class="space-y-3">
-            <DialogTitle>{title}</DialogTitle>
-            <DialogDescription>
-                {text}
-            </DialogDescription>
-        </div>
-        <DialogFooter>
-            <Button
-                variant="outline"
-                onclick={() => (deleteDialogOpen = false)}
-            >
-                Cancel
-            </Button>
-            <Button
-                {variant}
-                onclick={onConfirm}
-                data-test="slide-delete-confirm"
-            >
-                {action}
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+<Modal bind:open={deleteDialogOpen}>
+    {#snippet title()}{modalTitle}{/snippet}
+    <p class="text-muted-foreground text-sm">
+        {text}
+    </p>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (deleteDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button {variant} onclick={onConfirm} data-test="slide-delete-confirm">
+            {action}
+        </Button>
+    {/snippet}
+</Modal>

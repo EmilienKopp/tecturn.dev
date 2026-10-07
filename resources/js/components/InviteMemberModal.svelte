@@ -1,23 +1,6 @@
 <script lang="ts">
     import { Form } from '@inertiajs/svelte';
-    import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogClose,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
-    import {
-        Select,
-        SelectContent,
-        SelectItem,
-        SelectTrigger,
-    } from '@/components/ui/select';
+    import { Button, Input, Modal, Select } from 'daisy-svelte';
     import { store as storeInvitation } from '@/routes/teams/invitations';
     import type { RoleOption, Team } from '@/types';
 
@@ -34,94 +17,66 @@
     let inviteRole = $state<RoleOption['value']>('member');
     let formKey = $state(0);
 
-    const inviteRoleLabel = $derived(
-        availableRoles.find((role) => role.value === inviteRole)?.label ??
-            'Select a role',
+    const roleOptions = $derived(
+        availableRoles.map((role) => ({
+            value: role.value,
+            name: role.label,
+        })),
     );
 
-    function handleOpenChange(value: boolean) {
-        open = value;
-
-        if (!value) {
-            inviteRole = 'member';
-            formKey++;
-        }
+    function handleClose() {
+        inviteRole = 'member';
+        formKey++;
     }
 </script>
 
-<Dialog {open} onOpenChange={handleOpenChange}>
-    <DialogContent>
-        {#key formKey}
-            <Form
-                {...storeInvitation.form(team.slug)}
-                class="space-y-6"
-                onSuccess={() => (open = false)}
-            >
-                {#snippet children({ errors, processing })}
-                    <div class="space-y-3">
-                        <DialogTitle>Invite a team member</DialogTitle>
-                        <DialogDescription>
-                            Send an invitation to join this team.
-                        </DialogDescription>
-                    </div>
+<Modal bind:open onclose={handleClose}>
+    {#snippet title()}Invite a team member{/snippet}
+    {#key formKey}
+        <Form
+            {...storeInvitation.form(team.slug)}
+            class="space-y-6"
+            onSuccess={() => (open = false)}
+        >
+            {#snippet children({ errors, processing })}
+                <p class="text-muted-foreground text-sm">
+                    Send an invitation to join this team.
+                </p>
 
-                    <div class="grid gap-4">
-                        <div class="grid gap-2">
-                            <Label for="email">Email address</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="colleague@example.com"
-                                required
-                                data-test="invite-email"
-                            />
-                            <InputError message={errors.email} />
-                        </div>
+                <div class="grid gap-4">
+                    <Input
+                        label="Email address"
+                        name="email"
+                        type="email"
+                        placeholder="colleague@example.com"
+                        required
+                        error={errors.email}
+                        data-test="invite-email"
+                    />
 
-                        <div class="grid gap-2">
-                            <Label for="role">Role</Label>
-                            <Select bind:value={inviteRole}>
-                                <SelectTrigger
-                                    class="w-full"
-                                    data-test="invite-role"
-                                >
-                                    {inviteRoleLabel}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {#each availableRoles as role (role.value)}
-                                        <SelectItem
-                                            value={role.value}
-                                            label={role.label}
-                                        >
-                                            {role.label}
-                                        </SelectItem>
-                                    {/each}
-                                </SelectContent>
-                            </Select>
+                    <Select
+                        label="Role"
+                        name="role"
+                        placeholder="Select a role"
+                        options={roleOptions}
+                        bind:value={inviteRole}
+                        error={errors.role}
+                        data-test="invite-role"
+                    />
+                </div>
 
-                            <input
-                                type="hidden"
-                                name="role"
-                                value={inviteRole}
-                            />
-                            <InputError message={errors.role} />
-                        </div>
-                    </div>
+                <div class="modal-action gap-2">
+                    <Button variant="secondary" onclick={() => (open = false)}>
+                        Cancel
+                    </Button>
 
-                    <DialogFooter class="gap-2">
-                        <DialogClose>
-                            <Button variant="secondary">Cancel</Button>
-                        </DialogClose>
-
-                        <Button
-                            type="submit"
-                            disabled={processing}
-                            data-test="invite-submit">Send invitation</Button
-                        >
-                    </DialogFooter>
-                {/snippet}
-            </Form>
-        {/key}
-    </DialogContent>
-</Dialog>
+                    <Button
+                        type="submit"
+                        disabled={processing}
+                        data-test="invite-submit">Send invitation</Button
+                    >
+                </div>
+            {/snippet}
+        </Form>
+    {/key}
+</Modal>

@@ -11,24 +11,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import Select from '@/components/input/Select.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-        DialogTrigger,
-    } from '@/components/ui/dialog';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
-    import { Skeleton } from '@/components/ui/skeleton';
+    import { Button, Dropdown, Input, Modal } from 'daisy-svelte';
     import { index as aiSettings } from '@/routes/ai-credentials';
     import {
         destroy,
@@ -370,7 +353,8 @@
                 <DropdownMenuTrigger asChild>
                     {#snippet children(props)}
                         <Button
-                            variant="outline"
+                            variant="base"
+                            outline
                             onclick={props.onclick}
                             aria-expanded={props['aria-expanded']}
                             data-state={props['data-state']}
@@ -424,7 +408,8 @@
                 <DialogTrigger asChild>
                     {#snippet children(props)}
                         <Button
-                            variant="outline"
+                            variant="base"
+                            outline
                             onclick={(event: MouseEvent) => {
                                 if (typeof props.onClick === 'function') {
                                     props.onClick(event);
@@ -448,19 +433,18 @@
                             </DialogDescription>
                         </div>
 
-                        <div class="space-y-2">
-                            <Label for="draft-name">Name (optional)</Label>
-                            <Input
-                                id="draft-name"
-                                bind:value={draftName}
-                                maxlength={255}
-                                placeholder="Leave blank to use the generated title"
-                                data-test="magic-draft-name"
-                            />
-                        </div>
+                        <Input
+                            label="Name (optional)"
+                            id="draft-name"
+                            bind:value={draftName}
+                            maxlength={255}
+                            placeholder="Leave blank to use the generated title"
+                            data-test="magic-draft-name"
+                        />
 
                         <div class="space-y-2">
-                            <Label for="draft-plan">Outline</Label>
+                            <label class="label" for="draft-plan">Outline</label
+                            >
                             <textarea
                                 id="draft-plan"
                                 bind:value={draftPlan}
@@ -473,7 +457,7 @@
                         </div>
 
                         <div class="space-y-2">
-                            <Label for="draft-model">Model</Label>
+                            <label class="label" for="draft-model">Model</label>
                             <Select
                                 id="draft-model"
                                 class="*:bg-background  flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
@@ -560,19 +544,17 @@
                             </DialogDescription>
                         </div>
 
-                        <div class="space-y-2">
-                            <Label for="new-presentation-name">Name</Label>
-                            <Input
-                                id="new-presentation-name"
-                                bind:value={newName}
-                                required
-                                maxlength={255}
-                                data-test="new-presentation-name"
-                            />
-                        </div>
+                        <Input
+                            label="Name"
+                            id="new-presentation-name"
+                            bind:value={newName}
+                            required
+                            maxlength={255}
+                            data-test="new-presentation-name"
+                        />
 
                         <div class="space-y-2">
-                            <Label>Source</Label>
+                            <span class="label">Source</span>
                             <div
                                 class="grid grid-cols-3 gap-2"
                                 data-test="new-presentation-source"
@@ -599,8 +581,8 @@
 
                         {#if sourceType === 'pdf'}
                             <div class="space-y-2">
-                                <Label for="new-presentation-pdf"
-                                    >PDF file</Label
+                                <label class="label" for="new-presentation-pdf"
+                                    >PDF file</label
                                 >
                                 <input
                                     id="new-presentation-pdf"
@@ -619,10 +601,8 @@
                             </div>
                         {:else if sourceType === 'google_slides'}
                             <div class="space-y-2">
-                                <Label for="new-presentation-url"
-                                    >Google Slides link</Label
-                                >
                                 <Input
+                                    label="Google Slides link"
                                     id="new-presentation-url"
                                     bind:value={externalUrl}
                                     type="url"
@@ -687,7 +667,7 @@
                             >
                                 {presentation.name}
                             </p>
-                            <Skeleton class="mt-1.5 h-3 w-28" />
+                            <div class="skeleton mt-1.5 h-3 w-28"></div>
                         </div>
                     </div>
                 </li>
@@ -717,7 +697,8 @@
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => retryDeck(presentation)}
                                 data-test="presentation-retry-button"
@@ -813,7 +794,8 @@
                                 </Button>
                             {/if}
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => openEditor(presentation)}
                                 data-test="presentation-open-button"
@@ -920,7 +902,11 @@
             {/if}
         </div>
         <DialogFooter>
-            <Button variant="outline" onclick={() => (pasteDialogOpen = false)}>
+            <Button
+                variant="base"
+                outline
+                onclick={() => (pasteDialogOpen = false)}
+            >
                 Cancel
             </Button>
             <Button
@@ -944,7 +930,8 @@
         </div>
         <DialogFooter>
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 onclick={() => (deleteDialogOpen = false)}
             >
                 Cancel

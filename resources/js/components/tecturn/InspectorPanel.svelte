@@ -7,22 +7,13 @@
     import RotateCcw from 'lucide-svelte/icons/rotate-ccw';
     import SquarePen from 'lucide-svelte/icons/square-pen';
     import Trash2 from 'lucide-svelte/icons/trash-2';
-    import { toast } from 'svelte-sonner';
     import PresentationBackgroundController from '@/actions/App/Http/Controllers/Presentations/PresentationBackgroundController';
     import UploadPresentationImageController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationImageController';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
     import ImageLibraryModal from '@/components/tecturn/ImageLibraryModal.svelte';
     import LayoutPicker from '@/components/tecturn/LayoutPicker.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Label } from '@/components/ui/label';
+    import { Button, Modal, toast } from 'daisy-svelte';
     import { isGradientBackground } from '@/lib/tecturn/background';
     import {
         formatSpeakingTime,
@@ -352,8 +343,8 @@
                 {@render sectionHeader('Transition')}
                 <div class="mt-2 space-y-3">
                     <div class="space-y-1">
-                        <Label for="block-transition" class="text-xs"
-                            >Step</Label
+                        <label class="label text-xs" for="block-transition"
+                            >Step</label
                         >
                         <select
                             id="block-transition"
@@ -378,8 +369,8 @@
 
                     {#if pinnedTransition}
                         <div class="space-y-1">
-                            <Label for="transition-label" class="text-xs"
-                                >Step name</Label
+                            <label class="label text-xs" for="transition-label"
+                                >Step name</label
                             >
                             <input
                                 id="transition-label"
@@ -409,7 +400,9 @@
                 {@render sectionHeader('Code')}
                 <div class="mt-2 space-y-3">
                     <div class="space-y-1">
-                        <Label for="block-lang" class="text-xs">Language</Label>
+                        <label class="label text-xs" for="block-lang"
+                            >Language</label
+                        >
                         <select
                             id="block-lang"
                             class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
@@ -428,9 +421,10 @@
                     </div>
 
                     <div class="space-y-1">
-                        <Label class="text-xs">Code sequence</Label>
+                        <span class="label text-xs">Code sequence</span>
                         <Button
-                            variant="outline"
+                            variant="base"
+                            outline
                             size="sm"
                             class="w-full"
                             onclick={() => onEditCodeSequence(block.id)}
@@ -504,7 +498,8 @@
                             />
                         </label>
                         <Button
-                            variant="outline"
+                            variant="base"
+                            outline
                             size="sm"
                             class="w-full"
                             onclick={() => openLibrary('block', block.id)}
@@ -514,7 +509,9 @@
                         </Button>
                     </div>
                     <div class="space-y-1">
-                        <Label for="block-alt" class="text-xs">Alt text</Label>
+                        <label class="label text-xs" for="block-alt"
+                            >Alt text</label
+                        >
                         <input
                             id="block-alt"
                             type="text"
@@ -541,7 +538,8 @@
                 {@render sectionHeader('QR code')}
                 <div class="mt-2 space-y-3">
                     <div class="space-y-1">
-                        <Label for="qr-url" class="text-xs">URL to encode</Label
+                        <label class="label text-xs" for="qr-url"
+                            >URL to encode</label
                         >
                         <input
                             id="qr-url"
@@ -558,7 +556,7 @@
                         />
                     </div>
                     <div class="space-y-1">
-                        <Label for="qr-size" class="text-xs">Size</Label>
+                        <label class="label text-xs" for="qr-size">Size</label>
                         <select
                             id="qr-size"
                             class="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
@@ -592,8 +590,8 @@
                         individually.
                     </p>
                     <div class="space-y-1">
-                        <Label for="block-font-size" class="text-xs"
-                            >Font size</Label
+                        <label class="label text-xs" for="block-font-size"
+                            >Font size</label
                         >
                         <select
                             id="block-font-size"
@@ -613,8 +611,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <Label for="block-font-weight" class="text-xs"
-                            >Font weight</Label
+                        <label class="label text-xs" for="block-font-weight"
+                            >Font weight</label
                         >
                         <select
                             id="block-font-weight"
@@ -635,8 +633,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <Label for="block-font-family" class="text-xs"
-                            >Font</Label
+                        <label class="label text-xs" for="block-font-family"
+                            >Font</label
                         >
                         <select
                             id="block-font-family"
@@ -661,8 +659,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <Label for="block-color" class="text-xs"
-                            >Text color</Label
+                        <label class="label text-xs" for="block-color"
+                            >Text color</label
                         >
                         <ColorField
                             id="block-color"
@@ -685,8 +683,8 @@
                 {@render sectionHeader('Box colors')}
                 <div class="mt-2 space-y-3">
                     <div class="space-y-1">
-                        <Label for="block-border-color" class="text-xs"
-                            >Border color</Label
+                        <label class="label text-xs" for="block-border-color"
+                            >Border color</label
                         >
                         <ColorField
                             id="block-border-color"
@@ -700,8 +698,8 @@
                     </div>
 
                     <div class="space-y-1">
-                        <Label for="block-bg-color" class="text-xs"
-                            >Background</Label
+                        <label class="label text-xs" for="block-bg-color"
+                            >Background</label
                         >
                         <ColorField
                             id="block-bg-color"
@@ -719,7 +717,8 @@
 
         {#if block.type === 'text' || block.type === 'box'}
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 size="sm"
                 onclick={() => editor.resetBlockStyleToBranding(block.id)}
                 title="Reset this block's color and typography to your branding, and forget the last-used picks for this block kind"
@@ -749,7 +748,7 @@
             {@render sectionHeader('Slide')}
             <div class="mt-2 space-y-3">
                 <div class="space-y-1">
-                    <Label for="slide-title" class="text-xs">Title</Label>
+                    <label class="label text-xs" for="slide-title">Title</label>
                     <input
                         id="slide-title"
                         type="text"
@@ -767,7 +766,7 @@
                     data-test="inspector-content-stats"
                 >
                     <div class="flex items-center justify-between">
-                        <Label class="text-xs">Content</Label>
+                        <span class="label text-xs">Content</span>
                         <span class="text-xs {verdictClass}"
                             >{verdictMessage}</span
                         >
@@ -814,7 +813,8 @@
                     )}
                     <div class="space-y-1">
                         <Button
-                            variant={enabled ? 'outline' : 'default'}
+                            variant={enabled ? 'base' : 'primary'}
+                            outline={enabled}
                             size="sm"
                             class="w-full"
                             onclick={() =>
@@ -879,7 +879,8 @@
                     {/if}
                     <div class="flex gap-1.5">
                         <Button
-                            variant="outline"
+                            variant="base"
+                            outline
                             size="sm"
                             class="flex-1"
                             onclick={() => (gradientModalOpen = true)}
@@ -903,7 +904,8 @@
                         {/if}
                     </div>
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         size="sm"
                         class="w-full"
                         onclick={() => editor.applyBackgroundToAllSlides()}
@@ -955,7 +957,8 @@
                     />
                 </label>
                 <Button
-                    variant="outline"
+                    variant="base"
+                    outline
                     size="sm"
                     class="w-full"
                     onclick={() => openLibrary('slide-bg')}
@@ -965,7 +968,8 @@
                 </Button>
                 {#if editor.selectedSlide.backgroundImage}
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         size="sm"
                         class="w-full"
                         onclick={() => editor.setSlideBackgroundImage(null)}
@@ -1013,7 +1017,8 @@
                     />
                 </label>
                 <Button
-                    variant="outline"
+                    variant="base"
+                    outline
                     size="sm"
                     class="w-full"
                     onclick={() => openLibrary('deck-bg')}
@@ -1023,7 +1028,8 @@
                 </Button>
                 {#if editor.backgroundImage}
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         size="sm"
                         class="w-full"
                         onclick={removeBackgroundImage}
@@ -1066,30 +1072,27 @@
     {/if}
 </div>
 
-<Dialog bind:open={deleteBlockDialogOpen}>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Delete block</DialogTitle>
-            <DialogDescription>
-                Delete this block? This cannot be undone.
-            </DialogDescription>
-        </div>
-        <DialogFooter>
-            <Button
-                variant="outline"
-                onclick={() => (deleteBlockDialogOpen = false)}
-            >
-                Cancel
-            </Button>
-            <Button
-                variant="destructive"
-                onclick={confirmDeleteBlock}
-                data-test="inspector-delete-block-confirm"
-            >
-                Delete
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+<Modal bind:open={deleteBlockDialogOpen}>
+    {#snippet title()}Delete block{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Delete this block? This cannot be undone.
+    </p>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (deleteBlockDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            variant="destructive"
+            onclick={confirmDeleteBlock}
+            data-test="inspector-delete-block-confirm"
+        >
+            Delete
+        </Button>
+    {/snippet}
+</Modal>
 
 <ImageLibraryModal bind:open={libraryOpen} onSelect={onLibrarySelected} />

@@ -1,17 +1,7 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
     import ColorField from '@/components/tecturn/ColorField.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Checkbox } from '@/components/ui/checkbox';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Checkbox, Input, Modal } from 'daisy-svelte';
     import type { FooterSettings } from '@/types/generated';
     import PresentFooter from './PresentFooter.svelte';
 
@@ -70,10 +60,6 @@
         wasOpen = open;
     });
 
-    function handleOpenChange(value: boolean) {
-        open = value;
-    }
-
     const preview = $derived<FooterSettings>({
         enabled,
         xHandle: stripLeading(xHandle) || null,
@@ -90,16 +76,13 @@
     }
 </script>
 
-<Dialog {open} onOpenChange={handleOpenChange}>
-    <DialogContent class="sm:max-w-lg">
-        <div class="space-y-3">
-            <DialogTitle>Footer</DialogTitle>
-            <DialogDescription>
-                Shown across every slide while presenting.
-            </DialogDescription>
-        </div>
+<Modal bind:open class="sm:max-w-lg">
+    {#snippet title()}Footer{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Shown across every slide while presenting.
+    </p>
 
-        <div class="grid gap-4">
+    <div class="mt-4 grid gap-4">
             <label class="flex items-center gap-2 text-sm" for="footer-enabled">
                 <Checkbox
                     id="footer-enabled"
@@ -109,45 +92,38 @@
                 Show footer
             </label>
 
-            <div class="grid gap-2">
-                <Label for="footer-x">X handle</Label>
-                <Input
-                    id="footer-x"
-                    bind:value={xHandle}
-                    placeholder={stripLeading(userDefaults?.social_x_handle) ||
-                        'yourhandle'}
-                    autocomplete="off"
-                    data-test="footer-x-handle"
-                />
-            </div>
+            <Input
+                label="X handle"
+                id="footer-x"
+                bind:value={xHandle}
+                placeholder={stripLeading(userDefaults?.social_x_handle) ||
+                    'yourhandle'}
+                autocomplete="off"
+                data-test="footer-x-handle"
+            />
 
-            <div class="grid gap-2">
-                <Label for="footer-github">GitHub handle</Label>
-                <Input
-                    id="footer-github"
-                    bind:value={githubHandle}
-                    placeholder={stripLeading(
-                        userDefaults?.social_github_handle,
-                    ) || 'yourhandle'}
-                    autocomplete="off"
-                    data-test="footer-github-handle"
-                />
-            </div>
+            <Input
+                label="GitHub handle"
+                id="footer-github"
+                bind:value={githubHandle}
+                placeholder={stripLeading(userDefaults?.social_github_handle) ||
+                    'yourhandle'}
+                autocomplete="off"
+                data-test="footer-github-handle"
+            />
 
-            <div class="grid gap-2">
-                <Label for="footer-hashtag">Event hashtag</Label>
-                <Input
-                    id="footer-hashtag"
-                    bind:value={hashtag}
-                    placeholder="myconf2026"
-                    autocomplete="off"
-                    data-test="footer-hashtag"
-                />
-            </div>
+            <Input
+                label="Event hashtag"
+                id="footer-hashtag"
+                bind:value={hashtag}
+                placeholder="myconf2026"
+                autocomplete="off"
+                data-test="footer-hashtag"
+            />
 
             <div class="flex items-center gap-6">
                 <div class="grid gap-2">
-                    <Label for="footer-bg">Background</Label>
+                    <label class="label" for="footer-bg">Background</label>
                     <div class="flex items-center gap-2">
                         <ColorField
                             id="footer-bg"
@@ -171,7 +147,7 @@
                 </div>
 
                 <div class="grid gap-2">
-                    <Label for="footer-font">Font color</Label>
+                    <label class="label" for="footer-font">Font color</label>
                     <ColorField
                         id="footer-font"
                         value={fontColor}
@@ -207,11 +183,10 @@
             </div>
         </div>
 
-        <DialogFooter class="gap-2">
-            <Button variant="secondary" onclick={() => (open = false)}
-                >Cancel</Button
-            >
-            <Button onclick={save} data-test="footer-save">Save</Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}
+            >Cancel</Button
+        >
+        <Button onclick={save} data-test="footer-save">Save</Button>
+    {/snippet}
+</Modal>
