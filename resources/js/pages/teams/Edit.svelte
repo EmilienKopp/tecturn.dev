@@ -28,19 +28,8 @@
     import Heading from '@/components/Heading.svelte';
     import InviteMemberModal from '@/components/InviteMemberModal.svelte';
     import RemoveMemberModal from '@/components/RemoveMemberModal.svelte';
-    import {
-        Avatar,
-        AvatarFallback,
-        AvatarImage,
-    } from '@/components/ui/avatar';
-    import { Badge, Button, Dropdown, Input } from 'daisy-svelte';
-    import {
-        Tooltip,
-        TooltipContent,
-        TooltipProvider,
-        TooltipTrigger,
-    } from '@/components/ui/tooltip';
-    import { getInitials } from '@/lib/initials';
+    import UserAvatar from '@/components/UserAvatar.svelte';
+    import { Badge, Button, Dropdown, Input, Tooltip } from 'daisy-svelte';
     import { update } from '@/routes/teams';
     import { update as updateMember } from '@/routes/teams/members';
     import type {
@@ -90,12 +79,6 @@
     const confirmCancelInvitation = (invitation: TeamInvitation) => {
         invitationToCancel = invitation;
         cancelInvitationDialogOpen = true;
-    };
-
-    const callClickHandler = (handler: unknown, event: MouseEvent) => {
-        if (typeof handler === 'function') {
-            handler(event);
-        }
     };
 </script>
 
@@ -165,17 +148,11 @@
                     data-test="member-row"
                 >
                     <div class="flex items-center gap-4">
-                        <Avatar class="h-10 w-10">
-                            {#if member.avatar}
-                                <AvatarImage
-                                    src={member.avatar}
-                                    alt={member.name}
-                                />
-                            {/if}
-                            <AvatarFallback
-                                >{getInitials(member.name)}</AvatarFallback
-                            >
-                        </Avatar>
+                        <UserAvatar
+                            name={member.name}
+                            avatar={member.avatar}
+                            class="h-10 w-10"
+                        />
 
                         <div>
                             <div class="font-medium">{member.name}</div>
@@ -226,32 +203,16 @@
                         {/if}
 
                         {#if member.role !== 'owner' && permissions.canRemoveMember}
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        {#snippet child({ props })}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                {...props}
-                                                data-test="member-remove-button"
-                                                onclick={(event) => {
-                                                    callClickHandler(
-                                                        props.onClick,
-                                                        event,
-                                                    );
-                                                    confirmRemoveMember(member);
-                                                }}
-                                            >
-                                                <X class="h-4 w-4" />
-                                            </Button>
-                                        {/snippet}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Remove member</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip tip="Remove member">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    data-test="member-remove-button"
+                                    onclick={() => confirmRemoveMember(member)}
+                                >
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
                         {/if}
                     </div>
                 </div>
@@ -290,34 +251,17 @@
                         </div>
 
                         {#if permissions.canCancelInvitation}
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        {#snippet child({ props })}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                {...props}
-                                                data-test="invitation-cancel-button"
-                                                onclick={(event) => {
-                                                    callClickHandler(
-                                                        props.onClick,
-                                                        event,
-                                                    );
-                                                    confirmCancelInvitation(
-                                                        invitation,
-                                                    );
-                                                }}
-                                            >
-                                                <X class="h-4 w-4" />
-                                            </Button>
-                                        {/snippet}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Cancel invitation</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip tip="Cancel invitation">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    data-test="invitation-cancel-button"
+                                    onclick={() =>
+                                        confirmCancelInvitation(invitation)}
+                                >
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
                         {/if}
                     </div>
                 {/each}

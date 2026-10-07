@@ -4,6 +4,7 @@ use App\Enums\TeamRole;
 use App\Models\Presentation;
 use App\Models\PresentationSession;
 use App\Models\Rehearsal;
+use App\Models\Talk;
 use App\Models\Team;
 use App\Models\TeamInvitation;
 use App\Models\User;
@@ -62,6 +63,35 @@ test('dashboard timeline interleaves sessions and rehearsals, most recent first'
         ->where('timeline.1.reaction_total', 4)
         ->where('timeline.1.reaction_counts.🔥', 3)
         ->has('recentDecks', 1),
+    );
+});
+
+test('dashboard recent decks expose the talk version label', function () {
+    $user = User::factory()->create();
+    $talk = Talk::factory()->create(['team_id' => $user->currentTeam->id]);
+    Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'talk_id' => $talk->id,
+        'version_major' => 2,
+        'version_minor' => 1,
+        'updated_at' => Carbon::now(),
+    ]);
+    Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'updated_at' => Carbon::now()->subDay(),
+    ]);
+
+    $response = $this
+        ->actingAs($user)
+        ->get(route('dashboard'));
+
+    $response->assertOk();
+    $response->assertInertia(fn (Assert $page) => $page
+        ->component('Dashboard')
+        ->has('recentDecks', 2)
+        ->where('recentDecks.0.version', '2.1')
+        ->where('recentDecks.1.version', null)
+        ->etc(),
     );
 });
 

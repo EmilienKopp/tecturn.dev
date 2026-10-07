@@ -21,13 +21,7 @@
     import CreateTeamModal from '@/components/CreateTeamModal.svelte';
     import Heading from '@/components/Heading.svelte';
     import LeaveTeamModal from '@/components/LeaveTeamModal.svelte';
-    import { Badge, Button } from 'daisy-svelte';
-    import {
-        Tooltip,
-        TooltipContent,
-        TooltipProvider,
-        TooltipTrigger,
-    } from '@/components/ui/tooltip';
+    import { Badge, Button, Tooltip } from 'daisy-svelte';
     import { edit } from '@/routes/teams';
     import type { Team } from '@/types';
 
@@ -105,69 +99,42 @@
                     </div>
                 </div>
 
-                <TooltipProvider delayDuration={0}>
-                    <div class="flex items-center gap-2">
-                        {#if !team.isPersonal && team.role !== 'owner'}
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    {#snippet child({ props })}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            {...props}
-                                            onclick={() =>
-                                                openLeaveTeamDialog(team)}
-                                            data-test="team-leave-button"
-                                        >
-                                            <LogOut class="h-4 w-4" />
-                                        </Button>
-                                    {/snippet}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Leave team</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        {/if}
+                <div class="flex items-center gap-2">
+                    {#if !team.isPersonal && team.role !== 'owner'}
+                        <Tooltip tip="Leave team">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onclick={() => openLeaveTeamDialog(team)}
+                                data-test="team-leave-button"
+                            >
+                                <LogOut class="h-4 w-4" />
+                            </Button>
+                        </Tooltip>
+                    {/if}
 
-                        {#if team.role === 'member'}
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    {#snippet child({ props })}
-                                        <Link
-                                            {...props}
-                                            class="btn btn-ghost btn-sm"
-                                            href={edit(team.slug)}
-                                            data-test="team-view-button"
-                                        >
-                                            <Eye class="h-4 w-4" />
-                                        </Link>
-                                    {/snippet}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>View team</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        {:else}
-                            <Tooltip>
-                                <TooltipTrigger>
-                                    {#snippet child({ props })}
-                                        <Link
-                                            {...props}
-                                            class="btn btn-ghost btn-sm"
-                                            href={edit(team.slug)}
-                                            data-test="team-edit-button"
-                                        >
-                                            <Pencil class="h-4 w-4" />
-                                        </Link>
-                                    {/snippet}
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>Edit team</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        {/if}
-                    </div>
-                </TooltipProvider>
+                    {#if team.role === 'member'}
+                        <Tooltip tip="View team">
+                            <Link
+                                class="btn btn-ghost btn-sm"
+                                href={edit(team.slug)}
+                                data-test="team-view-button"
+                            >
+                                <Eye class="h-4 w-4" />
+                            </Link>
+                        </Tooltip>
+                    {:else}
+                        <Tooltip tip="Edit team">
+                            <Link
+                                class="btn btn-ghost btn-sm"
+                                href={edit(team.slug)}
+                                data-test="team-edit-button"
+                            >
+                                <Pencil class="h-4 w-4" />
+                            </Link>
+                        </Tooltip>
+                    {/if}
+                </div>
             </div>
         {/each}
 

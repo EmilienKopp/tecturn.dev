@@ -60,6 +60,7 @@
         name: string;
         slide_count: number;
         updated_at: string | null;
+        version: string | null;
     };
 
     let {
@@ -242,6 +243,11 @@
                 >
                     <Presentation class="h-3.5 w-3.5 shrink-0" />
                     <span class="truncate">{deck.name}</span>
+                    {#if deck.version}
+                        <span class="shrink-0 font-mono text-[10px] opacity-60">
+                            v{deck.version}
+                        </span>
+                    {/if}
                 </Button>
             {/each}
             <Button

@@ -47,7 +47,6 @@
         "@inertiajs/vite": "^3.0.0",
         "@sveltejs/vite-plugin-svelte": "^7.0.0",
         "@xyflow/svelte": "^1.6.2",
-        "bits-ui": "^2.15.0",
         "clsx": "^2.1.1",
         "laravel-echo": "^2.4.0",
         "laravel-vite-plugin": "^3.1",

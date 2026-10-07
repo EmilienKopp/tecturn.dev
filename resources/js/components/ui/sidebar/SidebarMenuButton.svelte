@@ -2,7 +2,6 @@
     import type { Snippet } from 'svelte';
     import { getContext } from 'svelte';
     import { cn } from '@/lib/utils';
-    import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
     import { SIDEBAR_CONTEXT, type SidebarContext } from './context';
 
     type Size = 'default' | 'lg';
@@ -42,43 +41,14 @@
         const activeClasses = isActive ? 'bg-sidebar-accent font-medium text-sidebar-accent-foreground' : '';
         return cn(base, sizeClasses[size], activeClasses, className);
     };
+
+    // CSS tooltip only matters when the rail is collapsed to icons.
+    const showTooltip = $derived(
+        !!tooltip && $state === 'collapsed' && !$isMobile,
+    );
 </script>
 
-{#if tooltip}
-    <Tooltip disabled={$state !== 'collapsed' || $isMobile}>
-        <TooltipTrigger>
-            {#snippet child({ props: triggerProps })}
-                {#if asChild}
-                    {@render children?.({
-                        class: classes(),
-                        'data-slot': 'sidebar-menu-button',
-                        'data-sidebar': 'menu-button',
-                        'data-size': size,
-                        'data-active': isActive,
-                        ...rest,
-                        ...triggerProps,
-                    })}
-                {:else}
-                    <button
-                        class={classes()}
-                        type="button"
-                        data-slot="sidebar-menu-button"
-                        data-sidebar="menu-button"
-                        data-size={size}
-                        data-active={isActive}
-                        {...rest}
-                        {...triggerProps}
-                    >
-                        {@render children?.({})}
-                    </button>
-                {/if}
-            {/snippet}
-        </TooltipTrigger>
-        <TooltipContent side="right" align="center">
-            {tooltip}
-        </TooltipContent>
-    </Tooltip>
-{:else}
+{#snippet menuButton()}
     {#if asChild}
         {@render children?.({
             class: classes(),
@@ -101,4 +71,12 @@
             {@render children?.({})}
         </button>
     {/if}
+{/snippet}
+
+{#if showTooltip}
+    <div class="tooltip tooltip-right w-full" data-tip={tooltip}>
+        {@render menuButton()}
+    </div>
+{:else}
+    {@render menuButton()}
 {/if}

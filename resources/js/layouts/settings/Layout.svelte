@@ -2,7 +2,6 @@
     import { Link } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Separator } from '@/components/ui/separator';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
     import { index as aiCredentials } from '@/routes/ai-credentials';
@@ -72,7 +71,7 @@
             </nav>
         </aside>
 
-        <Separator class="my-6 lg:hidden" />
+        <div class="divider my-6 lg:hidden"></div>
 
         <div class="flex-1 md:max-w-2xl">
             <section class="max-w-xl space-y-12">
