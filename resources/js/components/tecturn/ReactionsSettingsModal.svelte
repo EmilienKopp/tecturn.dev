@@ -57,7 +57,7 @@
     }
 
     // Re-seed on open. The editor opens the modal by setting `open` directly
-    // (bind:open), which bypasses onOpenChange, so watch the flag itself.
+    // (bind:open), so watch the flag itself.
     let wasOpen = false;
 
     $effect(() => {
@@ -113,117 +113,111 @@
     </p>
 
     <div class="grid gap-4 my-4">
-            <label
-                class="flex items-center gap-2 text-sm"
-                for="reactions-enabled"
-            >
-                <Checkbox
-                    id="reactions-enabled"
-                    bind:checked={enabled}
-                    data-test="reactions-enabled"
-                />
-                Show reactions
-            </label>
+        <label class="flex items-center gap-2 text-sm" for="reactions-enabled">
+            <Checkbox
+                id="reactions-enabled"
+                bind:checked={enabled}
+                data-test="reactions-enabled"
+            />
+            Show reactions
+        </label>
 
-            <div class="grid gap-2">
-                <div class="flex items-baseline justify-between">
-                    <span class="label">Reactions</span>
-                    <span class="text-xs text-muted-foreground tabular-nums">
-                        {list.length} / {MAX_REACTIONS}
-                    </span>
-                </div>
+        <div class="grid gap-2">
+            <div class="flex items-baseline justify-between">
+                <span class="label">Reactions</span>
+                <span class="text-xs text-muted-foreground tabular-nums">
+                    {list.length} / {MAX_REACTIONS}
+                </span>
+            </div>
 
-                {#if list.length}
-                    <div
-                        class="flex flex-wrap gap-2"
-                        data-test="reactions-list"
-                    >
-                        {#each list as emoji, index (emoji)}
-                            <span
-                                class="group flex items-center gap-1 rounded-md border bg-muted/40 py-1 pr-1 pl-2 text-xl"
+            {#if list.length}
+                <div class="flex flex-wrap gap-2" data-test="reactions-list">
+                    {#each list as emoji, index (emoji)}
+                        <span
+                            class="group flex items-center gap-1 rounded-md border bg-muted/40 py-1 pr-1 pl-2 text-xl"
+                        >
+                            {emoji}
+                            <button
+                                type="button"
+                                class="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-destructive"
+                                onclick={() => removeReaction(index)}
+                                aria-label="Remove {emoji}"
+                                data-test="reaction-remove"
                             >
-                                {emoji}
-                                <button
-                                    type="button"
-                                    class="rounded p-0.5 text-muted-foreground hover:bg-accent hover:text-destructive"
-                                    onclick={() => removeReaction(index)}
-                                    aria-label="Remove {emoji}"
-                                    data-test="reaction-remove"
-                                >
-                                    <X class="h-3.5 w-3.5" />
-                                </button>
-                            </span>
-                        {/each}
-                    </div>
-                {:else}
-                    <p class="text-xs text-muted-foreground">
-                        No reactions — the defaults will be used.
-                    </p>
-                {/if}
-            </div>
-
-            <div class="flex items-end gap-2">
-                <Input
-                    label="Add a reaction"
-                    id="reaction-add"
-                    fieldsetClass="flex-1"
-                    bind:value={draft}
-                    onkeydown={onDraftKeydown}
-                    maxlength={2}
-                    autocomplete="off"
-                    disabled={atLimit}
-                    data-test="reaction-input"
-                />
-                <Button
-                    variant="secondary"
-                    onclick={addReaction}
-                    disabled={!canAdd}
-                    data-test="reaction-add-button"
-                >
-                    Add
-                </Button>
-            </div>
-
-            {#if atLimit}
+                                <X class="h-3.5 w-3.5" />
+                            </button>
+                        </span>
+                    {/each}
+                </div>
+            {:else}
                 <p class="text-xs text-muted-foreground">
-                    That's the maximum of {MAX_REACTIONS}. Remove one to add
-                    another.
+                    No reactions — the defaults will be used.
                 </p>
             {/if}
-
-            <div class="grid gap-3 border-t pt-4">
-                <label
-                    class="flex items-center gap-2 text-sm"
-                    for="reactions-free-text"
-                >
-                    <Checkbox
-                        id="reactions-free-text"
-                        bind:checked={freeText}
-                        data-test="reactions-free-text"
-                    />
-                    <span>
-                        Allow free-text messages
-                        <span class="block text-xs text-muted-foreground">
-                            The audience can send a short message to the screen.
-                        </span>
-                    </span>
-                </label>
-
-                {#if freeText}
-                    <Input
-                        label="Max length (up to {MAX_FREE_TEXT_LENGTH})"
-                        id="reactions-max-length"
-                        fieldsetClass="max-w-[16rem]"
-                        type="number"
-                        min="1"
-                        max={MAX_FREE_TEXT_LENGTH}
-                        bind:value={maxLength}
-                        onblur={clampMaxLength}
-                        data-test="reactions-max-length"
-                    />
-                {/if}
-            </div>
         </div>
+
+        <div class="flex items-end gap-2">
+            <Input
+                label="Add a reaction"
+                id="reaction-add"
+                fieldsetClass="flex-1"
+                bind:value={draft}
+                onkeydown={onDraftKeydown}
+                maxlength={2}
+                autocomplete="off"
+                disabled={atLimit}
+                data-test="reaction-input"
+            />
+            <Button
+                variant="secondary"
+                onclick={addReaction}
+                disabled={!canAdd}
+                data-test="reaction-add-button"
+            >
+                Add
+            </Button>
+        </div>
+
+        {#if atLimit}
+            <p class="text-xs text-muted-foreground">
+                That's the maximum of {MAX_REACTIONS}. Remove one to add
+                another.
+            </p>
+        {/if}
+
+        <div class="grid gap-3 border-t pt-4">
+            <label
+                class="flex items-center gap-2 text-sm"
+                for="reactions-free-text"
+            >
+                <Checkbox
+                    id="reactions-free-text"
+                    bind:checked={freeText}
+                    data-test="reactions-free-text"
+                />
+                <span>
+                    Allow free-text messages
+                    <span class="block text-xs text-muted-foreground">
+                        The audience can send a short message to the screen.
+                    </span>
+                </span>
+            </label>
+
+            {#if freeText}
+                <Input
+                    label="Max length (up to {MAX_FREE_TEXT_LENGTH})"
+                    id="reactions-max-length"
+                    fieldsetClass="max-w-[16rem]"
+                    type="number"
+                    min="1"
+                    max={MAX_FREE_TEXT_LENGTH}
+                    bind:value={maxLength}
+                    onblur={clampMaxLength}
+                    data-test="reactions-max-length"
+                />
+            {/if}
+        </div>
+    </div>
 
     {#snippet actions()}
         <div class="flex w-full items-center justify-between gap-2">
