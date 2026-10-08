@@ -11,7 +11,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import { store } from '@/routes/feedback';
 
     const form = useForm({ message: '' });

@@ -5,14 +5,7 @@
     import Trash2 from 'lucide-svelte/icons/trash-2';
     import { untrack } from 'svelte';
     import CodeEditor from '@/components/tecturn/CodeEditor.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Label } from '@/components/ui/label';
+    import { Button, Modal } from 'daisy-svelte';
     import { isValidHighlightLines } from '@/lib/tecturn/code-actions';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
 
@@ -104,23 +97,24 @@
         }
     }
 
-    function handleOpenChange(open: boolean): void {
-        if (!open) {
-            onClose();
-        }
-    }
+    // Modal open state mirrors whether a block is targeted; the $effect keeps
+    // it in sync when the parent opens/closes by setting blockId.
+    let modalOpen = $state(false);
+
+    $effect(() => {
+        modalOpen = block !== null;
+    });
 </script>
 
-<Dialog open={block !== null} onOpenChange={handleOpenChange}>
-    <DialogContent class="flex h-[80vh] flex-col sm:max-w-4xl">
-        <DialogTitle>Code sequence</DialogTitle>
-        <DialogDescription>
-            Each page is a state the code morphs into during the presentation.
-            Base is the code shown when the block appears.
-        </DialogDescription>
+<Modal bind:open={modalOpen} class="sm:max-w-4xl" onclose={onClose}>
+    {#snippet title()}Code sequence{/snippet}
+    <p class="text-muted-foreground mb-4 text-sm">
+        Each page is a state the code morphs into during the presentation. Base
+        is the code shown when the block appears.
+    </p>
 
-        {#if block}
-            <div class="flex min-h-0 flex-1 gap-4">
+    {#if block}
+        <div class="flex h-[70vh] gap-4">
                 <div
                     class="flex w-44 shrink-0 flex-col gap-1 overflow-y-auto"
                     data-test="sequence-page-list"
@@ -196,7 +190,8 @@
                     {/each}
 
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         size="sm"
                         class="mt-1"
                         onclick={addPage}
@@ -235,8 +230,10 @@
                     {#if selectedAction}
                         <div class="flex gap-4">
                             <div class="flex-1 space-y-1">
-                                <Label for="sequence-highlight" class="text-xs"
-                                    >Highlight lines</Label
+                                <label
+                                    class="label text-xs"
+                                    for="sequence-highlight"
+                                    >Highlight lines</label
                                 >
                                 <input
                                     id="sequence-highlight"
@@ -260,8 +257,9 @@
                                 {/if}
                             </div>
                             <div class="flex-1 space-y-1">
-                                <Label for="sequence-label" class="text-xs"
-                                    >Page label</Label
+                                <label
+                                    class="label text-xs"
+                                    for="sequence-label">Page label</label
                                 >
                                 <input
                                     id="sequence-label"
@@ -294,5 +292,4 @@
                 </div>
             </div>
         {/if}
-    </DialogContent>
-</Dialog>
+</Modal>

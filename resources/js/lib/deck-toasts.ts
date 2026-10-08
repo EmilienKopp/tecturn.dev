@@ -1,5 +1,5 @@
 import { page, router } from '@inertiajs/svelte';
-import { toast } from 'svelte-sonner';
+import { toast } from 'daisy-svelte';
 import { getEcho } from '@/lib/echo';
 
 type DeckGeneratedPayload = {
@@ -33,7 +33,7 @@ export function subscribeDeckToasts(userId: number): () => void {
             toast.success(`"${payload.name}" is ready`, {
                 action: {
                     label: 'Open',
-                    onClick: () => router.visit(payload.url),
+                    onclick: () => router.visit(payload.url),
                 },
             });
             refreshPresentationsIndex();

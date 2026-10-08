@@ -17,7 +17,7 @@
     import Timer from 'lucide-svelte/icons/timer';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import UserAvatar from '@/components/UserAvatar.svelte';
     import { index as presentationsIndex } from '@/routes/presentations';
     import { show } from '@/routes/rehearsals';
@@ -155,7 +155,8 @@
                                         : 'Pending'}
                                 </span>
                                 <Button
-                                    variant="outline"
+                                    variant="base"
+                                    outline
                                     size="sm"
                                     onclick={() =>
                                         router.visit(
@@ -198,7 +199,8 @@
                                 {formatDuration(run.duration_seconds)}
                             </span>
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => openRun(run.id)}
                             >
@@ -219,7 +221,8 @@
                 Present menu to time a run-through.
             </p>
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 onclick={() => router.visit(presentationsIndex(teamSlug).url)}
             >
                 Your presentations

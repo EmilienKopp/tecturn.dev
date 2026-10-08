@@ -11,24 +11,7 @@
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import Select from '@/components/input/Select.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-        DialogTrigger,
-    } from '@/components/ui/dialog';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
-    import { Skeleton } from '@/components/ui/skeleton';
+    import { Button, Dropdown, Input, Modal } from 'daisy-svelte';
     import { index as aiSettings } from '@/routes/ai-credentials';
     import {
         destroy,
@@ -366,297 +349,257 @@
                 onchange={importFromFile}
                 data-test="import-presentation-input"
             />
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    {#snippet children(props)}
-                        <Button
-                            variant="outline"
-                            onclick={props.onclick}
-                            aria-expanded={props['aria-expanded']}
-                            data-state={props['data-state']}
-                            disabled={importing}
-                            data-test="import-presentation-button"
+            <Dropdown align="end">
+                {#snippet trigger()}
+                    <span
+                        class="btn btn-outline {importing
+                            ? 'btn-disabled'
+                            : ''}"
+                        data-test="import-presentation-button"
+                    >
+                        <Upload class="h-4 w-4" />
+                        {importing ? 'Importing…' : 'Import'}
+                        <ChevronDown class="ml-1 h-4 w-4 opacity-50" />
+                    </span>
+                {/snippet}
+                {#snippet children({ close })}
+                    <li>
+                        <button
+                            type="button"
+                            onclick={() => {
+                                close();
+                                triggerFileImport();
+                            }}
+                            data-test="import-upload-option"
                         >
                             <Upload class="h-4 w-4" />
-                            {importing ? 'Importing…' : 'Import'}
-                            <ChevronDown class="ml-1 h-4 w-4 opacity-50" />
-                        </Button>
-                    {/snippet}
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                    <DropdownMenuItem asChild>
-                        {#snippet children(props)}
-                            <button
-                                type="button"
-                                class={props.class}
-                                onclick={() => {
-                                    props.onClick?.();
-                                    triggerFileImport();
-                                }}
-                                data-test="import-upload-option"
-                            >
-                                <Upload class="h-4 w-4" />
-                                Upload file
-                            </button>
-                        {/snippet}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                        {#snippet children(props)}
-                            <button
-                                type="button"
-                                class={props.class}
-                                onclick={() => {
-                                    props.onClick?.();
-                                    importError = null;
-                                    pasteDialogOpen = true;
-                                }}
-                                data-test="import-paste-option"
-                            >
-                                <ClipboardPaste class="h-4 w-4" />
-                                Paste JSON
-                            </button>
-                        {/snippet}
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
-
-            <Dialog bind:open={draftDialogOpen}>
-                <DialogTrigger asChild>
-                    {#snippet children(props)}
-                        <Button
-                            variant="outline"
-                            onclick={(event: MouseEvent) => {
-                                if (typeof props.onClick === 'function') {
-                                    props.onClick(event);
-                                }
+                            Upload file
+                        </button>
+                    </li>
+                    <li>
+                        <button
+                            type="button"
+                            onclick={() => {
+                                close();
+                                importError = null;
+                                pasteDialogOpen = true;
                             }}
-                            data-test="magic-draft-button"
+                            data-test="import-paste-option"
                         >
-                            <Sparkles class="h-4 w-4" /> Magic draft
-                        </Button>
-                    {/snippet}
-                </DialogTrigger>
-                <DialogContent>
-                    <form onsubmit={generateDraft} class="space-y-4">
-                        <div class="space-y-3">
-                            <DialogTitle>Magic draft</DialogTitle>
-                            <DialogDescription>
-                                Describe your talk and Deckster will draft the
-                                slides for you, styled with your branding. Rough
-                                bullet points work great. You can edit
-                                everything afterwards.
-                            </DialogDescription>
-                        </div>
+                            <ClipboardPaste class="h-4 w-4" />
+                            Paste JSON
+                        </button>
+                    </li>
+                {/snippet}
+            </Dropdown>
 
-                        <div class="space-y-2">
-                            <Label for="draft-name">Name (optional)</Label>
-                            <Input
-                                id="draft-name"
-                                bind:value={draftName}
-                                maxlength={255}
-                                placeholder="Leave blank to use the generated title"
-                                data-test="magic-draft-name"
-                            />
-                        </div>
+            <Button
+                variant="base"
+                outline
+                onclick={() => (draftDialogOpen = true)}
+                data-test="magic-draft-button"
+            >
+                <Sparkles class="h-4 w-4" /> Magic draft
+            </Button>
 
-                        <div class="space-y-2">
-                            <Label for="draft-plan">Outline</Label>
-                            <textarea
-                                id="draft-plan"
-                                bind:value={draftPlan}
-                                rows={10}
-                                required
-                                placeholder="# Ship faster with X\n\n- The problem teams hit today\n- How X solves it (3 key features)\n- A quick demo\n- Pricing and next steps"
-                                class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                                data-test="magic-draft-plan"
-                            ></textarea>
-                        </div>
+            <Modal bind:open={draftDialogOpen}>
+                {#snippet title()}Magic draft{/snippet}
+                <form onsubmit={generateDraft} class="space-y-4">
+                    <p class="text-sm text-muted-foreground">
+                        Describe your talk and Deckster will draft the slides
+                        for you, styled with your branding. Rough bullet points
+                        work great. You can edit everything afterwards.
+                    </p>
 
-                        <div class="space-y-2">
-                            <Label for="draft-model">Model</Label>
-                            <Select
-                                id="draft-model"
-                                class="*:bg-background  flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                                value={String(selectedModel)}
-                                onchange={(event) =>
-                                    (selectedModel =
-                                        event.currentTarget.value === 'house'
-                                            ? 'house'
-                                            : Number(
-                                                  event.currentTarget.value,
-                                              ))}
-                                data-test="magic-draft-model"
-                            >
-                                <option value="house" disabled={houseExhausted}>
-                                    Default (free) — {houseAllowance.remaining}/{houseAllowance.max}
-                                    left today
+                    <Input
+                        label="Name (optional)"
+                        id="draft-name"
+                        bind:value={draftName}
+                        maxlength={255}
+                        placeholder="Leave blank to use the generated title"
+                        data-test="magic-draft-name"
+                    />
+
+                    <div class="space-y-2">
+                        <label class="label" for="draft-plan">Outline</label>
+                        <textarea
+                            id="draft-plan"
+                            bind:value={draftPlan}
+                            rows={10}
+                            required
+                            placeholder="# Ship faster with X\n\n- The problem teams hit today\n- How X solves it (3 key features)\n- A quick demo\n- Pricing and next steps"
+                            class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                            data-test="magic-draft-plan"
+                        ></textarea>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="label" for="draft-model">Model</label>
+                        <Select
+                            id="draft-model"
+                            class="*:bg-background  flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+                            value={String(selectedModel)}
+                            onchange={(event) =>
+                                (selectedModel =
+                                    event.currentTarget.value === 'house'
+                                        ? 'house'
+                                        : Number(event.currentTarget.value))}
+                            data-test="magic-draft-model"
+                        >
+                            <option value="house" disabled={houseExhausted}>
+                                Default (free) — {houseAllowance.remaining}/{houseAllowance.max}
+                                left today
+                            </option>
+                            {#each aiCredentials as credential (credential.id)}
+                                <option value={String(credential.id)}>
+                                    {credential.label} ({credential.model})
                                 </option>
-                                {#each aiCredentials as credential (credential.id)}
-                                    <option value={String(credential.id)}>
-                                        {credential.label} ({credential.model})
-                                    </option>
-                                {/each}
-                            </Select>
-                            {#if selectedModel === 'house' && houseExhausted}
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                    data-test="magic-draft-house-exhausted"
-                                >
-                                    No free builds left today. <a
-                                        href={aiSettings().url}
-                                        class="underline">Add your own AI key</a
-                                    > to keep going.
-                                </p>
-                            {/if}
-                        </div>
-
-                        {#if draftError}
+                            {/each}
+                        </Select>
+                        {#if selectedModel === 'house' && houseExhausted}
                             <p
-                                class="text-sm text-destructive"
-                                data-test="magic-draft-error"
+                                class="text-xs text-muted-foreground"
+                                data-test="magic-draft-house-exhausted"
                             >
-                                {draftError}
+                                No free builds left today. <a
+                                    href={aiSettings().url}
+                                    class="underline">Add your own AI key</a
+                                > to keep going.
                             </p>
                         {/if}
+                    </div>
 
-                        <DialogFooter>
-                            <Button
-                                type="submit"
-                                disabled={draftSubmitDisabled}
-                                data-test="magic-draft-submit"
-                            >
-                                {drafting
-                                    ? 'Deckster is drafting…'
-                                    : 'Generate draft'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-
-            <Dialog bind:open={createDialogOpen}>
-                <DialogTrigger asChild>
-                    {#snippet children(props)}
-                        <Button
-                            onclick={(event: MouseEvent) => {
-                                if (typeof props.onClick === 'function') {
-                                    props.onClick(event);
-                                }
-                            }}
-                            data-test="new-presentation-button"
+                    {#if draftError}
+                        <p
+                            class="text-sm text-destructive"
+                            data-test="magic-draft-error"
                         >
-                            <Plus class="h-4 w-4" /> New presentation
+                            {draftError}
+                        </p>
+                    {/if}
+
+                    <div class="modal-action">
+                        <Button
+                            type="submit"
+                            disabled={draftSubmitDisabled}
+                            data-test="magic-draft-submit"
+                        >
+                            {drafting
+                                ? 'Deckster is drafting…'
+                                : 'Generate draft'}
                         </Button>
-                    {/snippet}
-                </DialogTrigger>
-                <DialogContent>
-                    <form onsubmit={createPresentation} class="space-y-4">
-                        <div class="space-y-3">
-                            <DialogTitle>New presentation</DialogTitle>
-                            <DialogDescription>
-                                Build slides in the editor, or bring your own
-                                deck as a PDF or Google Slides link and get the
-                                live dock, translation, and footer on top.
-                            </DialogDescription>
-                        </div>
+                    </div>
+                </form>
+            </Modal>
 
-                        <div class="space-y-2">
-                            <Label for="new-presentation-name">Name</Label>
-                            <Input
-                                id="new-presentation-name"
-                                bind:value={newName}
-                                required
-                                maxlength={255}
-                                data-test="new-presentation-name"
-                            />
-                        </div>
+            <Button
+                onclick={() => (createDialogOpen = true)}
+                data-test="new-presentation-button"
+            >
+                <Plus class="h-4 w-4" /> New presentation
+            </Button>
 
-                        <div class="space-y-2">
-                            <Label>Source</Label>
-                            <div
-                                class="grid grid-cols-3 gap-2"
-                                data-test="new-presentation-source"
-                            >
-                                {#each [{ value: 'editor', label: 'Editor' }, { value: 'pdf', label: 'PDF' }, { value: 'google_slides', label: 'Google Slides' }] as option (option.value)}
-                                    <button
-                                        type="button"
-                                        class="rounded-md border px-3 py-2 text-sm transition-colors {sourceType ===
-                                        option.value
-                                            ? 'border-primary bg-primary/10 font-medium text-primary'
-                                            : 'border-input text-muted-foreground hover:bg-muted'}"
-                                        onclick={() => {
-                                            sourceType =
-                                                option.value as typeof sourceType;
-                                            createError = null;
-                                        }}
-                                        data-test="new-presentation-source-{option.value}"
-                                    >
-                                        {option.label}
-                                    </button>
-                                {/each}
-                            </div>
-                        </div>
+            <Modal bind:open={createDialogOpen}>
+                {#snippet title()}New presentation{/snippet}
+                <form onsubmit={createPresentation} class="space-y-4">
+                    <p class="text-sm text-muted-foreground">
+                        Build slides in the editor, or bring your own deck as a
+                        PDF or Google Slides link and get the live dock,
+                        translation, and footer on top.
+                    </p>
 
-                        {#if sourceType === 'pdf'}
-                            <div class="space-y-2">
-                                <Label for="new-presentation-pdf"
-                                    >PDF file</Label
-                                >
-                                <input
-                                    id="new-presentation-pdf"
-                                    type="file"
-                                    accept="application/pdf,.pdf"
-                                    class="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-muted/80"
-                                    onchange={(event) => {
-                                        pdfFile =
-                                            (
-                                                event.currentTarget as HTMLInputElement
-                                            ).files?.[0] ?? null;
+                    <Input
+                        label="Name"
+                        id="new-presentation-name"
+                        bind:value={newName}
+                        required
+                        maxlength={255}
+                        data-test="new-presentation-name"
+                    />
+
+                    <div class="space-y-2">
+                        <span class="label">Source</span>
+                        <div
+                            class="grid grid-cols-3 gap-2"
+                            data-test="new-presentation-source"
+                        >
+                            {#each [{ value: 'editor', label: 'Editor' }, { value: 'pdf', label: 'PDF' }, { value: 'google_slides', label: 'Google Slides' }] as option (option.value)}
+                                <button
+                                    type="button"
+                                    class="rounded-md border px-3 py-2 text-sm transition-colors {sourceType ===
+                                    option.value
+                                        ? 'border-primary bg-primary/10 font-medium text-primary'
+                                        : 'border-input text-muted-foreground hover:bg-muted'}"
+                                    onclick={() => {
+                                        sourceType =
+                                            option.value as typeof sourceType;
                                         createError = null;
                                     }}
-                                    data-test="new-presentation-pdf-input"
-                                />
-                            </div>
-                        {:else if sourceType === 'google_slides'}
-                            <div class="space-y-2">
-                                <Label for="new-presentation-url"
-                                    >Google Slides link</Label
+                                    data-test="new-presentation-source-{option.value}"
                                 >
-                                <Input
-                                    id="new-presentation-url"
-                                    bind:value={externalUrl}
-                                    type="url"
-                                    placeholder="https://docs.google.com/presentation/d/…"
-                                    data-test="new-presentation-url-input"
-                                />
-                                <p class="text-xs text-muted-foreground">
-                                    Paste the share or publish link to your
-                                    Google Slides deck.
-                                </p>
-                            </div>
-                        {/if}
+                                    {option.label}
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
 
-                        {#if createError}
-                            <p
-                                class="text-sm text-destructive"
-                                data-test="new-presentation-error"
+                    {#if sourceType === 'pdf'}
+                        <div class="space-y-2">
+                            <label class="label" for="new-presentation-pdf"
+                                >PDF file</label
                             >
-                                {createError}
+                            <input
+                                id="new-presentation-pdf"
+                                type="file"
+                                accept="application/pdf,.pdf"
+                                class="block w-full text-sm text-muted-foreground file:mr-3 file:rounded-md file:border-0 file:bg-muted file:px-3 file:py-2 file:text-sm file:font-medium hover:file:bg-muted/80"
+                                onchange={(event) => {
+                                    pdfFile =
+                                        (
+                                            event.currentTarget as HTMLInputElement
+                                        ).files?.[0] ?? null;
+                                    createError = null;
+                                }}
+                                data-test="new-presentation-pdf-input"
+                            />
+                        </div>
+                    {:else if sourceType === 'google_slides'}
+                        <div class="space-y-2">
+                            <Input
+                                label="Google Slides link"
+                                id="new-presentation-url"
+                                bind:value={externalUrl}
+                                type="url"
+                                placeholder="https://docs.google.com/presentation/d/…"
+                                data-test="new-presentation-url-input"
+                            />
+                            <p class="text-xs text-muted-foreground">
+                                Paste the share or publish link to your Google
+                                Slides deck.
                             </p>
-                        {/if}
+                        </div>
+                    {/if}
 
-                        <DialogFooter>
-                            <Button
-                                type="submit"
-                                disabled={createDisabled}
-                                data-test="new-presentation-submit"
-                            >
-                                {creating ? 'Creating…' : 'Create'}
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                    {#if createError}
+                        <p
+                            class="text-sm text-destructive"
+                            data-test="new-presentation-error"
+                        >
+                            {createError}
+                        </p>
+                    {/if}
+
+                    <div class="modal-action">
+                        <Button
+                            type="submit"
+                            disabled={createDisabled}
+                            data-test="new-presentation-submit"
+                        >
+                            {creating ? 'Creating…' : 'Create'}
+                        </Button>
+                    </div>
+                </form>
+            </Modal>
         </div>
     </div>
 
@@ -687,7 +630,7 @@
                             >
                                 {presentation.name}
                             </p>
-                            <Skeleton class="mt-1.5 h-3 w-28" />
+                            <div class="skeleton mt-1.5 h-3 w-28"></div>
                         </div>
                     </div>
                 </li>
@@ -717,7 +660,8 @@
                         </div>
                         <div class="flex shrink-0 items-center gap-2">
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => retryDeck(presentation)}
                                 data-test="presentation-retry-button"
@@ -813,7 +757,8 @@
                                 </Button>
                             {/if}
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => openEditor(presentation)}
                                 data-test="presentation-open-button"
@@ -890,72 +835,66 @@
     {/if}
 </div>
 
-<Dialog bind:open={pasteDialogOpen}>
-    <DialogContent>
-        <div class="space-y-4">
-            <div class="space-y-3">
-                <DialogTitle>Paste presentation JSON</DialogTitle>
-                <DialogDescription>
-                    Paste an exported presentation's JSON below. It will be
-                    imported as a new presentation.
-                </DialogDescription>
-            </div>
+<Modal bind:open={pasteDialogOpen}>
+    {#snippet title()}Paste presentation JSON{/snippet}
+    <div class="space-y-4">
+        <p class="text-sm text-muted-foreground">
+            Paste an exported presentation's JSON below. It will be imported as
+            a new presentation.
+        </p>
 
-            <textarea
-                bind:value={pastedJson}
-                rows={12}
-                spellcheck={false}
-                placeholder={'{\n  "name": "My deck",\n  "content": { "version": "1.0", "slides": [] }\n}'}
-                class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
-                data-test="import-paste-textarea"
-            ></textarea>
+        <textarea
+            bind:value={pastedJson}
+            rows={12}
+            spellcheck={false}
+            placeholder={'{\n  "name": "My deck",\n  "content": { "version": "1.0", "slides": [] }\n}'}
+            class="flex w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs shadow-sm placeholder:text-muted-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+            data-test="import-paste-textarea"
+        ></textarea>
 
-            {#if importError}
-                <p
-                    class="text-sm text-destructive"
-                    data-test="import-paste-error"
-                >
-                    {importError}
-                </p>
-            {/if}
-        </div>
-        <DialogFooter>
-            <Button variant="outline" onclick={() => (pasteDialogOpen = false)}>
-                Cancel
-            </Button>
-            <Button
-                onclick={importFromPaste}
-                disabled={importing || pastedJson.trim() === ''}
-                data-test="import-paste-submit"
-            >
-                {importing ? 'Importing…' : 'Import'}
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        {#if importError}
+            <p class="text-sm text-destructive" data-test="import-paste-error">
+                {importError}
+            </p>
+        {/if}
+    </div>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (pasteDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            onclick={importFromPaste}
+            disabled={importing || pastedJson.trim() === ''}
+            data-test="import-paste-submit"
+        >
+            {importing ? 'Importing…' : 'Import'}
+        </Button>
+    {/snippet}
+</Modal>
 
-<Dialog bind:open={deleteDialogOpen}>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Delete presentation</DialogTitle>
-            <DialogDescription>
-                Delete "{presentationDeleting?.name}"? This cannot be undone.
-            </DialogDescription>
-        </div>
-        <DialogFooter>
-            <Button
-                variant="outline"
-                onclick={() => (deleteDialogOpen = false)}
-            >
-                Cancel
-            </Button>
-            <Button
-                variant="destructive"
-                onclick={confirmDelete}
-                data-test="presentation-delete-confirm"
-            >
-                Delete
-            </Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+<Modal bind:open={deleteDialogOpen}>
+    {#snippet title()}Delete presentation{/snippet}
+    <p class="text-sm text-muted-foreground">
+        Delete "{presentationDeleting?.name}"? This cannot be undone.
+    </p>
+    {#snippet actions()}
+        <Button
+            variant="base"
+            outline
+            onclick={() => (deleteDialogOpen = false)}
+        >
+            Cancel
+        </Button>
+        <Button
+            variant="destructive"
+            onclick={confirmDelete}
+            data-test="presentation-delete-confirm"
+        >
+            Delete
+        </Button>
+    {/snippet}
+</Modal>

@@ -2,9 +2,7 @@
     import { Form, Link } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import InputError from '@/components/InputError.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Input } from 'daisy-svelte';
     import { toUrl } from '@/lib/utils';
     import { login } from '@/routes';
     import { store as storeBeta } from '@/routes/beta';
@@ -53,43 +51,39 @@
             >
                 <Form {...storeBeta.form()} class="grid gap-4" resetOnSuccess>
                     {#snippet children({ errors, processing })}
-                        <div class="grid gap-2">
-                            <Label for="name">Name</Label>
-                            <Input
-                                id="name"
-                                name="name"
-                                type="text"
-                                placeholder="Ada Lovelace"
-                                value={prefill.name}
-                                required
-                                data-test="beta-name"
-                                class="text-accent-foreground"
-                            />
-                            <InputError message={errors.name} />
-                        </div>
+                        <Input
+                            label="Name"
+                            id="name"
+                            name="name"
+                            type="text"
+                            placeholder="Ada Lovelace"
+                            value={prefill.name}
+                            required
+                            error={errors.name}
+                            data-test="beta-name"
+                            class="text-accent-foreground"
+                        />
+
+                        <Input
+                            label="Email address"
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={prefill.email}
+                            required
+                            error={errors.email}
+                            data-test="beta-email"
+                            class="text-accent-foreground"
+                        />
 
                         <div class="grid gap-2">
-                            <Label for="email">Email address</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                placeholder="you@example.com"
-                                value={prefill.email}
-                                required
-                                data-test="beta-email"
-                                class="text-accent-foreground"
-                            />
-                            <InputError message={errors.email} />
-                        </div>
-
-                        <div class="grid gap-2">
-                            <Label for="message">
+                            <label class="label" for="message">
                                 What would you use it for?
                                 <span class="text-[hsl(37_6%_55%)]"
                                     >(optional)</span
                                 >
-                            </Label>
+                            </label>
                             <textarea
                                 id="message"
                                 name="message"

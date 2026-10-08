@@ -13,13 +13,12 @@
 
 <script lang="ts">
     import { page, useForm } from '@inertiajs/svelte';
+    import { Button } from 'daisy-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
     import InputError from '@/components/InputError.svelte';
     import ColorField from '@/components/tecturn/ColorField.svelte';
     import GradientModal from '@/components/tecturn/GradientModal.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Label } from '@/components/ui/label';
     import { isGradientBackground } from '@/lib/tecturn/background';
     import {
         BRANDING_FALLBACK,
@@ -27,9 +26,11 @@
         BRANDING_FONT_WEIGHTS,
         BRANDING_KEYS,
         BRANDING_LABELS,
+        brandingColorsFromTheme,
     } from '@/lib/tecturn/branding';
     import { FONTS } from '@/lib/tecturn/fonts';
     import { update as updateBranding } from '@/routes/branding';
+    import PickFromThemeModal from './Partials/PickFromThemeModal.svelte';
 
     const brandingForm = useForm({
         branding: { ...(page.props.auth.user.branding ?? BRANDING_FALLBACK) },
@@ -46,6 +47,7 @@
     );
 
     let gradientModalOpen = $state(false);
+    let themeModalOpen = $state(false);
 
     function saveBranding(): void {
         brandingForm.patch(updateBranding.url(), { preserveScroll: true });
@@ -67,17 +69,38 @@
         description="Your brand colors and typography are the editor's defaults: the background becomes the default slide background, the primary color the default text color, and all six colors appear as one-click shortcuts next to every color picker."
     />
 
+    <div class="flex flex-wrap gap-2">
+        <Button
+            type="button"
+            variant="neutral"
+            outline
+            onclick={() => (brandingForm.branding = brandingColorsFromTheme())}
+            data-test="branding-align-with-theme-button"
+        >
+            Align with current theme
+        </Button>
+        <Button
+            type="button"
+            variant="neutral"
+            outline
+            onclick={() => (themeModalOpen = true)}
+            data-test="branding-pick-from-theme-button"
+        >
+            Pick from a theme…
+        </Button>
+    </div>
+
     <div class="grid gap-4 sm:grid-cols-2">
         {#each BRANDING_KEYS as key (key)}
             <div class="grid gap-2">
-                <Label for="branding-{key}">
+                <label class="label" for="branding-{key}">
                     {BRANDING_LABELS[key]}
                     {#if roleHints[key]}
                         <span class="ml-1 text-xs text-muted-foreground">
                             · {roleHints[key]}
                         </span>
                     {/if}
-                </Label>
+                </label>
                 {#if key === 'background'}
                     <div class="flex items-center gap-3">
                         {#if backgroundIsGradient}
@@ -101,7 +124,8 @@
                         {/if}
                         <Button
                             type="button"
-                            variant="outline"
+                            variant="base"
+                            outline
                             size="sm"
                             onclick={() => (gradientModalOpen = true)}
                             data-test="branding-background-gradient-button"
@@ -154,7 +178,7 @@
 
     <div class="grid gap-4 sm:grid-cols-3">
         <div class="grid gap-2">
-            <Label for="branding-font-family">Font</Label>
+            <label class="label" for="branding-font-family">Font</label>
             <select
                 id="branding-font-family"
                 class="rounded-md border bg-background px-3 py-2 text-sm"
@@ -175,7 +199,7 @@
         </div>
 
         <div class="grid gap-2">
-            <Label for="branding-font-size">Font size</Label>
+            <label class="label" for="branding-font-size">Font size</label>
             <select
                 id="branding-font-size"
                 class="rounded-md border bg-background px-3 py-2 text-sm"
@@ -194,7 +218,7 @@
         </div>
 
         <div class="grid gap-2">
-            <Label for="branding-font-weight">Font weight</Label>
+            <label class="label" for="branding-font-weight">Font weight</label>
             <select
                 id="branding-font-weight"
                 class="rounded-md border bg-background px-3 py-2 text-sm"
@@ -220,6 +244,7 @@
             disabled={brandingForm.processing}
             data-test="save-branding-button">Save branding</Button
         >
+
         <Button type="button" variant="ghost" onclick={resetBranding}>
             Reset to defaults
         </Button>
@@ -230,4 +255,9 @@
     current={brandingForm.branding.background}
     bind:open={gradientModalOpen}
     onSave={(gradient) => (brandingForm.branding.background = gradient)}
+/>
+
+<PickFromThemeModal
+    bind:open={themeModalOpen}
+    onSave={(branding) => (brandingForm.branding = branding)}
 />

@@ -1,15 +1,5 @@
 <script lang="ts">
-    import { Button } from '@/components/ui/button';
-    import { Checkbox } from '@/components/ui/checkbox';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Checkbox, Input, Modal } from 'daisy-svelte';
     import { formatSpeakingTime } from '@/lib/tecturn/CodeGeneration/lint';
     import type { DeliveryStats } from '@/types/generated';
 
@@ -82,8 +72,8 @@
         style = presentationStyle;
     }
 
-    // Re-seed whenever the modal opens (the trigger sets `open` directly, which
-    // bypasses onOpenChange), mirroring FooterSettingsModal.
+    // Re-seed whenever the modal opens (the trigger sets `open` directly),
+    // mirroring FooterSettingsModal.
     let wasOpen = false;
 
     $effect(() => {
@@ -93,10 +83,6 @@
 
         wasOpen = open;
     });
-
-    function handleOpenChange(value: boolean) {
-        open = value;
-    }
 
     function save() {
         const clamped = Math.min(480, Math.max(1, Math.round(minutes || 0)));
@@ -110,142 +96,129 @@
     }
 </script>
 
-<Dialog {open} onOpenChange={handleOpenChange}>
-    <DialogContent class="sm:max-w-md">
-        <div class="space-y-3">
-            <DialogTitle>Talk length</DialogTitle>
-            <DialogDescription>
-                Set the ideal length of your talk. The editor uses it to check
-                pacing, and the presenter timer paces each slide against it.
-            </DialogDescription>
-        </div>
+<Modal bind:open class="sm:max-w-md">
+    {#snippet title()}Talk length{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Set the ideal length of your talk. The editor uses it to check pacing,
+        and the presenter timer paces each slide against it.
+    </p>
 
-        <div class="grid gap-4">
-            <label
-                class="flex items-center gap-2 text-sm"
-                for="talk-has-target"
+    <div class="mt-4 grid gap-4">
+        <label class="flex items-center gap-2 text-sm" for="talk-has-target">
+            <Checkbox
+                id="talk-has-target"
+                bind:checked={hasTarget}
+                data-test="talk-has-target"
+            />
+            Set a target duration
+        </label>
+
+        <Input
+            label="Target (minutes)"
+            id="talk-minutes"
+            type="number"
+            min="1"
+            max="480"
+            bind:value={minutes}
+            disabled={!hasTarget}
+            data-test="talk-minutes"
+        />
+
+        {#if measuredRuns > 0}
+            <div
+                class="space-y-1.5 rounded-md border p-2.5"
+                data-test="talk-delivery-stats"
             >
-                <Checkbox
-                    id="talk-has-target"
-                    bind:checked={hasTarget}
-                    data-test="talk-has-target"
-                />
-                Set a target duration
-            </label>
-
-            <div class="grid gap-2">
-                <Label for="talk-minutes">Target (minutes)</Label>
-                <Input
-                    id="talk-minutes"
-                    type="number"
-                    min="1"
-                    max="480"
-                    bind:value={minutes}
-                    disabled={!hasTarget}
-                    data-test="talk-minutes"
-                />
-            </div>
-
-            {#if measuredRuns > 0}
-                <div
-                    class="space-y-1.5 rounded-md border p-2.5"
-                    data-test="talk-delivery-stats"
-                >
-                    <p class="text-xs font-medium">
-                        Measured from {deliveryStats.rehearsalCount} rehearsal{deliveryStats.rehearsalCount ===
-                        1
-                            ? ''
-                            : 's'}{deliveryStats.sessionCount > 0
-                            ? ` and ${deliveryStats.sessionCount} live session${
-                                  deliveryStats.sessionCount === 1 ? '' : 's'
-                              }`
-                            : ''}
-                    </p>
-                    <div
-                        class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground"
-                    >
-                        {#if deliveryStats.avgRunSeconds}
-                            <span>Average run</span>
-                            <span class="text-right font-mono tabular-nums">
-                                {formatSpeakingTime(
-                                    deliveryStats.avgRunSeconds,
-                                )}
-                            </span>
-                        {/if}
-                        {#if deliveryStats.avgSecondsPerSlide}
-                            <span>Average per slide</span>
-                            <span class="text-right font-mono tabular-nums">
-                                {formatSpeakingTime(
-                                    deliveryStats.avgSecondsPerSlide,
-                                )}
-                            </span>
-                        {/if}
-                        {#if measuredWpm}
-                            <span>Your pace on this deck's text</span>
-                            <span class="text-right font-mono tabular-nums">
-                                ~{measuredWpm} words/min
-                            </span>
-                        {/if}
-                    </div>
-                </div>
-            {/if}
-
-            <div class="grid gap-2">
-                <Label>Presentation style</Label>
-                <div class="grid gap-1.5">
-                    {#each STYLES as option (option.value)}
-                        <label
-                            class="flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors {style ===
-                            option.value
-                                ? 'border-primary bg-accent'
-                                : 'hover:bg-accent/50'}"
-                        >
-                            <input
-                                type="radio"
-                                name="presentation-style"
-                                value={option.value}
-                                bind:group={style}
-                                class="mt-0.5"
-                                data-test="talk-style-{option.value}"
-                            />
-                            <span>
-                                {option.label}
-                                <span
-                                    class="block text-xs text-muted-foreground"
-                                >
-                                    {option.hint}
-                                </span>
-                            </span>
-                        </label>
-                    {/each}
-                </div>
-                <p class="text-xs text-muted-foreground">
-                    Sets how the editor turns your slide text into a
-                    speaking-time estimate.
+                <p class="text-xs font-medium">
+                    Measured from {deliveryStats.rehearsalCount} rehearsal{deliveryStats.rehearsalCount ===
+                    1
+                        ? ''
+                        : 's'}{deliveryStats.sessionCount > 0
+                        ? ` and ${deliveryStats.sessionCount} live session${
+                              deliveryStats.sessionCount === 1 ? '' : 's'
+                          }`
+                        : ''}
                 </p>
+                <div
+                    class="grid grid-cols-2 gap-x-3 gap-y-1 text-xs text-muted-foreground"
+                >
+                    {#if deliveryStats.avgRunSeconds}
+                        <span>Average run</span>
+                        <span class="text-right font-mono tabular-nums">
+                            {formatSpeakingTime(deliveryStats.avgRunSeconds)}
+                        </span>
+                    {/if}
+                    {#if deliveryStats.avgSecondsPerSlide}
+                        <span>Average per slide</span>
+                        <span class="text-right font-mono tabular-nums">
+                            {formatSpeakingTime(
+                                deliveryStats.avgSecondsPerSlide,
+                            )}
+                        </span>
+                    {/if}
+                    {#if measuredWpm}
+                        <span>Your pace on this deck's text</span>
+                        <span class="text-right font-mono tabular-nums">
+                            ~{measuredWpm} words/min
+                        </span>
+                    {/if}
+                </div>
             </div>
+        {/if}
 
-            <label class="flex items-center gap-2 text-sm" for="talk-countdown">
-                <Checkbox
-                    id="talk-countdown"
-                    bind:checked={countdown}
-                    disabled={!hasTarget}
-                    data-test="talk-countdown"
-                />
-                <span>
-                    Count down during the talk
-                    <span class="block text-xs text-muted-foreground">
-                        Timer shows time left instead of time elapsed.
-                    </span>
-                </span>
-            </label>
+        <div class="grid gap-2">
+            <span class="label">Presentation style</span>
+            <div class="grid gap-1.5">
+                {#each STYLES as option (option.value)}
+                    <label
+                        class="flex cursor-pointer items-start gap-2 rounded-md border p-2.5 text-sm transition-colors {style ===
+                        option.value
+                            ? 'border-primary bg-accent'
+                            : 'hover:bg-accent/50'}"
+                    >
+                        <input
+                            type="radio"
+                            name="presentation-style"
+                            value={option.value}
+                            bind:group={style}
+                            class="mt-0.5"
+                            data-test="talk-style-{option.value}"
+                        />
+                        <span>
+                            {option.label}
+                            <span class="block text-xs text-muted-foreground">
+                                {option.hint}
+                            </span>
+                        </span>
+                    </label>
+                {/each}
+            </div>
+            <p class="text-xs text-muted-foreground">
+                Sets how the editor turns your slide text into a speaking-time
+                estimate.
+            </p>
         </div>
 
-        <DialogFooter class="gap-2">
-            <Button variant="secondary" onclick={() => (open = false)}>
-                Cancel
-            </Button>
-            <Button onclick={save} data-test="talk-length-save">Save</Button>
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        <label class="flex items-center gap-2 text-sm" for="talk-countdown">
+            <Checkbox
+                id="talk-countdown"
+                bind:checked={countdown}
+                disabled={!hasTarget}
+                data-test="talk-countdown"
+            />
+            <span>
+                Count down during the talk
+                <span class="block text-xs text-muted-foreground">
+                    Timer shows time left instead of time elapsed.
+                </span>
+            </span>
+        </label>
+    </div>
+
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}>
+            Cancel
+        </Button>
+        <Button onclick={save} data-test="talk-length-save">Save</Button>
+    {/snippet}
+</Modal>

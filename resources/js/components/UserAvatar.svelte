@@ -1,9 +1,5 @@
 <script lang="ts">
-    import {
-        Avatar,
-        AvatarFallback,
-        AvatarImage,
-    } from '@/components/ui/avatar';
+    import { Avatar } from 'daisy-svelte';
     import { getInitials } from '@/lib/initials';
 
     let {
@@ -23,13 +19,10 @@
     );
 </script>
 
-<Avatar class={className}>
-    {#if showImage}
-        <AvatarImage
-            src={avatar}
-            alt={name}
-            onerror={() => (failedSrc = avatar)}
-        />
-    {/if}
-    <AvatarFallback>{getInitials(name)}</AvatarFallback>
-</Avatar>
+<Avatar
+    src={showImage ? avatar : null}
+    alt={name}
+    fallback={getInitials(name)}
+    class="rounded-full {className}"
+    onerror={() => (failedSrc = avatar)}
+/>

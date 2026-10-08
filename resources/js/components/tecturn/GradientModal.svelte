@@ -1,14 +1,6 @@
 <script lang="ts">
     import ColorField from '@/components/tecturn/ColorField.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Label } from '@/components/ui/label';
+    import { Button, Modal } from 'daisy-svelte';
     import {
         buildLinearGradient,
         MAX_GRADIENT_STOPS,
@@ -91,16 +83,13 @@
     }
 </script>
 
-<Dialog {open} onOpenChange={(value) => (open = value)}>
-    <DialogContent class="sm:max-w-md">
-        <div class="space-y-3">
-            <DialogTitle>Gradient background</DialogTitle>
-            <DialogDescription>
-                Pick up to {MAX_GRADIENT_STOPS} colors and a direction.
-            </DialogDescription>
-        </div>
+<Modal bind:open class="sm:max-w-md">
+    {#snippet title()}Gradient background{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Pick up to {MAX_GRADIENT_STOPS} colors and a direction.
+    </p>
 
-        <div class="grid gap-4">
+    <div class="mt-4 grid gap-4">
             <div
                 class="h-24 w-full rounded-md border"
                 style="background: {preview}"
@@ -108,9 +97,9 @@
             ></div>
 
             <div class="grid gap-2">
-                <Label for="gradient-angle" class="text-xs">
+                <label class="label text-xs" for="gradient-angle">
                     Angle: {angle}°
-                </Label>
+                </label>
                 <input
                     id="gradient-angle"
                     type="range"
@@ -124,7 +113,7 @@
             </div>
 
             <div class="grid gap-2">
-                <Label class="text-xs">Colors</Label>
+                <span class="label text-xs">Colors</span>
                 {#each stops as stop, index (index)}
                     <div class="flex items-center gap-2">
                         <ColorField
@@ -152,7 +141,8 @@
 
                 {#if stops.length < MAX_GRADIENT_STOPS}
                     <Button
-                        variant="outline"
+                        variant="base"
+                        outline
                         size="sm"
                         class="w-full"
                         onclick={addStop}
@@ -164,13 +154,10 @@
             </div>
         </div>
 
-        <DialogFooter class="gap-2">
-            <Button variant="secondary" onclick={() => (open = false)}>
-                Cancel
-            </Button>
-            <Button onclick={save} data-test="gradient-save"
-                >Apply gradient</Button
-            >
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}>
+            Cancel
+        </Button>
+        <Button onclick={save} data-test="gradient-save">Apply gradient</Button>
+    {/snippet}
+</Modal>

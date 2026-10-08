@@ -26,31 +26,10 @@
     import CancelInvitationModal from '@/components/CancelInvitationModal.svelte';
     import DeleteTeamModal from '@/components/DeleteTeamModal.svelte';
     import Heading from '@/components/Heading.svelte';
-    import InputError from '@/components/InputError.svelte';
     import InviteMemberModal from '@/components/InviteMemberModal.svelte';
     import RemoveMemberModal from '@/components/RemoveMemberModal.svelte';
-    import {
-        Avatar,
-        AvatarFallback,
-        AvatarImage,
-    } from '@/components/ui/avatar';
-    import { Badge } from '@/components/ui/badge';
-    import { Button } from '@/components/ui/button';
-    import {
-        DropdownMenu,
-        DropdownMenuContent,
-        DropdownMenuItem,
-        DropdownMenuTrigger,
-    } from '@/components/ui/dropdown-menu';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
-    import {
-        Tooltip,
-        TooltipContent,
-        TooltipProvider,
-        TooltipTrigger,
-    } from '@/components/ui/tooltip';
-    import { getInitials } from '@/lib/initials';
+    import UserAvatar from '@/components/UserAvatar.svelte';
+    import { Badge, Button, Dropdown, Input, Tooltip } from 'daisy-svelte';
     import { update } from '@/routes/teams';
     import { update as updateMember } from '@/routes/teams/members';
     import type {
@@ -101,12 +80,6 @@
         invitationToCancel = invitation;
         cancelInvitationDialogOpen = true;
     };
-
-    const callClickHandler = (handler: unknown, event: MouseEvent) => {
-        if (typeof handler === 'function') {
-            handler(event);
-        }
-    };
 </script>
 
 <AppHead title={pageTitle} />
@@ -124,17 +97,15 @@
 
             <Form {...update.form(team.slug)} class="space-y-6">
                 {#snippet children({ errors, processing })}
-                    <div class="grid gap-2">
-                        <Label for="name">Team name</Label>
-                        <Input
-                            id="name"
-                            name="name"
-                            value={team.name}
-                            required
-                            data-test="team-name-input"
-                        />
-                        <InputError message={errors.name} />
-                    </div>
+                    <Input
+                        label="Team name"
+                        id="name"
+                        name="name"
+                        value={team.name}
+                        required
+                        error={errors.name}
+                        data-test="team-name-input"
+                    />
 
                     <div class="flex items-center gap-4">
                         <Button
@@ -177,17 +148,11 @@
                     data-test="member-row"
                 >
                     <div class="flex items-center gap-4">
-                        <Avatar class="h-10 w-10">
-                            {#if member.avatar}
-                                <AvatarImage
-                                    src={member.avatar}
-                                    alt={member.name}
-                                />
-                            {/if}
-                            <AvatarFallback
-                                >{getInitials(member.name)}</AvatarFallback
-                            >
-                        </Avatar>
+                        <UserAvatar
+                            name={member.name}
+                            avatar={member.avatar}
+                            class="h-10 w-10"
+                        />
 
                         <div>
                             <div class="font-medium">{member.name}</div>
@@ -199,49 +164,38 @@
 
                     <div class="flex items-center gap-2">
                         {#if member.role !== 'owner' && permissions.canUpdateMember}
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    {#snippet children(props)}
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onclick={props.onclick}
-                                            aria-expanded={props[
-                                                'aria-expanded'
-                                            ]}
-                                            data-state={props['data-state']}
-                                            data-test="member-role-trigger"
-                                        >
-                                            {member.role_label}
-                                            <ChevronDown
-                                                class="ml-2 h-4 w-4 opacity-50"
-                                            />
-                                        </Button>
-                                    {/snippet}
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent>
+                            <Dropdown align="end">
+                                {#snippet trigger()}
+                                    <span
+                                        class="btn btn-outline btn-sm"
+                                        data-test="member-role-trigger"
+                                    >
+                                        {member.role_label}
+                                        <ChevronDown
+                                            class="ml-2 h-4 w-4 opacity-50"
+                                        />
+                                    </span>
+                                {/snippet}
+                                {#snippet children({ close })}
                                     {#each availableRoles as role (role.value)}
-                                        <DropdownMenuItem asChild>
-                                            {#snippet children(props)}
-                                                <button
-                                                    type="button"
-                                                    class={props.class}
-                                                    data-test="member-role-option"
-                                                    onclick={() => {
-                                                        props.onClick?.();
-                                                        updateMemberRole(
-                                                            member,
-                                                            role.value,
-                                                        );
-                                                    }}
-                                                >
-                                                    {role.label}
-                                                </button>
-                                            {/snippet}
-                                        </DropdownMenuItem>
+                                        <li>
+                                            <button
+                                                type="button"
+                                                data-test="member-role-option"
+                                                onclick={() => {
+                                                    close();
+                                                    updateMemberRole(
+                                                        member,
+                                                        role.value,
+                                                    );
+                                                }}
+                                            >
+                                                {role.label}
+                                            </button>
+                                        </li>
                                     {/each}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
+                                {/snippet}
+                            </Dropdown>
                         {:else}
                             <Badge variant="secondary"
                                 >{member.role_label}</Badge
@@ -249,32 +203,16 @@
                         {/if}
 
                         {#if member.role !== 'owner' && permissions.canRemoveMember}
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        {#snippet child({ props })}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                {...props}
-                                                data-test="member-remove-button"
-                                                onclick={(event) => {
-                                                    callClickHandler(
-                                                        props.onClick,
-                                                        event,
-                                                    );
-                                                    confirmRemoveMember(member);
-                                                }}
-                                            >
-                                                <X class="h-4 w-4" />
-                                            </Button>
-                                        {/snippet}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Remove member</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip tip="Remove member">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    data-test="member-remove-button"
+                                    onclick={() => confirmRemoveMember(member)}
+                                >
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
                         {/if}
                     </div>
                 </div>
@@ -313,34 +251,17 @@
                         </div>
 
                         {#if permissions.canCancelInvitation}
-                            <TooltipProvider delayDuration={0}>
-                                <Tooltip>
-                                    <TooltipTrigger>
-                                        {#snippet child({ props })}
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                {...props}
-                                                data-test="invitation-cancel-button"
-                                                onclick={(event) => {
-                                                    callClickHandler(
-                                                        props.onClick,
-                                                        event,
-                                                    );
-                                                    confirmCancelInvitation(
-                                                        invitation,
-                                                    );
-                                                }}
-                                            >
-                                                <X class="h-4 w-4" />
-                                            </Button>
-                                        {/snippet}
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>Cancel invitation</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
+                            <Tooltip tip="Cancel invitation">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    data-test="invitation-cancel-button"
+                                    onclick={() =>
+                                        confirmCancelInvitation(invitation)}
+                                >
+                                    <X class="h-4 w-4" />
+                                </Button>
+                            </Tooltip>
                         {/if}
                     </div>
                 {/each}

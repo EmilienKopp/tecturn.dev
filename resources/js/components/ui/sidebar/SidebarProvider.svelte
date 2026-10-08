@@ -3,7 +3,6 @@
     import { derived, readable, writable } from 'svelte/store';
     import { onMount, setContext } from 'svelte';
     import { cn } from '@/lib/utils';
-    import { TooltipProvider } from '@/components/ui/tooltip';
     import {
         SIDEBAR_CONTEXT,
         SIDEBAR_COOKIE_MAX_AGE,
@@ -91,15 +90,13 @@
     setContext(SIDEBAR_CONTEXT, context);
 </script>
 
-<TooltipProvider>
-    <div
-        data-slot="sidebar-wrapper"
-        style={`--sidebar-width: ${SIDEBAR_WIDTH}; --sidebar-width-icon: ${SIDEBAR_WIDTH_ICON};`}
-        class={cn(
-            'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
-            className,
-        )}
-    >
-        {@render children?.()}
-    </div>
-</TooltipProvider>
+<div
+    data-slot="sidebar-wrapper"
+    style={`--sidebar-width: ${SIDEBAR_WIDTH}; --sidebar-width-icon: ${SIDEBAR_WIDTH_ICON};`}
+    class={cn(
+        'group/sidebar-wrapper has-data-[variant=inset]:bg-sidebar flex min-h-svh w-full',
+        className,
+    )}
+>
+    {@render children?.()}
+</div>

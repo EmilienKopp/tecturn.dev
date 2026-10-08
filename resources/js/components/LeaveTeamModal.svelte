@@ -1,14 +1,6 @@
 <script lang="ts">
     import { router } from '@inertiajs/svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogClose,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
+    import { Button, Modal } from 'daisy-svelte';
     import { leave as leaveTeamAction } from '@/routes/teams';
     import type { Team } from '@/types';
 
@@ -37,26 +29,22 @@
     };
 </script>
 
-<Dialog bind:open>
-    <DialogContent>
-        <div class="space-y-3">
-            <DialogTitle>Leave team</DialogTitle>
-            <DialogDescription>
-                Are you sure you want to leave <strong>{team?.name}</strong>?
-            </DialogDescription>
-        </div>
+<Modal bind:open>
+    {#snippet title()}Leave team{/snippet}
+    <p class="text-muted-foreground text-sm">
+        Are you sure you want to leave <strong>{team?.name}</strong>?
+    </p>
 
-        <DialogFooter class="gap-2">
-            <DialogClose>
-                <Button variant="secondary">Cancel</Button>
-            </DialogClose>
+    {#snippet actions()}
+        <Button variant="secondary" onclick={() => (open = false)}
+            >Cancel</Button
+        >
 
-            <Button
-                variant="destructive"
-                disabled={processing}
-                onclick={leaveTeam}
-                data-test="leave-team-confirm">Leave team</Button
-            >
-        </DialogFooter>
-    </DialogContent>
-</Dialog>
+        <Button
+            variant="destructive"
+            disabled={processing}
+            onclick={leaveTeam}
+            data-test="leave-team-confirm">Leave team</Button
+        >
+    {/snippet}
+</Modal>

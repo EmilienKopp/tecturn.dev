@@ -12,7 +12,7 @@
     import X from 'lucide-svelte/icons/x';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import UserAvatar from '@/components/UserAvatar.svelte';
     import { received, show } from '@/routes/reviews';
 
@@ -235,7 +235,8 @@
                                     : 'Pending'}
                             </span>
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => openReview(review)}
                             >

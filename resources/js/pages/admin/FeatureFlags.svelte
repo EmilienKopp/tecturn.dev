@@ -13,13 +13,7 @@
     import { router } from '@inertiajs/svelte';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import {
-        Select,
-        SelectContent,
-        SelectItem,
-        SelectTrigger,
-    } from '@/components/ui/select';
-    import { Switch } from '@/components/ui/switch';
+    import { Select, Toggle } from 'daisy-svelte';
     import { update } from '@/routes/admin/features';
 
     type FlagOption = { value: string; label: string };
@@ -84,15 +78,6 @@
         selectedTeamId !== null ? String(selectedTeamId) : '',
     );
 
-    const selectedTeamName = $derived(
-        teams.find((team) => team.id === selectedTeamId)?.name ??
-            'Choose a team',
-    );
-
-    const optionLabel = (flag: Flag): string =>
-        flag.options.find((option) => option.value === flag.value)?.label ??
-        String(flag.value);
-
     const selectTeam = (value: string) => {
         router.get(
             features().url,
@@ -137,36 +122,34 @@
 
                     <div class="shrink-0">
                         {#if flag.type === 'boolean'}
-                            <Switch
+                            <Toggle
                                 checked={flag.value === true}
                                 disabled={isBusy(flag.key)}
-                                onCheckedChange={(checked) =>
-                                    setFlag(flag.key, checked)}
+                                onchange={(event: Event) =>
+                                    setFlag(
+                                        flag.key,
+                                        (
+                                            event.currentTarget as HTMLInputElement
+                                        ).checked,
+                                    )}
                             />
                         {:else}
-                            <Select
-                                type="single"
+                            <select
+                                class="select w-64"
+                                disabled={isBusy(flag.key)}
                                 value={String(flag.value)}
-                                onValueChange={(value) =>
-                                    setFlag(flag.key, value)}
+                                onchange={(event) =>
+                                    setFlag(
+                                        flag.key,
+                                        event.currentTarget.value,
+                                    )}
                             >
-                                <SelectTrigger
-                                    class="w-64"
-                                    disabled={isBusy(flag.key)}
-                                >
-                                    {optionLabel(flag)}
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {#each flag.options as option (option.value)}
-                                        <SelectItem
-                                            value={option.value}
-                                            label={option.label}
-                                        >
-                                            {option.label}
-                                        </SelectItem>
-                                    {/each}
-                                </SelectContent>
-                            </Select>
+                                {#each flag.options as option (option.value)}
+                                    <option value={option.value}>
+                                        {option.label}
+                                    </option>
+                                {/each}
+                            </select>
                         {/if}
                     </div>
                 </div>
@@ -184,26 +167,21 @@
 
         <div class="flex flex-col gap-2">
             <Select
-                type="single"
+                fieldsetClass="w-72"
+                class="w-72"
+                placeholder="Choose a team"
                 value={selectedTeamValue}
-                onValueChange={selectTeam}
-            >
-                <SelectTrigger class="w-72">
-                    {selectedTeamName}
-                </SelectTrigger>
-                <SelectContent>
-                    {#each teams as team (team.id)}
-                        <SelectItem value={String(team.id)} label={team.name}>
-                            {team.name}
-                            {#if team.is_personal}
-                                <span class="text-muted-foreground"
-                                    >(personal)</span
-                                >
-                            {/if}
-                        </SelectItem>
-                    {/each}
-                </SelectContent>
-            </Select>
+                options={teams.map((team) => ({
+                    value: String(team.id),
+                    name: team.is_personal
+                        ? `${team.name} (personal)`
+                        : team.name,
+                }))}
+                onchange={(event) =>
+                    selectTeam(
+                        (event.currentTarget as HTMLSelectElement).value,
+                    )}
+            />
         </div>
 
         {#if selectedTeamId === null}
@@ -228,11 +206,17 @@
                         </div>
 
                         <div class="shrink-0">
-                            <Switch
+                            <Toggle
                                 checked={flag.value === true}
                                 disabled={isBusy(flag.key, selectedTeamId)}
-                                onCheckedChange={(checked) =>
-                                    setFlag(flag.key, checked, selectedTeamId)}
+                                onchange={(event: Event) =>
+                                    setFlag(
+                                        flag.key,
+                                        (
+                                            event.currentTarget as HTMLInputElement
+                                        ).checked,
+                                        selectedTeamId,
+                                    )}
                             />
                         </div>
                     </div>

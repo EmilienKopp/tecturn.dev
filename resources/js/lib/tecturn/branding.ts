@@ -14,6 +14,16 @@ export const BRANDING_KEYS = [
 
 export type BrandingKey = (typeof BRANDING_KEYS)[number];
 
+/** The daisyUI theme variable that feeds each branding slot. */
+const THEME_COLOR_VARS: Record<BrandingKey, string> = {
+    background: '--color-base-100',
+    primary: '--color-primary',
+    secondary: '--color-secondary',
+    accent: '--color-accent',
+    success: '--color-success',
+    danger: '--color-error',
+};
+
 export const BRANDING_LABELS: Record<BrandingKey, string> = {
     background: 'Background',
     primary: 'Primary',
@@ -60,6 +70,91 @@ export const BRANDING_FALLBACK: BrandingColors = {
     fontSize: null,
     fontWeight: null,
 };
+
+let hexConversionContext: CanvasRenderingContext2D | null = null;
+
+/**
+ * Normalize any CSS color to the `#rrggbb` hex the branding validator
+ * accepts — daisyUI themes emit `oklch(...)`, which the backend rejects.
+ * A 1×1 canvas round-trip lets the browser do the parsing and gamut
+ * mapping. Returns null for values the browser can't parse.
+ */
+function cssColorToHex(value: string): string | null {
+    if (/^#[0-9a-fA-F]{6}$/.test(value)) {
+        return value.toLowerCase();
+    }
+
+    hexConversionContext ??= document
+        .createElement('canvas')
+        .getContext('2d', { willReadFrequently: true });
+
+    const context = hexConversionContext;
+
+    if (!context) {
+        return null;
+    }
+
+    // An unparseable color leaves fillStyle untouched, so a sentinel
+    // distinguishes "parsed" from "rejected".
+    context.fillStyle = '#010203';
+    context.fillStyle = value;
+
+    if (context.fillStyle === '#010203' && value !== '#010203') {
+        return null;
+    }
+
+    context.clearRect(0, 0, 1, 1);
+    context.fillRect(0, 0, 1, 1);
+
+    const [red, green, blue] = context.getImageData(0, 0, 1, 1).data;
+    const toChannel = (channel: number): string =>
+        channel.toString(16).padStart(2, '0');
+
+    return `#${toChannel(red)}${toChannel(green)}${toChannel(blue)}`;
+}
+
+/**
+ * Branding colors read from a daisyUI theme's CSS variables, normalized to
+ * hex. With no argument, reads the theme currently active on the document
+ * root; given a theme name, resolves that theme through a hidden probe
+ * element. Reads the daisy tokens directly (not the legacy shadcn aliases)
+ * because those are the only variables scoped to `[data-theme]` and thus
+ * probe-safe. Typography slots stay at their fallback defaults.
+ */
+export function brandingColorsFromTheme(theme?: string): BrandingColors {
+    const colors = { ...BRANDING_FALLBACK };
+
+    if (typeof document === 'undefined') {
+        return colors;
+    }
+
+    let element: HTMLElement = document.documentElement;
+    let probe: HTMLElement | null = null;
+
+    if (theme && theme !== document.documentElement.dataset.theme) {
+        probe = document.createElement('div');
+        probe.dataset.theme = theme;
+        probe.style.position = 'fixed';
+        probe.style.visibility = 'hidden';
+        document.body.appendChild(probe);
+        element = probe;
+    }
+
+    const styles = getComputedStyle(element);
+
+    for (const key of BRANDING_KEYS) {
+        const value = styles.getPropertyValue(THEME_COLOR_VARS[key]).trim();
+        const hex = value ? cssColorToHex(value) : null;
+
+        if (hex) {
+            colors[key] = hex;
+        }
+    }
+
+    probe?.remove();
+
+    return colors;
+}
 
 export interface BrandingSwatch {
     key: BrandingKey;

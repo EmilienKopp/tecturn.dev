@@ -20,16 +20,7 @@
     import Plus from 'lucide-svelte/icons/plus';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
-    import {
-        Dialog,
-        DialogContent,
-        DialogDescription,
-        DialogFooter,
-        DialogTitle,
-    } from '@/components/ui/dialog';
-    import { Input } from '@/components/ui/input';
-    import { Label } from '@/components/ui/label';
+    import { Button, Input, Modal } from 'daisy-svelte';
     import {
         destroy as destroyEvent,
         store as storeEvent,
@@ -283,7 +274,7 @@
                 >
                     <ChevronLeft class="h-4 w-4" />
                 </Button>
-                <Button variant="outline" size="sm" onclick={goToToday}>
+                <Button variant="base" outline size="sm" onclick={goToToday}>
                     Today
                 </Button>
                 <Button
@@ -379,7 +370,8 @@
                                 </p>
                             </div>
                             <Button
-                                variant="outline"
+                                variant="base"
+                                outline
                                 size="sm"
                                 onclick={() => openEdit(event)}
                             >
@@ -403,116 +395,96 @@
     {/if}
 </div>
 
-<Dialog bind:open={dialogOpen}>
-    <DialogContent>
-        <form onsubmit={submitEvent} class="space-y-4">
-            <div class="space-y-3">
-                <DialogTitle>
-                    {editingId === null ? 'Schedule a talk' : 'Edit event'}
-                </DialogTitle>
-                <DialogDescription>
-                    {editingId === null
-                        ? 'Block the date now; you can attach the talk itself later.'
-                        : 'Rename, reschedule or detach this event.'}
-                </DialogDescription>
-            </div>
+<Modal bind:open={dialogOpen}>
+    {#snippet title()}
+        {editingId === null ? 'Schedule a talk' : 'Edit event'}
+    {/snippet}
+    <form onsubmit={submitEvent} class="space-y-4">
+        <p class="text-sm text-muted-foreground">
+            {editingId === null
+                ? 'Block the date now; you can attach the talk itself later.'
+                : 'Rename, reschedule or detach this event.'}
+        </p>
 
-            <div class="space-y-2">
-                <Label for="event-name">Name</Label>
-                <Input
-                    id="event-name"
-                    bind:value={formName}
-                    maxlength={255}
-                    required
-                    placeholder="e.g. PHP Meetup Tokyo"
-                    data-test="event-name-input"
-                />
-                {#if formErrors.name}
-                    <p class="text-sm text-destructive">{formErrors.name}</p>
-                {/if}
-            </div>
+        <Input
+            label="Name"
+            id="event-name"
+            bind:value={formName}
+            maxlength={255}
+            required
+            placeholder="e.g. PHP Meetup Tokyo"
+            error={formErrors.name}
+            data-test="event-name-input"
+        />
 
-            <div class="grid grid-cols-2 gap-4">
-                <div class="space-y-2">
-                    <Label for="event-date">Date</Label>
-                    <Input
-                        id="event-date"
-                        type="date"
-                        bind:value={formDate}
-                        required
-                        data-test="event-date-input"
-                    />
-                    {#if formErrors.date}
-                        <p class="text-sm text-destructive">
-                            {formErrors.date}
-                        </p>
-                    {/if}
-                </div>
-                <div class="space-y-2">
-                    <Label for="event-time">Start time (optional)</Label>
-                    <Input
-                        id="event-time"
-                        type="time"
-                        bind:value={formTime}
-                        data-test="event-time-input"
-                    />
-                    {#if formErrors.start_time}
-                        <p class="text-sm text-destructive">
-                            {formErrors.start_time}
-                        </p>
-                    {/if}
-                </div>
-            </div>
+        <div class="grid grid-cols-2 gap-4">
+            <Input
+                label="Date"
+                id="event-date"
+                type="date"
+                bind:value={formDate}
+                required
+                error={formErrors.date}
+                data-test="event-date-input"
+            />
+            <Input
+                label="Start time (optional)"
+                id="event-time"
+                type="time"
+                bind:value={formTime}
+                error={formErrors.start_time}
+                data-test="event-time-input"
+            />
+        </div>
 
-            <div class="space-y-2">
-                <Label for="event-talk">Talk (optional)</Label>
-                <select
-                    id="event-talk"
-                    bind:value={formTalkId}
-                    class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors scheme-light focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none dark:scheme-dark"
-                    data-test="event-talk-select"
-                >
-                    <option value="">No talk attached yet</option>
-                    {#each talks as talk (talk.id)}
-                        <option value={String(talk.id)}>
-                            {talk.title}
-                            {talk.deck_count === 1
-                                ? '(1 deck)'
-                                : `(${talk.deck_count} decks)`}
-                        </option>
-                    {/each}
-                </select>
-                {#if formErrors.talk_id}
-                    <p class="text-sm text-destructive">
-                        {formErrors.talk_id}
-                    </p>
-                {/if}
-                <p class="text-xs text-muted-foreground">
-                    Every deck is a talk; its versions stay grouped under it.
+        <div class="space-y-2">
+            <label class="label" for="event-talk">Talk (optional)</label>
+            <select
+                id="event-talk"
+                bind:value={formTalkId}
+                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors scheme-light focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none dark:scheme-dark"
+                data-test="event-talk-select"
+            >
+                <option value="">No talk attached yet</option>
+                {#each talks as talk (talk.id)}
+                    <option value={String(talk.id)}>
+                        {talk.title}
+                        {talk.deck_count === 1
+                            ? '(1 deck)'
+                            : `(${talk.deck_count} decks)`}
+                    </option>
+                {/each}
+            </select>
+            {#if formErrors.talk_id}
+                <p class="text-sm text-destructive">
+                    {formErrors.talk_id}
                 </p>
-            </div>
+            {/if}
+            <p class="text-xs text-muted-foreground">
+                Every deck is a talk; its versions stay grouped under it.
+            </p>
+        </div>
 
-            <DialogFooter class="gap-2">
-                {#if editingId !== null}
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        class="mr-auto text-destructive hover:text-destructive"
-                        disabled={submitting}
-                        onclick={deleteEvent}
-                        data-test="event-delete-button"
-                    >
-                        Delete
-                    </Button>
-                {/if}
+        <div class="modal-action gap-2">
+            {#if editingId !== null}
                 <Button
-                    type="submit"
-                    disabled={submitting || formName.trim() === ''}
-                    data-test="event-submit-button"
+                    type="button"
+                    variant="ghost"
+                    class="mr-auto text-destructive hover:text-destructive"
+                    disabled={submitting}
+                    onclick={deleteEvent}
+                    data-test="event-delete-button"
                 >
-                    {editingId === null ? 'Schedule' : 'Save changes'}
+                    Delete
                 </Button>
-            </DialogFooter>
-        </form>
-    </DialogContent>
-</Dialog>
+            {/if}
+            <Button
+                type="submit"
+                disabled={submitting || formName.trim() === ''}
+                data-test="event-submit-button"
+            >
+                {editingId === null ? 'Schedule' : 'Save changes'}
+            </Button>
+        </div>
+    </form>
+</Modal>

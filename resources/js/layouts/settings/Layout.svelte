@@ -2,8 +2,6 @@
     import { Link } from '@inertiajs/svelte';
     import type { Snippet } from 'svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from '@/components/ui/button';
-    import { Separator } from '@/components/ui/separator';
     import { currentUrlState } from '@/lib/currentUrl.svelte';
     import { toUrl } from '@/lib/utils';
     import { index as aiCredentials } from '@/routes/ai-credentials';
@@ -58,27 +56,22 @@
                 aria-label="Settings"
             >
                 {#each sidebarNavItems as item (toUrl(item.href))}
-                    <Button
-                        variant="ghost"
-                        class="w-full justify-start {url.isCurrentOrParentUrl(
+                    <Link
+                        href={toUrl(item.href)}
+                        class="btn btn-ghost w-full justify-start {url.isCurrentOrParentUrl(
                             item.href,
                             url.currentUrl,
                         )
                             ? 'bg-muted'
                             : ''}"
-                        asChild
                     >
-                        {#snippet children(props)}
-                            <Link href={toUrl(item.href)} class={props.class}>
-                                {item.title}
-                            </Link>
-                        {/snippet}
-                    </Button>
+                        {item.title}
+                    </Link>
                 {/each}
             </nav>
         </aside>
 
-        <Separator class="my-6 lg:hidden" />
+        <div class="divider my-6 lg:hidden"></div>
 
         <div class="flex-1 md:max-w-2xl">
             <section class="max-w-xl space-y-12">

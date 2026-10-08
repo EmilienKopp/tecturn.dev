@@ -1,7 +1,7 @@
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
     import { onMount } from 'svelte';
-    import { toast } from 'svelte-sonner';
+    import { toast } from 'daisy-svelte';
     import AppHead from '@/components/AppHead.svelte';
     import CodeSequenceModal from '@/components/tecturn/CodeSequenceModal.svelte';
     import EditorToolbar from '@/components/tecturn/EditorToolbar.svelte';
@@ -141,10 +141,10 @@
             return;
         }
 
-        toast('Restored unsaved changes from this browser.', {
+        toast.info('Restored unsaved changes from this browser.', {
             action: {
                 label: 'Discard',
-                onClick: () => {
+                onclick: () => {
                     clearEditorDraft(presentation.id);
                     router.reload();
                 },

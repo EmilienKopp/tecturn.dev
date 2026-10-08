@@ -1,13 +1,7 @@
 <script lang="ts">
-    import { Link } from '@inertiajs/svelte';
-    import {
-        Breadcrumb,
-        BreadcrumbItem,
-        BreadcrumbLink,
-        BreadcrumbList,
-        BreadcrumbPage,
-        BreadcrumbSeparator,
-    } from '@/components/ui/breadcrumb';
+    import { router } from '@inertiajs/svelte';
+    import { Breadcrumbs } from 'daisy-svelte';
+    import { toUrl } from '@/lib/utils';
     import type { BreadcrumbItem as BreadcrumbItemType } from '@/types';
 
     let {
@@ -15,27 +9,21 @@
     }: {
         breadcrumbs: BreadcrumbItemType[];
     } = $props();
+
+    const items = $derived(
+        breadcrumbs.map((item) => ({
+            label: item.title,
+            href: toUrl(item.href),
+        })),
+    );
 </script>
 
-<Breadcrumb>
-    <BreadcrumbList>
-        {#each breadcrumbs as item, index (item.href)}
-            <BreadcrumbItem>
-                {#if index === breadcrumbs.length - 1}
-                    <BreadcrumbPage>{item.title}</BreadcrumbPage>
-                {:else}
-                    <BreadcrumbLink asChild>
-                        {#snippet children(props)}
-                            <Link href={item.href} class={props.class}>
-                                {item.title}
-                            </Link>
-                        {/snippet}
-                    </BreadcrumbLink>
-                {/if}
-            </BreadcrumbItem>
-            {#if index !== breadcrumbs.length - 1}
-                <BreadcrumbSeparator />
-            {/if}
-        {/each}
-    </BreadcrumbList>
-</Breadcrumb>
+<Breadcrumbs
+    {items}
+    onNavigate={(event, item) => {
+        event.preventDefault();
+        if (item.href) {
+            router.visit(item.href);
+        }
+    }}
+/>

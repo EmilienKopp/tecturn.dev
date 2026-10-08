@@ -20,7 +20,7 @@
     import MessageSquare from 'lucide-svelte/icons/message-square';
     import AppHead from '@/components/AppHead.svelte';
     import RehearsalReplay from '@/components/tecturn/RehearsalReplay.svelte';
-    import { Button } from '@/components/ui/button';
+    import { Button } from 'daisy-svelte';
     import {
         shownSlideNotes,
         shownSlideTitles,
@@ -434,7 +434,8 @@
                     Commands
                 </h2>
                 <Button
-                    variant="outline"
+                    variant="base"
+                    outline
                     size="sm"
                     class="w-full justify-start"
                     onclick={downloadSnapshot}
@@ -443,7 +444,8 @@
                     <Download class="h-4 w-4" /> Download JSON
                 </Button>
                 <Button
-                    variant="outline"
+                    variant="base"
+                    outline
                     size="sm"
                     class="w-full justify-start"
                     onclick={restoreAsNewDeck}

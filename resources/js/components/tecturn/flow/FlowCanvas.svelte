@@ -11,8 +11,7 @@
     import '@xyflow/svelte/dist/style.css';
     import Plus from 'lucide-svelte/icons/plus';
     import Sparkles from 'lucide-svelte/icons/sparkles';
-    import { toast } from 'svelte-sonner';
-    import { Button } from '@/components/ui/button';
+    import { Button, toast } from 'daisy-svelte';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import CodeActionNode from './CodeActionNode.svelte';
     import SlideNode from './SlideNode.svelte';
@@ -244,7 +243,8 @@
     >
         <Panel position="top-left" class="flex gap-2">
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 size="sm"
                 onclick={() => editor.addSlideNodeAt(viewportCenter())}
                 data-test="flow-add-slide"
@@ -252,7 +252,8 @@
                 <Plus class="h-4 w-4" /> Slide
             </Button>
             <Button
-                variant="outline"
+                variant="base"
+                outline
                 size="sm"
                 onclick={() => editor.addTransitionNode(viewportCenter())}
                 data-test="flow-add-transition"

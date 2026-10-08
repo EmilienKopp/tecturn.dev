@@ -1,6 +1,6 @@
 <script lang="ts">
     import { page } from '@inertiajs/svelte';
-    import { toast } from 'svelte-sonner';
+    import { toast } from 'daisy-svelte';
     import UploadPresentationImageController from '@/actions/App/Http/Controllers/Presentations/UploadPresentationImageController';
     import BlockPinMenu from '@/components/tecturn/BlockPinMenu.svelte';
     import BoxBlockView from '@/components/tecturn/BoxBlockView.svelte';
@@ -64,9 +64,7 @@
         const target = event.target as HTMLElement | null;
 
         if (
-            target?.closest(
-                'input, textarea, select, [contenteditable="true"]',
-            )
+            target?.closest('input, textarea, select, [contenteditable="true"]')
         ) {
             return;
         }
