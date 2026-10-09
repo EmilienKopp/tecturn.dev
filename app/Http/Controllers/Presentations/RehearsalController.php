@@ -12,6 +12,7 @@ use App\Http\Requests\Presentations\RecordRehearsalRequest;
 use App\Infrastructure\ReadModels\ContactsReadModel;
 use App\Infrastructure\ReadModels\RehearsalReadModel;
 use App\Infrastructure\ReadModels\RehearsalReviewReadModel;
+use App\Infrastructure\ReadModels\TalkReadModel;
 use App\Models\Presentation;
 use App\Models\Rehearsal;
 use App\Models\Team;
@@ -27,6 +28,7 @@ class RehearsalController extends Controller
         private readonly RehearsalReadModel $rehearsals,
         private readonly RehearsalReviewReadModel $reviews,
         private readonly ContactsReadModel $contacts,
+        private readonly TalkReadModel $talks,
         private readonly RecordRehearsal $recordRehearsal,
     ) {}
 
@@ -35,6 +37,7 @@ class RehearsalController extends Controller
         return Inertia::render('rehearsals/Index', [
             'runs' => $this->rehearsals->listForTeam($current_team->id),
             'reviewRequests' => $this->reviews->listForReviewer($request->user()->id),
+            'talks' => $this->talks->listForTeam($current_team->id),
         ]);
     }
 

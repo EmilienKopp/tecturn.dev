@@ -28,8 +28,8 @@
                 <h2
                     class="font-display text-[4.4cqw] font-semibold tracking-tight text-[#221c12]"
                 >
-                    Presentations →
-                    <span class="text-[#b06e10]">New presentation</span>
+                    Talks →
+                    <span class="text-[#b06e10]">New talk</span>
                 </h2>
                 <p class="text-[2.2cqw] text-[#6e6250]">
                     Name it, hit Create. You land in the editor on an empty

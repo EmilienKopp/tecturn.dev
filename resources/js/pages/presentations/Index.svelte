@@ -496,11 +496,11 @@
                 onclick={() => (createDialogOpen = true)}
                 data-test="new-presentation-button"
             >
-                <Plus class="h-4 w-4" /> New presentation
+                <Plus class="h-4 w-4" /> New talk
             </Button>
 
             <Modal bind:open={createDialogOpen}>
-                {#snippet title()}New presentation{/snippet}
+                {#snippet title()}New talk{/snippet}
                 <form onsubmit={createPresentation} class="space-y-4">
                     <p class="text-sm text-muted-foreground">
                         Build slides in the editor, or bring your own deck as a

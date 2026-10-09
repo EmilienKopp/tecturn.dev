@@ -5,14 +5,12 @@
     import CodeXml from 'lucide-svelte/icons/code-xml';
     import Copy from 'lucide-svelte/icons/copy';
     import Download from 'lucide-svelte/icons/download';
-    import FlaskConical from 'lucide-svelte/icons/flask-conical';
     import GitBranch from 'lucide-svelte/icons/git-branch';
     import Heart from 'lucide-svelte/icons/heart';
     import Languages from 'lucide-svelte/icons/languages';
     import Lock from 'lucide-svelte/icons/lock';
     import PanelBottom from 'lucide-svelte/icons/panel-bottom';
     import PanelRight from 'lucide-svelte/icons/panel-right';
-    import Play from 'lucide-svelte/icons/play';
     import Plus from 'lucide-svelte/icons/plus';
     import QrCode from 'lucide-svelte/icons/qr-code';
     import Save from 'lucide-svelte/icons/save';
@@ -20,6 +18,7 @@
     import Smartphone from 'lucide-svelte/icons/smartphone';
     import Timer from 'lucide-svelte/icons/timer';
     import Confirm from '@/components/feedback/Confirm.svelte';
+    import PresentMenu from '@/components/PresentMenu.svelte';
     import { promise } from '@/lib/support/async';
     import { ms } from '@/lib/support/time';
     import {
@@ -29,7 +28,7 @@
     import { qrToSvg } from '@/lib/tecturn/CodeGeneration/qr';
     import type { EditorState } from '@/lib/tecturn/editor-state.svelte';
     import { DEFAULT_REACTIONS } from '@/lib/tecturn/reactions';
-    import { edit, present, update } from '@/routes/presentations';
+    import { edit, update } from '@/routes/presentations';
     import { store as storeVersion } from '@/routes/presentations/versions';
     import type {
         DeliveryStats,
@@ -363,25 +362,6 @@
         }
     };
 
-    const presentUrl = $derived(
-        page.props.currentTeam
-            ? present({
-                  current_team: page.props.currentTeam.slug,
-                  presentation: presentationId,
-              }).url
-            : null,
-    );
-
-    // Same present screen, but `test=1` tells the presenter to skip opening an
-    // analytics session so a rehearsal never pollutes the numbers.
-    const testRunUrl = $derived(presentUrl ? `${presentUrl}?test=1` : null);
-
-    // Rehearsal mode: same screen again, but with a start/stop rehearsal timer
-    // whose runs are saved with a snapshot of the deck.
-    const rehearsalUrl = $derived(
-        presentUrl ? `${presentUrl}?rehearsal=1` : null,
-    );
-
     const save = async () => {
         const currentTeam = page.props.currentTeam;
 
@@ -499,57 +479,7 @@
             <Smartphone class="h-4 w-4" /> Remote
         </Button>
 
-        {#if presentUrl}
-            <Dropdown align="end" class="w-56">
-                {#snippet trigger()}
-                    <span
-                        class="btn btn-primary btn-sm shadow"
-                        data-test="editor-present-menu"
-                    >
-                        <Play class="h-4 w-4" /> Present
-                        <ChevronDown class="h-3.5 w-3.5 opacity-60" />
-                    </span>
-                {/snippet}
-                {#snippet children({ close })}
-                    <li>
-                        <a
-                            class="gap-2"
-                            onclick={close}
-                            href={presentUrl}
-                            target="_blank"
-                            rel="noopener"
-                            data-test="editor-present-link"
-                        >
-                            <Play class="h-4 w-4" />Go Live
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            class="gap-2"
-                            onclick={close}
-                            href={testRunUrl}
-                            target="_blank"
-                            rel="noopener"
-                            data-test="editor-test-run-link"
-                        >
-                            <FlaskConical class="h-4 w-4" />Test run
-                        </a>
-                    </li>
-                    <li>
-                        <a
-                            class="gap-2"
-                            onclick={close}
-                            href={rehearsalUrl}
-                            target="_blank"
-                            rel="noopener"
-                            data-test="editor-rehearse-link"
-                        >
-                            <Timer class="h-4 w-4" />Rehearse
-                        </a>
-                    </li>
-                {/snippet}
-            </Dropdown>
-        {/if}
+        <PresentMenu {presentationId} testPrefix="editor" />
 
         <Dropdown align="end" class="w-64">
             {#snippet trigger()}

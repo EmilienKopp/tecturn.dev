@@ -17,9 +17,12 @@
     import Timer from 'lucide-svelte/icons/timer';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button } from 'daisy-svelte';
+    import { Button, Modal } from 'daisy-svelte';
     import UserAvatar from '@/components/UserAvatar.svelte';
-    import { index as presentationsIndex } from '@/routes/presentations';
+    import {
+        index as presentationsIndex,
+        present,
+    } from '@/routes/presentations';
     import { show } from '@/routes/rehearsals';
     import { show as showReview } from '@/routes/reviews';
 
@@ -31,6 +34,15 @@
         duration_seconds: number;
         slide_count: number;
         slide_timings: { slide: number; seconds: number }[];
+    };
+
+    type TalkRow = {
+        id: number;
+        title: string;
+        deck_count: number;
+        latest_major: number | null;
+        latest_presentation_id: number | null;
+        generated_at: string | null;
     };
 
     type ReviewRequestRow = {
@@ -48,9 +60,11 @@
     let {
         runs = [],
         reviewRequests = [],
+        talks = [],
     }: {
         runs?: RunRow[];
         reviewRequests?: ReviewRequestRow[];
+        talks?: TalkRow[];
     } = $props();
 
     const teamSlug = $derived(page.props.currentTeam?.slug ?? '');
@@ -99,16 +113,56 @@
 
     const openRun = (id: number) =>
         router.visit(show({ current_team: teamSlug, rehearsal: id }).url);
+
+    // --- "Rehearse" talk picker ---
+    const rehearsableTalks = $derived(
+        talks.filter((talk) => talk.latest_presentation_id !== null),
+    );
+
+    let pickerOpen = $state(false);
+    let pickerTalkId = $state('');
+
+    const openPicker = (): void => {
+        pickerTalkId =
+            rehearsableTalks.length === 1 ? String(rehearsableTalks[0].id) : '';
+        pickerOpen = true;
+    };
+
+    const startRehearsal = (submission: SubmitEvent): void => {
+        submission.preventDefault();
+
+        const talk = rehearsableTalks.find(
+            (candidate) => String(candidate.id) === pickerTalkId,
+        );
+
+        if (!talk?.latest_presentation_id) {
+            return;
+        }
+
+        const url = present({
+            current_team: teamSlug,
+            presentation: talk.latest_presentation_id,
+        }).url;
+
+        router.visit(`${url}?rehearsal=1`);
+    };
 </script>
 
 <AppHead title="Rehearsals" />
 
 <div class="mx-auto flex w-full max-w-6xl flex-col gap-8 p-6">
-    <Heading
-        variant="small"
-        title="Rehearsals"
-        description="Your rehearsals, each saved with the deck as it was that day"
-    />
+    <div class="flex flex-wrap items-end justify-between gap-4">
+        <Heading
+            variant="small"
+            title="Rehearsals"
+            description="Your rehearsals, each saved with the deck as it was that day"
+        />
+        {#if rehearsableTalks.length > 0}
+            <Button onclick={openPicker} data-test="rehearse-button">
+                <Timer class="h-4 w-4" /> Rehearse
+            </Button>
+        {/if}
+    </div>
 
     {#if reviewRequests.length > 0}
         <section class="flex flex-col gap-3">
@@ -217,8 +271,8 @@
         >
             <Timer class="h-6 w-6 text-muted-foreground" />
             <p class="text-sm text-muted-foreground">
-                No rehearsals yet. Open a deck and pick "Rehearse" from the
-                Present menu to time a run-through.
+                No rehearsals yet. Use "Rehearse" above to time a run-through,
+                or open a deck and pick "Rehearse" from the Present menu.
             </p>
             <Button
                 variant="base"
@@ -230,3 +284,43 @@
         </div>
     {/if}
 </div>
+
+<Modal bind:open={pickerOpen}>
+    {#snippet title()}Rehearse a talk{/snippet}
+    <form onsubmit={startRehearsal} class="space-y-4">
+        <p class="text-sm text-muted-foreground">
+            Pick a talk; its latest deck opens with the rehearsal timer.
+        </p>
+
+        <div class="space-y-2">
+            <label class="label" for="rehearse-talk">Talk</label>
+            <select
+                id="rehearse-talk"
+                bind:value={pickerTalkId}
+                required
+                class="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm text-foreground shadow-xs transition-colors scheme-light focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none dark:scheme-dark"
+                data-test="rehearse-talk-select"
+            >
+                <option value="" disabled>Pick a talk</option>
+                {#each rehearsableTalks as talk (talk.id)}
+                    <option value={String(talk.id)}>
+                        {talk.title}
+                        {talk.latest_major !== null
+                            ? `(v${talk.latest_major})`
+                            : ''}
+                    </option>
+                {/each}
+            </select>
+        </div>
+
+        <div class="modal-action gap-2">
+            <Button
+                type="submit"
+                disabled={pickerTalkId === ''}
+                data-test="rehearse-start-button"
+            >
+                <Timer class="h-4 w-4" /> Start rehearsal
+            </Button>
+        </div>
+    </form>
+</Modal>

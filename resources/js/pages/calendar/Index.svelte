@@ -14,13 +14,15 @@
 
 <script lang="ts">
     import { page, router } from '@inertiajs/svelte';
+    import { Button, Input, Modal } from 'daisy-svelte';
     import CalendarDays from 'lucide-svelte/icons/calendar-days';
     import ChevronLeft from 'lucide-svelte/icons/chevron-left';
     import ChevronRight from 'lucide-svelte/icons/chevron-right';
     import Plus from 'lucide-svelte/icons/plus';
     import AppHead from '@/components/AppHead.svelte';
     import Heading from '@/components/Heading.svelte';
-    import { Button, Input, Modal } from 'daisy-svelte';
+    import PresentMenu from '@/components/PresentMenu.svelte';
+    import { edit as editPresentation } from '@/routes/presentations';
     import {
         destroy as destroyEvent,
         store as storeEvent,
@@ -41,6 +43,8 @@
         title: string;
         deck_count: number;
         latest_major: number | null;
+        latest_presentation_id: number | null;
+        generated_at: string | null;
     };
 
     let {
@@ -189,6 +193,23 @@
         (page.props.errors ?? {}) as Record<string, string>,
     );
 
+    // Drafts still generating are not linkable, but a talk already attached to
+    // the event being edited stays listed so saving doesn't drop the link.
+    const linkableTalks = $derived(
+        talks.filter(
+            (talk) =>
+                talk.generated_at !== null || String(talk.id) === formTalkId,
+        ),
+    );
+
+    // The picked talk resolves to its latest deck for the Present menu.
+    const formPresentationId = $derived(
+        formTalkId !== ''
+            ? (talks.find((talk) => String(talk.id) === formTalkId)
+                  ?.latest_presentation_id ?? null)
+            : null,
+    );
+
     const submitEvent = (submission: SubmitEvent): void => {
         submission.preventDefault();
 
@@ -250,7 +271,7 @@
         <Heading
             variant="small"
             title="Calendar"
-            description="Your scheduled talks, so every rehearsal has a date to aim at"
+            description="Click on days to schedule talks, or edit/present existing ones."
         />
         <Button onclick={() => openCreate()} data-test="schedule-talk-button">
             <Plus class="h-4 w-4" /> Schedule a talk
@@ -397,7 +418,7 @@
 
 <Modal bind:open={dialogOpen}>
     {#snippet title()}
-        {editingId === null ? 'Schedule a talk' : 'Edit event'}
+        {editingId === null ? 'Schedule a talk' : 'Event information'}
     {/snippet}
     <form onsubmit={submitEvent} class="space-y-4">
         <p class="text-sm text-muted-foreground">
@@ -446,7 +467,7 @@
                 data-test="event-talk-select"
             >
                 <option value="">No talk attached yet</option>
-                {#each talks as talk (talk.id)}
+                {#each linkableTalks as talk (talk.id)}
                     <option value={String(talk.id)}>
                         {talk.title}
                         {talk.deck_count === 1
@@ -477,6 +498,30 @@
                 >
                     Delete
                 </Button>
+            {/if}
+            {#if formPresentationId !== null}
+                <Button
+                    type="button"
+                    variant="base"
+                    outline
+                    onclick={() =>
+                        router.visit(
+                            editPresentation({
+                                current_team: teamSlug,
+                                presentation: formPresentationId,
+                            }).url,
+                        )}
+                    data-test="event-edit-deck-button"
+                >
+                    Edit
+                </Button>
+                <PresentMenu
+                    presentationId={formPresentationId}
+                    testPrefix="calendar"
+                    triggerClass="btn btn-primary"
+                    position="top"
+                    onNavigate={() => (dialogOpen = false)}
+                />
             {/if}
             <Button
                 type="submit"

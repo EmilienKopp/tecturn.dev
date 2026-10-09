@@ -68,7 +68,8 @@
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "@php artisan dev"
+            "@php artisan dev",
+            "php artisan reverb:start"
         ],
         "lint": [
             "pint --parallel"

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Models\Presentation;
 use App\Models\PresentationSession;
 use App\Models\Talk;
 use App\Models\TalkEvent;
@@ -17,7 +18,41 @@ test('guests are redirected away from the calendar', function () {
 
 test('a team member sees the calendar with the team events', function () {
     $user = User::factory()->create();
-    $talk = Talk::factory()->create(['team_id' => $user->currentTeam->id]);
+    $talk = Talk::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'title' => 'A finished talk',
+    ]);
+    Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'talk_id' => $talk->id,
+        'version_major' => 1,
+        'version_minor' => 0,
+    ]);
+    $latest = Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'talk_id' => $talk->id,
+        'version_major' => 2,
+        'version_minor' => 0,
+    ]);
+    // An AI draft still generating must not steal the "latest deck" slot.
+    Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'talk_id' => $talk->id,
+        'version_major' => 3,
+        'version_minor' => 0,
+        'draft_requested_at' => now(),
+        'draft_completed_at' => null,
+    ]);
+    $generatingTalk = Talk::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'title' => 'Z still generating',
+    ]);
+    Presentation::factory()->create([
+        'team_id' => $user->currentTeam->id,
+        'talk_id' => $generatingTalk->id,
+        'draft_requested_at' => now(),
+        'draft_completed_at' => null,
+    ]);
     TalkEvent::factory()->withStartTime('10:00')->create([
         'team_id' => $user->currentTeam->id,
         'talk_id' => $talk->id,
@@ -36,7 +71,12 @@ test('a team member sees the calendar with the team events', function () {
             ->where('events.0.date', '2026-11-12')
             ->where('events.0.start_time', '10:00')
             ->where('events.0.talk_title', $talk->title)
-            ->count('talks', 1)
+            ->count('talks', 2)
+            ->where('talks.0.latest_presentation_id', $latest->id)
+            ->whereNot('talks.0.generated_at', null)
+            ->where('talks.1.id', $generatingTalk->id)
+            ->where('talks.1.latest_presentation_id', null)
+            ->where('talks.1.generated_at', null)
         );
 });
 

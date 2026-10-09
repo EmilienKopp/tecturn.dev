@@ -21,7 +21,7 @@ class AppNavigation
             ->addIf(condition: $team !== null, title: 'Platform', configure: function (Section $section) use ($team) {
                 $section
                     ->add('Dashboard', route('dashboard', $team->slug), attributes: ['icon' => 'layout-grid'])
-                    ->add('Presentations', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
+                    ->add('Talks', route('presentations.index', $team->slug), attributes: ['icon' => 'presentation'])
                     ->add('Rehearsals', route('rehearsals.index', $team->slug), attributes: ['icon' => 'timer'])
                     ->add('Calendar', route('calendar.index', $team->slug), attributes: ['icon' => 'calendar-days'])
                     ->add('Reviews', route('reviews.index'), attributes: ['icon' => 'message-square'])

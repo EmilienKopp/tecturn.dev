@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\Presentation;
 use App\Models\Rehearsal;
+use App\Models\Talk;
 use App\Models\User;
 use Illuminate\Http\Testing\File as TestingFile;
 use Illuminate\Http\UploadedFile;
@@ -181,9 +182,11 @@ test('rehearsal timings are validated', function (array $payload) {
 
 test('the rehearsals page lists the team\'s rehearsals, most recent first', function () {
     $user = User::factory()->create();
+    $talk = Talk::factory()->create(['team_id' => $user->currentTeam->id]);
     $presentation = Presentation::factory()->withSlides(2)->create([
         'team_id' => $user->currentTeam->id,
         'name' => 'Scaling Postgres',
+        'talk_id' => $talk->id,
     ]);
     $older = Rehearsal::factory()->create([
         'presentation_id' => $presentation->id,
@@ -211,7 +214,9 @@ test('the rehearsals page lists the team\'s rehearsals, most recent first', func
         ->where('runs.0.id', $newer->id)
         ->where('runs.0.presentation_name', 'Scaling Postgres')
         ->where('runs.0.duration_seconds', 120)
-        ->where('runs.1.id', $older->id),
+        ->where('runs.1.id', $older->id)
+        ->has('talks', 1)
+        ->where('talks.0.latest_presentation_id', $presentation->id),
     );
 });
 
